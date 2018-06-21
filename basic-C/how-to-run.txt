@@ -1,0 +1,5 @@
+gcc file.c -o anyPhrase
+./anyPhrase
+
+# C tutorial
+https://o7planning.org/vi/10315/huong-dan-lap-trinh-c-cho-nguoi-moi-bat-dau#a219710
