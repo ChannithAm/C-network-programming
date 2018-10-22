@@ -1,0 +1,3 @@
+gcc source_code.c -o output_file
+
+g++ source_code.cpp -o output_file
