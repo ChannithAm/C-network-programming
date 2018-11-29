@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 25. Variable Argument Functions</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch25"><a id="page_132"/>Exercise 25. Variable Argument Functions</h2>
+<p class="noindent">In C, you can create your own versions of functions like <code>printf</code> and <code>scanf</code> by creating a <em>variable argument</em> function, or vararg function. These functions use the header <code>stdarg.h</code>, and with them, you can create nicer interfaces to your library. They are handy for certain types of builder functions, formatting functions, and anything that takes variable arguments.</p>
+<p class="noindent">Understanding vararg functions is <em>not</em> essential to creating C programs. I think I&#8217;ve used it maybe 20 times in my code in all of the years I&#8217;ve been programming. However, knowing how a vararg function works will help you debug the programs you use and gives you a better understanding of the computer.</p>
+<p class="ex-caption"><code>ex25.c</code></p>
+<hr/>
+<p class="codelink"><a id="p132pro01" href="ch25_images.html#p132pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1<br/>
+&#160;&#160;2<br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdarg.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define MAX_DATA 100</span></span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> read_string<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>out_string<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> max_buffer<span class="EmpStrong">)</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> max_buffer <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string<span class="EmpStrong">);</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fgets<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string<span class="EmpStrong">,</span> max_buffer<span class="EmpStrong">,</span> stdin<span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Input error."</span><span class="EmpStrong">);</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string<span class="EmpStrong">)</span> free<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string<span class="EmpStrong">);</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> read_int<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_int<span class="EmpStrong">)</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>input <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_string<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>input<span class="EmpStrong">,</span> MAX_DATA<span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read number."</span><span class="EmpStrong">);</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_int <span class="pd_brown-1"><span class="EmpStrong">=</span></span> atoi<span class="EmpStrong">(</span>input<span class="EmpStrong">);</span><br/>
+<a id="page_133"/>&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>input<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>input<span class="EmpStrong">)</span> free<span class="EmpStrong">(</span>input<span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> read_scan<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>fmt<span class="EmpStrong">, ...)</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_int <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_char <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>out_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> max_buffer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">va_list</span></span> argp<span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;va_start<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> fmt<span class="EmpStrong">);</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> fmt<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>fmt<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_green">'%'</span><span class="EmpStrong">) {</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>fmt<span class="EmpStrong">[</span>i<span class="EmpStrong">]) {</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'\0'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"Invalid format, you ended with %%."</span><span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'d'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;out_int <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_int<span class="EmpStrong">(</span>out_int<span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read int."</span><span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'c'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;out_char <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">);</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>out_char <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fgetc<span class="EmpStrong">(</span>stdin<span class="EmpStrong">);</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;72<br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'s'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;max_buffer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;out_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span><span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_string<span class="EmpStrong">(</span>out_string<span class="EmpStrong">,</span> max_buffer<span class="EmpStrong">);</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read string."</span><span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">default</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"Invalid format."</span><span class="EmpStrong">);</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_134"/>&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;fgetc<span class="EmpStrong">(</span>stdin<span class="EmpStrong">);</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>feof<span class="EmpStrong">(</span>stdin<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38; !</span></span>ferror<span class="EmpStrong">(</span>stdin<span class="EmpStrong">),</span> <span class="pd_green">"Input error."</span><span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;89<br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;va_end<span class="EmpStrong">(</span>argp<span class="EmpStrong">);</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;va_end<span class="EmpStrong">(</span>argp<span class="EmpStrong">);</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;96&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;97<br/>
+&#160;98&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;99&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>first_name <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> initial <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">' '</span><span class="EmpStrong">;</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>last_name <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What's your first name? "</span><span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_scan<span class="EmpStrong">(</span><span class="pd_green">"%s"</span><span class="EmpStrong">,</span> MAX_DATA<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>first_name<span class="EmpStrong">);</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed first name."</span><span class="EmpStrong">);</span><br/>
+108<br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What's your initial? "</span><span class="EmpStrong">);</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_scan<span class="EmpStrong">(</span><span class="pd_green">"%c\n"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>initial<span class="EmpStrong">);</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed initial."</span><span class="EmpStrong">);</span><br/>
+112<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What's your last name? "</span><span class="EmpStrong">);</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_scan<span class="EmpStrong">(</span><span class="pd_green">"%s"</span><span class="EmpStrong">,</span> MAX_DATA<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>last_name<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed last name."</span><span class="EmpStrong">);</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"How old are you? "</span><span class="EmpStrong">);</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_scan<span class="EmpStrong">(</span><span class="pd_green">"%d"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>age<span class="EmpStrong">);</span><br/>
+119<br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"---- RESULTS ----\n"</span><span class="EmpStrong">);</span><br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"First Name: %s"</span><span class="EmpStrong">,</span> first_name<span class="EmpStrong">);</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Initial: '%c'\n"</span><span class="EmpStrong">,</span> initial<span class="EmpStrong">);</span><br/>
+123&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Last Name: %s"</span><span class="EmpStrong">,</span> last_name<span class="EmpStrong">);</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Age: %d\n"</span><span class="EmpStrong">,</span> age<span class="EmpStrong">);</span><br/>
+125<br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>first_name<span class="EmpStrong">);</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>last_name<span class="EmpStrong">);</span><br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+129&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+131&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent"><a id="page_135"/>This program is similar to the previous exercise, except I have written my own <code>scanf</code> function to handle strings the way I want. The main function should be clear to you, as well as the two functions <code>read_string</code> and <code>read_int</code>, since they do nothing new.</p>
+<p class="noindent">The varargs function is called <code>read_scan</code>, and it does the same thing that <code>scanf</code> is doing using the <code>va_list</code> data structure and supporting macros and functions. Here&#8217;s how:</p>
+<p class="indenthangingB">&#8226; I set as the last parameter of the function the keyword <code>...</code> to indicate to C that this function will take any number of arguments after the <code>fmt</code> argument. I could put many other arguments before this, but I can&#8217;t put any more after this.</p>
+<p class="indenthangingB">&#8226; After setting up some variables, I create a <code>va_list</code> variable and initialize it with <code>va_start</code>. This configures the gear in <code>stdarg.h</code> that handles variable arguments.</p>
+<p class="indenthangingB">&#8226; I then use a <code>for-loop</code> to loop through the format string <code>fmt</code> and process the same kind of formats that <code>scanf</code> has, only much simpler. I just have integers, characters, and strings.</p>
+<p class="indenthangingB">&#8226; When I hit a format, I use the <code>switch-statement</code> to figure out what to do.</p>
+<p class="indenthangingB">&#8226; Now, to <em>get</em> a variable from the <code>va_list argp</code>, I use the macro <code>va_arg(argp, TYPE)</code> where TYPE is the exact type of what I will assign this function parameter to. The downside to this design is that you&#8217;re flying blind, so if you don&#8217;t have enough parameters, then oh well, you&#8217;ll most likely crash.</p>
+<p class="indenthangingB">&#8226; The interesting difference from <code>scanf</code> is I&#8217;m assuming that people want <code>read_scan</code> to create the strings it reads when it hits an <code>'s'</code> format sequence. When you give this sequence, the function takes two parameters off the <code>va_list argp</code> stack: the max function size to read, and the output character string pointer. Using that information, it just runs <code>read_string</code> to do the real work.</p>
+<p class="indenthangingB">&#8226; This makes <code>read_scan</code> more consistent than <code>scanf</code>, since you <em>always</em> give an address-of <code>&#38;</code> on variables to have them set appropriately.</p>
+<p class="indenthangingB">&#8226; Finally, if the function encounters a character that&#8217;s not in the correct format, it just reads one char to skip it. It doesn&#8217;t care what that char is, just that it should skip it.</p>
+<div class="heading">
+<h3 id="ch25lev1sec1">What You Should See</h3>
+<p class="noindent">When you run this one, it&#8217;s similar to the last one.</p>
+</div>
+<p class="ex-caption"><code>Exercise 25 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p135pro01" href="ch25_images.html#p135pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex25<br/>
+<span class="EmpItalic">cc -Wall -g -DNDEBUG&#160;&#160;&#160;&#160;ex25.c&#160;&#160;&#160;-o ex25</span><br/>
+<span class="pd_brown">$</span> ./ex25<br/>
+<span class="EmpItalic">What's your first name? Zed</span><br/>
+<span class="EmpItalic">What's your initial? A</span><br/>
+<a id="page_136"/><span class="EmpItalic">What's your last name? Shaw</span><br/>
+<span class="EmpItalic">How old are you? 37</span><br/>
+<span class="EmpItalic">---- RESULTS ----</span><br/>
+<span class="EmpItalic">First Name: Zed</span><br/>
+<span class="EmpItalic">Initial: 'A'</span><br/>
+<span class="EmpItalic">Last Name: Shaw</span><br/>
+<span class="EmpItalic">Age: 37</span></p>
+<div class="heading">
+<h3 id="ch25lev1sec2">How to Break It</h3>
+<p class="noindent">This program should be more robust against buffer overflows, but it doesn&#8217;t handle the formatted input as well as <code>scanf</code>. To try to break this, change the code so that you forget to pass in the initial size for &#8216;%s&#8217; formats. Try giving it more data than <code>MAX_DATA</code>, and then see how omitting <code>calloc</code> in <code>read_string</code> changes how it works. Finally, there&#8217;s a problem where <code>fgets</code> eats the newlines, so try to fix that using <code>fgetc</code>, but leave out the <code>\0</code> that ends the string.</p>
+</div>
+<div class="heading">
+<h3 id="ch25lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Make double and triple sure that you know what each of the <code>out_</code> variables is doing. Most importantly, you should know what <code>out_string</code> is and how it&#8217;s a pointer to a pointer, so that you understand when you&#8217;re setting the pointer versus the contents is important.</p>
+</div>
+<p class="indenthangingB">&#8226; Write a similar function to <code>printf</code> that uses the varargs system, and rewrite <code>main</code> to use it.</p>
+<p class="indenthangingB">&#8226; As usual, read the man page on all of this so that you know what it does on your platform. Some platforms will use macros, others will use functions, and some will have these do nothing. It all depends on the compiler and the platform you use.<a id="page_137"/></p>
+</body>
+</html>

@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 41. Project devpkg</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch41"><a id="page_274"/>Exercise 41. Project <span class="EmpStrong">devpkg</span></h2>
+<p class="noindent">You are now ready to tackle a new project called <code>devpkg</code>. In this project you&#8217;re going to recreate a piece of software that I wrote specifically for this book called <code>devpkg</code>. You&#8217;ll then extend it in a few key ways and improve the code, most importantly by writing some unit tests for it.</p>
+<p class="noindent">This exercise has a companion video to it, and also a project on GitHub (<a href="https://github.com">https://github.com</a>) that you can reference if you get stuck. You should attempt to do this exercise using the description below, since that&#8217;s how you&#8217;ll need to learn to code from books in the future. Most computer science textbooks don&#8217;t include videos for their exercises, so this project is more about trying to figure it out from this description.</p>
+<p class="noindent">If you get stuck, and you can&#8217;t figure it out, <em>then</em> go watch the video and look at the GitHub project to see how your code differs from mine.</p>
+<div class="heading">
+<h3 id="ch41lev1sec1">What Is <span class="EmpStrong">devpkg</span>?</h3>
+<p class="noindent"><code>Devpkg</code> is a simple C program that installs other software. I made it specifically for this book as a way to teach you how a real software project is structured, and also how to reuse other people&#8217;s libraries. It uses a portability library called the Apache Portable Runtime (APR), which has many handy C functions that work on tons of platforms, including Windows. Other than that, it just grabs code from the Internet (or local files) and does the usual <code>./configure</code>, <code>make</code>, and <code>make install</code> that every program does.</p>
+</div>
+<p class="noindent">Your goal in this exercise is to build <code>devpkg</code> from the source, finish each <em>challenge</em> I give, and use the source to understand what <code>devpkg</code> does and why.</p>
+<div class="heading">
+<h4 id="ch41lev2sec1">What We Want to Make</h4>
+<p class="noindent">We want a tool that has these commands:</p>
+</div>
+<p class="indenthanging"><strong>devpkg -S</strong> Sets up a new installation on a computer.</p>
+<p class="indenthanging"><strong>devpkg -I</strong> Installs a piece of software from a URL.</p>
+<p class="indenthanging"><strong>devpkg -L</strong> Lists all of the software that&#8217;s been installed.</p>
+<p class="indenthanging"><strong>devpkg -F</strong> Fetches some source code for manual building.</p>
+<p class="indenthanging"><strong>devpkg -B</strong> Builds the source code and installs it, even if it&#8217;s already installed.</p>
+<p class="noindent"><a id="page_275"/>We want <code>devpkg</code> to be able to take almost any URL, figure out what kind of project it is, download it, install it, and register that it downloaded that software. We&#8217;d also like it to process a simple dependency list so that it can install all of the software that a project might need, as well.</p>
+<div class="heading">
+<h4 id="ch41lev2sec2">The Design</h4>
+<p class="noindent">To accomplish this goal, <code>devpkg</code> will have a very simple design:</p>
+</div>
+<p class="indenthanging"><strong>Use External Commands</strong> You&#8217;ll do most of the work through external commands like <code>curl</code>, <code>git</code>, and <code>tar</code>. This reduces the amount of code <code>devpkg</code> needs to get things done.</p>
+<p class="indenthanging"><strong>Simple File Database</strong> You could easily make it more complex, but you&#8217;ll start by making just make a single simple file database at <code>/usr/local/.devpkg/db</code> to keep track of what&#8217;s installed.</p>
+<p class="indenthanging"><strong>/usr/local Always</strong> Again, you could make this more advanced, but for now just assume it&#8217;s always <code>/usr/local</code>, which is a standard install path for most software on UNIX.</p>
+<p class="indenthanging"><strong>configure, make, make install</strong> It&#8217;s assumed that most software can be installed with just a <code>configure</code>, <code>make</code>, and <code>make install</code>&#8212;and maybe <code>configure</code> is optional. If the software at a minimum can&#8217;t do that, there are some options to modify the commands, but otherwise, <code>devpkg</code> won&#8217;t bother.</p>
+<p class="indenthanging"><strong>The User Can Be Root</strong> We&#8217;ll assume that the user can become root using <code>sudo</code>, but doesn&#8217;t want to become root until the end.</p>
+<p class="noindent">This will keep our program small at first and work well enough for us to get it going, at which point you&#8217;ll be able to modify it further for this exercise.</p>
+<div class="heading">
+<h4 id="ch41lev2sec3">The Apache Portable Runtime</h4>
+<p class="noindent">One more thing you&#8217;ll do is leverage the APR Libraries to get a good set of portable routines for doing this kind of work. APR isn&#8217;t necessary, and you could probably write this program without it, but it&#8217;d take more code than necessary. I&#8217;m also forcing you to use APR now so you get used to linking and using other libraries. Finally, APR also works on <em>Windows</em>, so your skills with it are transferable to many other platforms.</p>
+</div>
+<p class="noindent">You should go get both the <code>apr-1.5.2</code> and the <code>apr-util-1.5.4</code> libraries, as well as browse through the documentation available at the main APR site at <a href="http://apr.apache.org">http://apr.apache.org</a>.</p>
+<p class="noindent">Here&#8217;s a shell script that will install all the stuff you need. You should write this into a file by hand, and then run it until it can install APR without any errors.</p>
+<p class="ex-caption"><a id="page_276"/><code>Exercise 41.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p276pro01" href="ch41_images.html#p276pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_blue">set</span> -e<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># go somewhere safe</span></span><br/>
+<span class="pd_blue">cd</span> /tmp<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># get the source to base APR 1.5.2</span></span><br/>
+curl -L -O http://archive.apache.org/dist/apr/apr-1.5.2.tar.gz<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># extract it and go into the source</span></span><br/>
+tar -xzvf apr-1.5.2.tar.gz<br/>
+<span class="pd_blue">cd</span> apr-1.5.2<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># configure, make, make install</span></span><br/>
+./configure<br/>
+make<br/>
+sudo make install<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># reset and cleanup</span></span><br/>
+<span class="pd_blue">cd</span> /tmp<br/>
+rm -rf apr-1.5.2 apr-1.5.2.tar.gz<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># do the same with apr-util</span></span><br/>
+curl -L -O http://archive.apache.org/dist/apr/apr-util-1.5.4.tar.gz<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># extract</span></span><br/>
+tar -xzvf apr-util-1.5.4.tar.gz<br/>
+<span class="pd_blue">cd</span> apr-util-1.5.4<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic"># configure, make, make install</span></span><br/>
+./configure --with-apr<span class="pd_brown-1"><span class="EmpStrong">=</span></span>/usr/local/apr<br/>
+<span class="pd_brown"><span class="EmpItalic"># you need that extra parameter to configure because</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic"># apr-util can't really find it because...who knows.</span></span><br/>
+<br/>
+make<br/>
+sudo make install<br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#cleanup</span></span><br/>
+<span class="pd_blue">cd</span> /tmp<br/>
+rm -rf apr-util-1.5.4* apr-1.5.2*</p>
+<p class="noindent">I&#8217;m having you write this script out because it&#8217;s basically what we want <code>devpkg</code> to do, but with extra options and checks. In fact, you could just do it all in shell with less code, but then that wouldn&#8217;t be a very good program for a C book would it?</p>
+<p class="noindent">Simply run this script and fix it until it works, then you&#8217;ll have the libraries you need to complete the rest of this project.</p>
+<div class="heading">
+<h3 id="ch41lev1sec2"><a id="page_277"/>Project Layout</h3>
+<p class="noindent">You need to set up some simple project files to get started. Here&#8217;s how I usually craft a new project:</p>
+</div>
+<p class="ex-caption"><code>Exercise 41.2 Session</code></p>
+<hr/>
+<p class="pre">mkdir devpkg<br/>
+<span class="pd_blue">cd</span> devpkg<br/>
+touch README Makefile</p>
+<div class="heading">
+<h4 id="ch41lev2sec4">Other Dependencies</h4>
+<p class="noindent">You should have already installed apr-1.5.2 and apr-util-1.5.4, so now you need a few more files to use as basic dependencies:</p>
+</div>
+<p class="indenthangingB">&#8226; <code>dbg.h</code> from <a href="ch20.html#ch20">Exercise 20</a>.</p>
+<p class="indenthangingB">&#8226; <code>bstrlib.h</code> and <code>bstrlib.c</code> from <a href="http://bstring.sourceforge.net/">http://bstring.sourceforge.net/</a>. Download the .zip file, extract it, and copy just those two files.</p>
+<p class="indenthangingB">&#8226; Type <code>make bstrlib.o</code>, and if it doesn&#8217;t work, read the instructions for fixing <code>bstring</code> below.</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">In some platforms, the <code>bstring.c</code> file will have an error like this:</p>
+<p class="codelink"><a id="p277pro01" href="ch41_images.html#p277pro01a">Click here to view code image</a></p>
+<p class="pre">bstrlib.c:2762: error: expected declaration\<br/>
+specifiers or '...' before numeric constant</p>
+<p class="sb-noindent">This is from a bad <code>define</code> that the authors added, which doesn&#8217;t always work. You just need to change line 2759 that reads <code>#ifdef __GNUC__</code> to read:</p>
+<p class="codelink"><a id="p277pro02" href="ch41_images.html#p277pro02a">Click here to view code image</a></p>
+<p class="pre">#if defined(__GNUC__) &#38;&#38; !defined(__APPLE__)</p>
+<p class="sb-noindent">and then it should work on OS X.</p>
+<hr/></div>
+<p class="noindent">When that&#8217;s all done, you should have a <code>Makefile</code>, <code>README</code>, <code>dbg.h</code>, <code>bstrlib.h</code>, and <code>bstrlib.c</code> ready to go.</p>
+<div class="heading">
+<h3 id="ch41lev1sec3">The <span class="EmpStrong">Makefile</span></h3>
+<p class="noindent">A good place to start is the <code>Makefile</code> since this lays out how things are built and what source files you&#8217;ll be creating.</p>
+</div>
+<p class="ex-caption"><a id="page_278"/><code>Makefile</code></p>
+<hr/>
+<p class="codelink"><a id="p278pro01" href="ch41_images.html#p278pro01a">Click here to view code image</a></p>
+<p class="pre">PREFIX<span class="pd_brown-1"><span class="EmpStrong">?=</span></span>/usr/local<br/>
+CFLAGS<span class="pd_brown-1"><span class="EmpStrong">=</span></span>-g -Wall -I<span class="pd_green">${</span>PREFIX<span class="pd_green">}</span>/apr/include/apr-1<br/>
+CFLAGS<span class="pd_brown-1"><span class="EmpStrong">+=</span></span>-I<span class="pd_green">${</span>PREFIX<span class="pd_green">}</span>/apr/include/apr-util-1<br/>
+LDFLAGS<span class="pd_brown-1"><span class="EmpStrong">=</span></span>-L<span class="pd_green">${</span>PREFIX<span class="pd_green">}</span>/apr/lib -lapr-1 -pthread -laprutil-1<br/>
+<br/>
+all<span class="pd_brown-1"><span class="EmpStrong">:</span></span> devpkg<br/>
+<br/>
+devpkg<span class="pd_brown-1"><span class="EmpStrong">:</span></span> bstrlib.o db.o shell.o commands.o<br/>
+<br/>
+install<span class="pd_brown-1"><span class="EmpStrong">:</span></span> all<br/>
+&#160;&#160;&#160;&#160;install -d <span class="pd_blue"><span class="EmpStrong">$(</span></span>DESTDIR<span class="pd_blue"><span class="EmpStrong">)</span></span>/<span class="pd_blue"><span class="EmpStrong">$(</span></span>PREFIX<span class="pd_blue"><span class="EmpStrong">)</span></span>/bin/<br/>
+&#160;&#160;&#160;&#160;install devpkg <span class="pd_blue"><span class="EmpStrong">$(</span></span>DESTDIR<span class="pd_blue"><span class="EmpStrong">)</span></span>/<span class="pd_blue"><span class="EmpStrong">$(</span></span>PREFIX<span class="pd_blue"><span class="EmpStrong">)</span></span>/bin/<br/>
+<br/>
+clean<span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;&#160;&#160;&#160;rm -f *.o<br/>
+&#160;&#160;&#160;&#160;rm -f devpkg<br/>
+&#160;&#160;&#160;&#160;rm -rf *.dSYM</p>
+<p class="noindent">There&#8217;s nothing in this that you haven&#8217;t seen before, except maybe the strange <code>?=</code> syntax, which says &#8220;set PREFIX equal to this unless PREFIX is already set.&#8221;</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">If you&#8217;re on more recent versions of Ubuntu, and you get errors about <code>apr_off_t</code> or <code>off64_t</code>, then add <code>-D_LARGEFILE64_SOURCE=1</code> to <code>CFLAGS</code>. Another thing is that you need to add <code>/usr/local/apr/lib</code> to a file in <code>/etc/ld.conf.so.d/</code> and then run <code>ldconfig</code> so that it correctly picks up the libraries.</p>
+<hr/></div>
+<div class="heading">
+<h3 id="ch41lev1sec4">The Source Files</h3>
+<p class="noindent">From the <code>Makefile,</code> we see that there are five dependencies for <code>devpkg</code>:</p>
+</div>
+<p class="indenthanging"><strong>bstrlib.o</strong> This comes from <code>bstrlib.c</code> and the header file <code>bstlib.h</code>, which you already have.</p>
+<p class="indenthanging"><strong>db.o</strong> This comes from <code>db.c</code> and header file <code>db.h</code>, and it will contain code for our little database routines.</p>
+<p class="indenthanging"><strong>shell.o</strong> This is from <code>shell.c</code> and header <code>shell.h</code>, as well as a couple of functions that make running other commands like <code>curl</code> easier.</p>
+<p class="indenthanging"><strong>commands.o</strong> This is from <code>command.c</code> and header <code>command.h</code>, and contains all of the commands that <code>devpkg</code> needs to be useful.</p>
+<p class="indenthanging"><a id="page_279"/><strong>devpkg</strong> It&#8217;s not explicitly mentioned, but it&#8217;s the target (on the left) in this part of the <code>Makefile</code>. It comes from <code>devpkg.c</code>, which contains the <code>main</code> function for the whole program.</p>
+<p class="noindent">Your job is to now create each of these files, type in their code, and get them correct.</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">You may read this description and think, &#8220;Man! How is it that Zed is so smart that he just sat down and typed these files out like this!? I could never do that.&#8221; I didn&#8217;t magically craft <code>devpkg</code> in this form with my awesome coding powers. Instead, what I did is this:</p>
+<p class="indenthangingB">&#8226; I wrote a quick little <code>README</code> to get an idea of how I wanted it to work.</p>
+<p class="indenthangingB">&#8226; I created a simple bash script (like the one you did earlier) to figure out all of the pieces that were needed.</p>
+<p class="indenthangingB">&#8226; I made one .c file and hacked on it for a few days working through the idea and figuring it out.</p>
+<p class="indenthangingB">&#8226; I got it mostly working and debugged, <em>then</em> I started breaking up the one big file into these four files.</p>
+<p class="indenthangingB">&#8226; After getting these files laid down, I renamed and refined the functions and data structures so that they&#8217;d be more logical and pretty.</p>
+<p class="indenthangingB">&#8226; Finally, after I had it working the <em>exact same</em> but with the new structure, I added a few features like the <code>-F</code> and <code>-B</code> options.</p>
+<p class="sb-noindent">You&#8217;re reading this in the order I want to teach it to you, but don&#8217;t think this is how I always build software. Sometimes I already know the subject and I use more planning. Sometimes I just hack up an idea and see how well it&#8217;d work. Sometimes I write one, then throw it away and plan out a better one. It all depends on what my experience tells me is best or where my inspiration takes me.</p>
+<p class="sb-indent">If you run into a supposed expert who tries to tell you that there&#8217;s only one way to solve a programming problem, they&#8217;re lying to you. Either they actually use multiple tactics, or they&#8217;re not very good.</p>
+<hr/></div>
+<div class="heading">
+<h4 id="ch41lev2sec5">The DB Functions</h4>
+<p class="noindent">There must be a way to record URLs that have been installed, list these URLs, and check whether something has already been installed so we can skip it. I&#8217;ll use a simple flat file database and the <code>bstrlib.h</code> library to do it.</p>
+</div>
+<p class="noindent">First, create the <code>db.h</code> header file so you know what you&#8217;ll be implementing.</p>
+<p class="ex-caption"><a id="page_280"/><code>db.h</code></p>
+<hr/>
+<p class="codelink"><a id="p280pro01" href="ch41_images.html#p280pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _db_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _db_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define DB_FILE "/usr/local/.devpkg/db"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DB_DIR "/usr/local/.devpkg"</span></span><br/>
+<br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_init<span class="EmpStrong">();</span><br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_list<span class="EmpStrong">();</span><br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_update<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_find<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">Then, implement those functions in <code>db.c</code>, and as you build this, use <code>make</code> to get it to compile cleanly.</p>
+<p class="ex-caption"><code>db.c</code></p>
+<hr/>
+<p class="codelink"><a id="p280pro02" href="ch41_images.html#p280pro02a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;unistd.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_errno.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_file_io.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "db.h"</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "bstrlib.h"</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DB_open<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>path<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>mode<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> fopen<span class="EmpStrong">(</span>path<span class="EmpStrong">,</span> mode<span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static void</span></span> DB_close<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> db<span class="EmpStrong">)</span><br/>
+&#160;15&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;fclose<span class="EmpStrong">(</span>db<span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static</span></span> bstring DB_load<span class="EmpStrong">()</span><br/>
+&#160;20&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>db <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;db <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_open<span class="EmpStrong">(</span>DB_FILE<span class="EmpStrong">,</span> <span class="pd_green">"r"</span><span class="EmpStrong">);</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>db<span class="EmpStrong">,</span> <span class="pd_green">"Failed to open database: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bread<span class="EmpStrong">((</span>bNread<span class="EmpStrong">)</span> fread<span class="EmpStrong">,</span> db<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>data<span class="EmpStrong">,</span> <span class="pd_green">"Failed to read from db file: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_close<span class="EmpStrong">(</span>db<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> data<span class="EmpStrong">;</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>db<span class="EmpStrong">)</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_close<span class="EmpStrong">(</span>db<span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>data<span class="EmpStrong">)</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;39&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_update<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">)</span><br/>
+&#160;42&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>DB_find<span class="EmpStrong">(</span>url<span class="EmpStrong">)) {</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Already recorded as installed: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>db <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_open<span class="EmpStrong">(</span>DB_FILE<span class="EmpStrong">,</span> <span class="pd_green">"a+"</span><span class="EmpStrong">);</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>db<span class="EmpStrong">,</span> <span class="pd_green">"Failed to open DB file: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bfromcstr<span class="EmpStrong">(</span>url<span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;bconchar<span class="EmpStrong">(</span>line<span class="EmpStrong">,</span> <span class="pd_green">'\n'</span><span class="EmpStrong">);</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fwrite<span class="EmpStrong">(</span>line<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">,</span> blength<span class="EmpStrong">(</span>line<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> db<span class="EmpStrong">);</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to append to the db."</span><span class="EmpStrong">);</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+<a id="page_281"/>&#160;56&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>db<span class="EmpStrong">)</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_close<span class="EmpStrong">(</span>db<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_find<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">)</span><br/>
+&#160;63&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bfromcstr<span class="EmpStrong">(</span>url<span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> res <span class="pd_brown-1"><span class="EmpStrong">= -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_load<span class="EmpStrong">();</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>data<span class="EmpStrong">,</span> <span class="pd_green">"Failed to load: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>binstr<span class="EmpStrong">(</span>data<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> line<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> BSTR_ERR<span class="EmpStrong">) {</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// fallthrough</span></span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>data<span class="EmpStrong">)</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>line<span class="EmpStrong">)</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+<a id="page_282"/>&#160;82<br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> res<span class="EmpStrong">;</span><br/>
+&#160;84&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;85<br/>
+&#160;86&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_init<span class="EmpStrong">()</span><br/>
+&#160;87&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>p <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_initialize<span class="EmpStrong">();</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>p<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;91<br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>access<span class="EmpStrong">(</span>DB_DIR<span class="EmpStrong">,</span> W_OK <span class="pd_brown-1"><span class="EmpStrong">|</span></span> X_OK<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_dir_make_recursive<span class="EmpStrong">(</span>DB_DIR<span class="EmpStrong">,</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_UREAD <span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_UWRITE<br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_UEXECUTE <span class="pd_brown-1"><span class="EmpStrong">|</span></span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_GREAD <span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_GWRITE<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_GEXECUTE<span class="EmpStrong">,</span> p<span class="EmpStrong">);</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to make database dir: %s"</span><span class="EmpStrong">,</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_DIR<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>access<span class="EmpStrong">(</span>DB_FILE<span class="EmpStrong">,</span> W_OK<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>db <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_open<span class="EmpStrong">(</span>DB_FILE<span class="EmpStrong">,</span> <span class="pd_green">"w"</span><span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>db<span class="EmpStrong">,</span> <span class="pd_green">"Cannot open database: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_close<span class="EmpStrong">(</span>db<span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_destroy<span class="EmpStrong">(</span>p<span class="EmpStrong">);</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+110<br/>
+111&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_destroy<span class="EmpStrong">(</span>p<span class="EmpStrong">);</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+114&#160;&#160;<span class="EmpStrong">}</span><br/>
+115<br/>
+116&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DB_list<span class="EmpStrong">()</span><br/>
+117&#160;&#160;<span class="EmpStrong">{</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;bstring data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_load<span class="EmpStrong">();</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>data<span class="EmpStrong">,</span> <span class="pd_green">"Failed to read load: %s"</span><span class="EmpStrong">,</span> DB_FILE<span class="EmpStrong">);</span><br/>
+120<br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>data<span class="EmpStrong">));</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+123&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+124<br/>
+125&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+127&#160;&#160;<span class="EmpStrong">}</span></p>
+<div class="heading">
+<h5 id="ch41lev3sec1"><a id="page_283"/>Challenge 1: Code Review</h5>
+<p class="noindent">Before continuing, read every line of these files carefully and confirm that you have them entered in <em>exactly</em> as they appear here. Read them backward line by line to practice that. Also, trace each function call and make sure you&#8217;re using <code>check</code> to validate the return codes. Finally, look up <em>every</em> function that you don&#8217;t recognize&#8212;either in the APR Web site documentation or in the <code>bstrlib.h</code> and <code>bstrlib.c</code> source.</p>
+</div>
+<div class="heading">
+<h4 id="ch41lev2sec6">The Shell Functions</h4>
+<p class="noindent">A key design decision for <code>devpkg</code> is to have external tools like <code>curl</code>, <code>tar</code>, and <code>git</code> do most of the work. We could find libraries to do all of this internally, but it&#8217;s pointless if we just need the base features of these programs. There is no shame in running another command in UNIX.</p>
+</div>
+<p class="noindent">To do this, I&#8217;m going to use the <code>apr_thread_proc.h</code> functions to run programs, but I also want to make a simple kind of template system. I&#8217;ll use a <code>struct Shell</code> that holds all of the information needed to run a program, but has holes in the arguments list that I can replace with values.</p>
+<p class="noindent">Look at the <code>shell.h</code> file to see the structure and the commands that I&#8217;ll use. You can see that I&#8217;m using <code>extern</code> to indicate how other <code>.c</code> files can access variables that I&#8217;m defining in <code>shell.c</code>.</p>
+<p class="ex-caption"><code>shell.h</code></p>
+<hr/>
+<p class="codelink"><a id="p283pro01" href="ch41_images.html#p283pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _shell_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _shell_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define MAX_COMMAND_ARGS 100</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_thread_proc.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> Shell <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>dir<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>exe<span class="EmpStrong">;</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_procattr_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>attr<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_proc_t</span></span> proc<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;apr_exit_why_e exit_why<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> exit_code<span class="EmpStrong">;</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>args<span class="EmpStrong">[</span>MAX_COMMAND_ARGS<span class="EmpStrong">];</span><br/>
+<span class="EmpStrong">}</span> Shell<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Shell_run<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> Shell <span class="pd_brown-1"><span class="EmpStrong">*</span></span> cmd<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Shell_exec<span class="EmpStrong">(</span>Shell cmd<span class="EmpStrong">, ...);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell CLEANUP_SH<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell GIT_SH<span class="EmpStrong">;</span><br/>
+<a id="page_284"/><span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell TAR_SH<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell CURL_SH<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell CONFIGURE_SH<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell MAKE_SH<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern</span></span> Shell INSTALL_SH<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">Make sure you&#8217;ve created <code>shell.h</code> exactly as it appears here, and that you&#8217;ve got the same names and number of <code>extern Shell</code> variables. Those are used by the <code>Shell_run</code> and <code>Shell_exec</code> functions to run commands. I define these two functions, and create the real variables in <code>shell.c</code>.</p>
+<p class="ex-caption"><code>shell.c</code></p>
+<hr/>
+<p class="codelink"><a id="p284pro01" href="ch41_images.html#p284pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "shell.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdarg.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Shell_exec<span class="EmpStrong">(</span>Shell template<span class="EmpStrong">, ...)</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>p <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">= -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> APR_SUCCESS<span class="EmpStrong">;</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">va_list</span></span> argp<span class="EmpStrong">;</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>arg <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_pool_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>p<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to create pool."</span><span class="EmpStrong">);</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;va_start<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> template<span class="EmpStrong">);</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">);</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;key <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span> key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">))</span> <span class="EmpStrong">{</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;arg <span class="pd_brown-1"><span class="EmpStrong">=</span></span> va_arg<span class="EmpStrong">(</span>argp<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">);</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> template<span class="EmpStrong">.</span>args<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>strcmp<span class="EmpStrong">(</span>template<span class="EmpStrong">.</span>args<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> key<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;template<span class="EmpStrong">.</span>args<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> arg<span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// found it</span></span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_run<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>template<span class="EmpStrong">);</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_destroy<span class="EmpStrong">(</span>p<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;va_end<span class="EmpStrong">(</span>argp<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+&#160;36<br/>
+<a id="page_285"/>&#160;37&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>p<span class="EmpStrong">) {</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_destroy<span class="EmpStrong">(</span>p<span class="EmpStrong">);</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Shell_run<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> Shell <span class="pd_brown-1"><span class="EmpStrong">*</span></span> cmd<span class="EmpStrong">)</span><br/>
+&#160;45&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_procattr_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>attr<span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rv<span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_proc_t</span></span> newproc<span class="EmpStrong">;</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_procattr_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>attr<span class="EmpStrong">,</span> p<span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to create proc attr."</span><span class="EmpStrong">);</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_procattr_io_set<span class="EmpStrong">(</span>attr<span class="EmpStrong">,</span> APR_NO_PIPE<span class="EmpStrong">,</span> APR_NO_PIPE<span class="EmpStrong">,</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_NO_PIPE<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to set IO of command."</span><span class="EmpStrong">);</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_procattr_dir_set<span class="EmpStrong">(</span>attr<span class="EmpStrong">,</span> cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>dir<span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to set root to %s"</span><span class="EmpStrong">,</span> cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>dir<span class="EmpStrong">);</span><br/>
+&#160;59<br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_procattr_cmdtype_set<span class="EmpStrong">(</span>attr<span class="EmpStrong">,</span> APR_PROGRAM_PATH<span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to set cmd type."</span><span class="EmpStrong">);</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_proc_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>newproc<span class="EmpStrong">,</span> cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exe<span class="EmpStrong">,</span> cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>args<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> attr<span class="EmpStrong">,</span> p<span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to run command."</span><span class="EmpStrong">);</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_proc_wait<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>newproc<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exit_code<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exit_why<span class="EmpStrong">,</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_WAIT<span class="EmpStrong">);</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_CHILD_DONE<span class="EmpStrong">,</span> <span class="pd_green">"Failed to wait."</span><span class="EmpStrong">);</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exit_code <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"%s exited badly."</span><span class="EmpStrong">,</span> cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exe<span class="EmpStrong">);</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exit_why <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_PROC_EXIT<span class="EmpStrong">,</span> <span class="pd_green">"%s was killed or crashed"</span><span class="EmpStrong">,</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;cmd<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>exe<span class="EmpStrong">);</span><br/>
+&#160;73<br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;78&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;Shell CLEANUP_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"rm"</span><span class="EmpStrong">,</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp"</span><span class="EmpStrong">,</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"rm"</span><span class="EmpStrong">,</span> <span class="pd_green">"-rf"</span><span class="EmpStrong">,</span> <span class="pd_green">"/tmp/pkg-build"</span><span class="EmpStrong">,</span> <span class="pd_green">"/tmp/pkg-src.tar.gz"</span><span class="EmpStrong">,</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"/tmp/pkg-src.tar.bz2"</span><span class="EmpStrong">,</span> <span class="pd_green">"/tmp/DEPENDS"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+&#160;85&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;86<br/>
+<a id="page_286"/>&#160;87&#160;&#160;&#160;Shell GIT_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp"</span><span class="EmpStrong">,</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"git"</span><span class="EmpStrong">,</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"git"</span><span class="EmpStrong">,</span> <span class="pd_green">"clone"</span><span class="EmpStrong">,</span> <span class="pd_green">"URL"</span><span class="EmpStrong">,</span> <span class="pd_green">"pkg-build"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+&#160;91&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;Shell TAR_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp/pkg-build"</span><span class="EmpStrong">,</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"tar"</span><span class="EmpStrong">,</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"tar"</span><span class="EmpStrong">,</span> <span class="pd_green">"-xzf"</span><span class="EmpStrong">,</span> <span class="pd_green">"FILE"</span><span class="EmpStrong">,</span> <span class="pd_green">"--strip-components"</span><span class="EmpStrong">,</span> <span class="pd_green">"1"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+&#160;97&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;98<br/>
+&#160;99&#160;&#160;&#160;Shell CURL_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp"</span><span class="EmpStrong">,</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"curl"</span><span class="EmpStrong">,</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"curl"</span><span class="EmpStrong">,</span> <span class="pd_green">"-L"</span><span class="EmpStrong">,</span> <span class="pd_green">"-o"</span><span class="EmpStrong">,</span> <span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> <span class="pd_green">"URL"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+103&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+104<br/>
+105&#160;&#160;&#160;Shell CONFIGURE_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"./configure"</span><span class="EmpStrong">,</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp/pkg-build"</span><span class="EmpStrong">,</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"configure"</span><span class="EmpStrong">,</span> <span class="pd_green">"OPTS"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">,</span><br/>
+110&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+111<br/>
+112&#160;&#160;&#160;Shell MAKE_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"make"</span><span class="EmpStrong">,</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp/pkg-build"</span><span class="EmpStrong">,</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"make"</span><span class="EmpStrong">,</span> <span class="pd_green">"OPTS"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+116&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+117<br/>
+118&#160;&#160;&#160;Shell INSTALL_SH <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>exe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"sudo"</span><span class="EmpStrong">,</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>dir <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"/tmp/pkg-build"</span><span class="EmpStrong">,</span><br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>args <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">"sudo"</span><span class="EmpStrong">,</span> <span class="pd_green">"make"</span><span class="EmpStrong">,</span> <span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">}</span><br/>
+122&#160;&#160;&#160;<span class="EmpStrong">};</span></p>
+<p class="noindent">Read the <code>shell.c</code> from the bottom to the top (which is a common C source layout) and you see how I&#8217;ve created the actual <code>Shell</code> variables that you indicated were <code>extern</code> in <code>shell.h</code>. They live here, but are available to the rest of the program. This is how you make global variables that live in one <code>.o</code> file but are used everywhere. You shouldn&#8217;t make many of these, but they are handy for things like this.</p>
+<p class="noindent">Continuing up the file we get to the <code>Shell_run</code> function, which is a base function that just runs a command according to what&#8217;s in a <code>Shell</code> struct. It uses many of the functions defined in <code>apr_thread_proc.h</code>, so go look up each one to see how the base function works. This seems like a lot of work compared to just using the <code>system</code> function call, but it also gives you more control over the other program&#8217;s execution. For example, in our <code>Shell</code> struct, we have a <code>.dir</code> attribute that forces the program to be in a specific directory before running.</p>
+<p class="noindent"><a id="page_287"/>Finally, I have the <code>Shell_exec</code> function, which is a variable argument function. You&#8217;ve seen this before, but make sure you grasp the <code>stdarg.h</code> functions. In the challenge for this section, you&#8217;re going to analyze this function.</p>
+<div class="heading">
+<h5 id="ch41lev3sec2">Challenge 2: Analyze <span class="EmpStrong">Shell_exec</span></h5>
+<p class="noindent">The challenge for these files (in addition to a full code review like you did in Challenge 1) is to fully analyze <code>Shell_exec</code> and break down exactly how it works. You should be able to understand each line, how the two <code>for-loop</code>s work, and how arguments are being replaced.</p>
+</div>
+<p class="noindent">Once you have it analyzed, add a field to <code>struct Shell</code> that gives you the number of variable <code>args</code> that must be replaced. Update all of the commands to have the right count of args, and have an error check to confirm that these args have been replaced, and then error exit.</p>
+<div class="heading">
+<h4 id="ch41lev2sec7">The Command Functions</h4>
+<p class="noindent">Now you get to make the actual commands that do the work. These commands will use functions from APR, <code>db.h</code>, and <code>shell.h</code> to do the real work of downloading and building the software that you want it to build. This is the most complex set of files, so do them carefully. As before, you start by making the <code>commands.h</code> file, then implementing its functions in the <code>commands.c</code> file.</p>
+</div>
+<p class="ex-caption"><code>commands.h</code></p>
+<hr/>
+<p class="codelink"><a id="p287pro01" href="ch41_images.html#p287pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _commands_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _commands_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_pools.h&gt;</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define DEPENDS_PATH "/tmp/DEPENDS"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define TAR_GZ_SRC "/tmp/pkg-src.tar.gz"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define TAR_BZ2_SRC "/tmp/pkg-src.tar.bz2"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define BUILD_DIR "/tmp/pkg-build"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define GIT_PAT "*.git"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DEPEND_PAT "*DEPENDS"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define TAR_GZ_PAT "*.tar.gz"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define TAR_BZ2_PAT "*.tar.bz2"</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define CONFIG_SCRIPT "/tmp/pkg-build/configure"</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">enum</span></span> CommandType <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;COMMAND_NONE<span class="EmpStrong">,</span> COMMAND_INSTALL<span class="EmpStrong">,</span> COMMAND_LIST<span class="EmpStrong">,</span> COMMAND_FETCH<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;COMMAND_INIT<span class="EmpStrong">,</span> COMMAND_BUILD<br/>
+<span class="EmpStrong">};</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_fetch<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> fetch_only<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_288"/><span class="pd_blue"><span class="EmpStrong">int</span></span> Command_install<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>configure_opts<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>make_opts<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>install_opts<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_depends<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>path<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_build<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>configure_opts<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>make_opts<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>install_opts<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">There&#8217;s not much in <code>commands.h</code> that you haven&#8217;t seen already. You should see that there are some <code>define</code>s for strings that are used everywhere. The really interesting code is in <code>commands.c</code>.</p>
+<p class="ex-caption"><code>commands.c</code></p>
+<hr/>
+<p class="codelink"><a id="p288pro01" href="ch41_images.html#p288pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_uri.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_fnmatch.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;unistd.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "commands.h"</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "bstrlib.h"</span></span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "db.h"</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "shell.h"</span></span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_depends<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>path<span class="EmpStrong">)</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fopen<span class="EmpStrong">(</span>path<span class="EmpStrong">,</span> <span class="pd_green">"r"</span><span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>in <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to open downloaded depends: %s"</span><span class="EmpStrong">,</span> path<span class="EmpStrong">);</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bgets<span class="EmpStrong">((</span>bNgetc<span class="EmpStrong">)</span> fgetc<span class="EmpStrong">,</span> in<span class="EmpStrong">,</span> <span class="pd_green">'\n'</span><span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;line <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bgets<span class="EmpStrong">((</span>bNgetc<span class="EmpStrong">)</span> fgetc<span class="EmpStrong">,</span> in<span class="EmpStrong">,</span> <span class="pd_green">'\n'</span><span class="EmpStrong">))</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;btrimws<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Processing depends: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>line<span class="EmpStrong">));</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Command_install<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>line<span class="EmpStrong">),</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to install: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>line<span class="EmpStrong">));</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;fclose<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>line<span class="EmpStrong">)</span> bdestroy<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+<a id="page_289"/>&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>in<span class="EmpStrong">)</span> fclose<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_fetch<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> fetch_only<span class="EmpStrong">)</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_uri_t</span></span> info <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>port <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span>&#160;&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>depends_file <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_uri_parse<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>info<span class="EmpStrong">);</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to parse URL: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>apr_fnmatch<span class="EmpStrong">(</span>GIT_PAT<span class="EmpStrong">,</span> info<span class="EmpStrong">.</span>path<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">) {</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>GIT_SH<span class="EmpStrong">,</span> <span class="pd_green">"URL"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"git failed."</span><span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>apr_fnmatch<span class="EmpStrong">(</span>DEPEND_PAT<span class="EmpStrong">,</span> info<span class="EmpStrong">.</span>path<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">) {</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>fetch_only<span class="EmpStrong">,</span> <span class="pd_green">"No point in fetching a DEPENDS file."</span><span class="EmpStrong">);</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>info<span class="EmpStrong">.</span>scheme<span class="EmpStrong">) {</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;depends_file <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DEPENDS_PATH<span class="EmpStrong">;</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>CURL_SH<span class="EmpStrong">,</span> <span class="pd_green">"URL"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> depends_file<span class="EmpStrong">,</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Curl failed."</span><span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;depends_file <span class="pd_brown-1"><span class="EmpStrong">=</span></span> info<span class="EmpStrong">.</span>path<span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// recursively process the devpkg list</span></span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Building according to DEPENDS: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Command_depends<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> depends_file<span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to process the DEPENDS: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this indicates that nothing needs to be done</span></span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>apr_fnmatch<span class="EmpStrong">(</span>TAR_GZ_PAT<span class="EmpStrong">,</span> info<span class="EmpStrong">.</span>path<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">) {</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>info<span class="EmpStrong">.</span>scheme<span class="EmpStrong">) {</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>CURL_SH<span class="EmpStrong">,</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"URL"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> TAR_GZ_SRC<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to curl source: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_dir_make_recursive<span class="EmpStrong">(</span>BUILD_DIR<span class="EmpStrong">,</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_UREAD <span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_UWRITE <span class="pd_brown-1"><span class="EmpStrong">|</span></span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_UEXECUTE<span class="EmpStrong">,</span> p<span class="EmpStrong">);</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">,</span> <span class="pd_green">"Failed to make directory %s"</span><span class="EmpStrong">,</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BUILD_DIR<span class="EmpStrong">);</span><br/>
+&#160;83<br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>TAR_SH<span class="EmpStrong">,</span> <span class="pd_green">"FILE"</span><span class="EmpStrong">,</span> TAR_GZ_SRC<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to untar %s"</span><span class="EmpStrong">,</span> TAR_GZ_SRC<span class="EmpStrong">);</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>apr_fnmatch<span class="EmpStrong">(</span>TAR_BZ2_PAT<span class="EmpStrong">,</span> info<span class="EmpStrong">.</span>path<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> APR_SUCCESS<span class="EmpStrong">) {</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>info<span class="EmpStrong">.</span>scheme<span class="EmpStrong">) {</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>CURL_SH<span class="EmpStrong">,</span> <span class="pd_green">"URL"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> TAR_BZ2_SRC<span class="EmpStrong">,</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Curl failed."</span><span class="EmpStrong">);</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_dir_make_recursive<span class="EmpStrong">(</span>BUILD_DIR<span class="EmpStrong">,</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_UREAD <span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_UWRITE<br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">|</span></span> APR_UEXECUTE<span class="EmpStrong">,</span> p<span class="EmpStrong">);</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make directory %s"</span><span class="EmpStrong">,</span> BUILD_DIR<span class="EmpStrong">);</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>TAR_SH<span class="EmpStrong">,</span> <span class="pd_green">"FILE"</span><span class="EmpStrong">,</span> TAR_BZ2_SRC<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+<a id="page_290"/>&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to untar %s"</span><span class="EmpStrong">,</span> TAR_BZ2_SRC<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"Don't now how to handle %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+103<br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// indicates that an install needs to actually run</span></span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+106&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+108&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+109<br/>
+110&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_build<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>configure_opts<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>make_opts<span class="EmpStrong">,</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>install_opts<span class="EmpStrong">)</span><br/>
+113&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+115<br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>access<span class="EmpStrong">(</span>BUILD_DIR<span class="EmpStrong">,</span> X_OK <span class="pd_brown-1"><span class="EmpStrong">|</span></span> R_OK <span class="pd_brown-1"><span class="EmpStrong">|</span></span> W_OK<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span><br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Build directory doesn't exist: %s"</span><span class="EmpStrong">,</span> BUILD_DIR<span class="EmpStrong">);</span><br/>
+118<br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// actually do an install</span></span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>access<span class="EmpStrong">(</span>CONFIG_SCRIPT<span class="EmpStrong">,</span> X_OK<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Has a configure script, running it."</span><span class="EmpStrong">);</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>CONFIGURE_SH<span class="EmpStrong">,</span> <span class="pd_green">"OPTS"</span><span class="EmpStrong">,</span> configure_opts<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+123&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to configure."</span><span class="EmpStrong">);</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+125<br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>MAKE_SH<span class="EmpStrong">,</span> <span class="pd_green">"OPTS"</span><span class="EmpStrong">,</span> make_opts<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to build."</span><span class="EmpStrong">);</span><br/>
+128<br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>INSTALL_SH<span class="EmpStrong">,</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"TARGET"</span><span class="EmpStrong">,</span> install_opts <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_orange">install_opts</span> <span class="EmpStrong">:</span> <span class="pd_green">"install"</span><span class="EmpStrong">,</span><br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to install."</span><span class="EmpStrong">);</span><br/>
+133<br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Shell_exec<span class="EmpStrong">(</span>CLEANUP_SH<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+<a id="page_291"/>135&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to cleanup after build."</span><span class="EmpStrong">);</span><br/>
+136<br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_update<span class="EmpStrong">(</span>url<span class="EmpStrong">);</span><br/>
+138&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to add this package to the database."</span><span class="EmpStrong">);</span><br/>
+139<br/>
+140&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+141<br/>
+142&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+143&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+144&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+145<br/>
+146&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Command_install<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> p<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url<span class="EmpStrong">,</span><br/>
+147&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>configure_opts<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>make_opts<span class="EmpStrong">,</span><br/>
+148&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>install_opts<span class="EmpStrong">)</span><br/>
+149&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+150&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+151&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>Shell_exec<span class="EmpStrong">(</span>CLEANUP_SH<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span><br/>
+152&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to cleanup before building."</span><span class="EmpStrong">);</span><br/>
+153<br/>
+154&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_find<span class="EmpStrong">(</span>url<span class="EmpStrong">);</span><br/>
+155&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Error checking the install database."</span><span class="EmpStrong">);</span><br/>
+156<br/>
+157&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+158&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Package %s already installed."</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+159&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+160&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+161<br/>
+162&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Command_fetch<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+163<br/>
+164&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+165&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Command_build<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> configure_opts<span class="EmpStrong">,</span> make_opts<span class="EmpStrong">,</span><br/>
+166&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;install_opts<span class="EmpStrong">);</span><br/>
+167&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to build: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+168&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else i</span></span><span class="EmpStrong">f (</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+169&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// no install needed</span></span><br/>
+170&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Depends successfully installed: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+171&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+172&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// had an error</span></span><br/>
+173&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"Install failed: %s"</span><span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+174&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+175<br/>
+176&#160;&#160;&#160;&#160;&#160;&#160;&#160;Shell_exec<span class="EmpStrong">(</span>CLEANUP_SH<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+177&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+178<br/>
+179&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+180&#160;&#160;&#160;&#160;&#160;&#160;&#160;Shell_exec<span class="EmpStrong">(</span>CLEANUP_SH<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+181&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+182&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent"><a id="page_292"/>After you have this entered in and compiling, you can analyze it. If you&#8217;ve done the challenges thus far, you should see how the <code>shell.c</code> functions are being used to run shells, and how the arguments are being replaced. If not, then go back and make sure you <em>truly</em> understand how <code>Shell_exec</code> actually works.</p>
+<div class="heading">
+<h5 id="ch41lev3sec3">Challenge 3: Critique My Design</h5>
+<p class="noindent">As before, do a complete review of this code and make sure it&#8217;s exactly the same. Then go through each function and make sure you know how they work and what they&#8217;re doing. You should also trace how each function calls the other functions you&#8217;ve written in this file and other files. Finally, confirm that you understand all of the functions that you&#8217;re calling from APR here.</p>
+</div>
+<p class="noindent">Once you have the file correct and analyzed, go back through and assume that I&#8217;m an idiot. Then, criticize the design I have to see how you can improve it if you can. Don&#8217;t <em>actually</em> change the code, just create a little <code>notes.txt</code> file and write down some thoughts about what you might change.</p>
+<div class="heading">
+<h4 id="ch41lev2sec8">The <span class="EmpStrong">devpkg</span> Main Function</h4>
+<p class="noindent">The last and most important file, but probably the simplest, is <code>devpkg.c</code>, which is where the <code>main</code> function lives. There&#8217;s no <code>.h</code> file for this, since it includes all of the others. Instead, this just creates the executable <code>devpkg</code> when combined with the other <code>.o</code> files from our <code>Makefile</code>. Enter in the code for this file, and make sure it&#8217;s correct.</p>
+</div>
+<p class="ex-caption"><code>devpkg.c</code></p>
+<hr/>
+<p class="codelink"><a id="p292pro01" href="ch41_images.html#p292pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_general.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_getopt.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_strings.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;apr_lib.h&gt;</span></span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "db.h"</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "commands.h"</span></span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char const</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_pool_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>p <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_initialize<span class="EmpStrong">();</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;apr_pool_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>p<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_getopt_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>opt<span class="EmpStrong">;</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">apr_status_t</span></span> rv<span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> ch <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>optarg <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+<a id="page_293"/>&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>config_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>install_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>make_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">enum</span></span> CommandType request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_NONE<span class="EmpStrong">;</span><br/>
+&#160;27<br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> apr_getopt_init<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>opt<span class="EmpStrong">,</span> p<span class="EmpStrong">,</span> argc<span class="EmpStrong">,</span> argv<span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>apr_getopt<span class="EmpStrong">(</span>opt<span class="EmpStrong">,</span> <span class="pd_green">"I:Lc:m:i:d:SF:B:"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ch<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>optarg<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;APR_SUCCESS<span class="EmpStrong">) {</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>ch<span class="EmpStrong">) {</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'I'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_INSTALL<span class="EmpStrong">;</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'L'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_LIST<span class="EmpStrong">;</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'c'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;config_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'m'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;make_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'i'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;install_opts <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'S'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_INIT<span class="EmpStrong">;</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'F'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_FETCH<span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'B'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;request <span class="pd_brown-1"><span class="EmpStrong">=</span></span> COMMAND_BUILD<span class="EmpStrong">;</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> optarg<span class="EmpStrong">;</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>request<span class="EmpStrong">) {</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">COMMAND_INSTALL</span><span class="EmpStrong">:</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>url<span class="EmpStrong">,</span> <span class="pd_green">"You must at least give a URL."</span><span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Command_install<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> config_opts<span class="EmpStrong">,</span> make_opts<span class="EmpStrong">,</span> install_opts<span class="EmpStrong">);</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">COMMAND_LIST</span><span class="EmpStrong">:</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DB_list<span class="EmpStrong">();</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">COMMAND_FETCH</span><span class="EmpStrong">:</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>url <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"You must give a URL."</span><span class="EmpStrong">);</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Command_fetch<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Downloaded to %s and in /tmp/"</span><span class="EmpStrong">,</span> BUILD_DIR<span class="EmpStrong">);</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;85<br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">COMMAND_BUILD</span><span class="EmpStrong">:</span><br/>
+<a id="page_294"/>&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>url<span class="EmpStrong">,</span> <span class="pd_green">"You must at least give a URL."</span><span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Command_build<span class="EmpStrong">(</span>p<span class="EmpStrong">,</span> url<span class="EmpStrong">,</span> config_opts<span class="EmpStrong">,</span> make_opts<span class="EmpStrong">,</span> install_opts<span class="EmpStrong">);</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">COMMAND_INIT</span><span class="EmpStrong">:</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rv <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DB_init<span class="EmpStrong">();</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rv <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make the database."</span><span class="EmpStrong">);</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">default</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"Invalid command given."</span><span class="EmpStrong">);</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;99<br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+101<br/>
+102&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+104&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<div class="heading">
+<h5 id="ch41lev3sec4">Challenge 4: The <span class="EmpStrong">README</span> and Test Files</h5>
+<p class="noindent">The challenge for this file is to understand how the arguments are being processed, what the arguments are, and then create the <code>README</code> file with instructions on how to use them. As you write the <code>README</code>, also write a simple <code>test.sh</code> that runs <code>./devpkg</code> to check that each command is actually working against real, live code. Use the <code>set -e</code> at the top of your script so that it aborts on the first error.</p>
+</div>
+<p class="noindent">Finally, run the program under your debugger and make sure it&#8217;s working before moving on to the final challenge.</p>
+<div class="heading">
+<h3 id="ch41lev1sec5"><a id="page_295"/>The Final Challenge</h3>
+<p class="noindent">Your final challenge is a mini exam and it involves three things:</p>
+</div>
+<p class="indenthangingB">&#8226; Compare your code to my code that&#8217;s available online. Starting at 100%, subtract 1% for each line you got wrong.</p>
+<p class="indenthangingB">&#8226; Take the <code>notes.txt</code> file that you previously created and implement your improvements to the the code and functionality of <code>devpkg</code>.</p>
+<p class="indenthangingB">&#8226; Write an alternative version of <code>devpkg</code> using your other favorite language or the one you think can do this the best. Compare the two, then improve your <em>C</em> version of <code>devpkg</code> based on what you&#8217;ve learned.</p>
+<p class="noindent">To compare your code with mine, do the following:</p>
+<p class="codelink"><a id="p295pro01" href="ch41_images.html#p295pro01a">Click here to view code image</a></p>
+<p class="pre">cd .. # get one directory above your current one<br/>
+git clone git:<span class="pd_purple">//gitorious.org/devpkg/devpkg.git devpkgzed</span><br/>
+diff -r devpkg devpkgzed</p>
+<p class="noindent">This will clone my version of <code>devpkg</code> into a directory called <code>devpkgzed</code> so you can then use the tool <code>diff</code> to compare what you&#8217;ve done to what I did. The files you&#8217;re working with in this book come directly from this project, so if you get different lines, that&#8217;s an error.</p>
+<p class="noindent">Keep in mind that there&#8217;s no real pass or fail on this exercise. It&#8217;s just a way for you to challenge yourself to be as exact and meticulous as possible.</p>
+</body>
+</html>

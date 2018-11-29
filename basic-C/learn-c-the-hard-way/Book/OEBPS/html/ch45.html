@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 45. A Simple TCP/IP Client</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch45"><a id="page_316"/>Exercise 45. A Simple TCP/IP Client</h2>
+<p class="noindent">Im going to use the <code>RingBuffer</code> to create a very simplistic network testing tool that I call <code>netclient</code>. To do this, I have to add some stuff to the <code>Makefile</code> to handle little programs in the <code>bin/</code> directory.</p>
+<div class="heading">
+<h3 id="ch45lev1sec1">Augment the <span class="EmpStrong">Makefile</span></h3>
+<p class="noindent">First, add a variable for the programs just like the unit test&#8217;s <code>TESTS</code> and <code>TEST_SRC</code> variables:</p>
+</div>
+<p class="codelink"><a id="p316pro01" href="ch45_images.html#p316pro01a">Click here to view code image</a></p>
+<p class="pre">PROGRAMS_SRC=$(wildcard bin<span class="pd_purple">/*.c)</span><br/>
+<span class="pd_purple">PROGRAMS=$(patsubst %.c,%,$(PROGRAMS_SRC))</span></p>
+<p class="noindent">Then, you want to add the <code>PROGRAMS</code> to the <code>all</code> target:</p>
+<p class="codelink"><a id="p316pro02" href="ch45_images.html#p316pro02a">Click here to view code image</a></p>
+<p class="pre">all: $(TARGET) $(SO_TARGET) tests $(PROGRAMS)</p>
+<p class="noindent">Then, add <code>PROGRAMS</code> to the <code>rm</code> line in the <code>clean</code> target:</p>
+<p class="codelink"><a id="p316pro03" href="ch45_images.html#p316pro03a">Click here to view code image</a></p>
+<p class="pre">rm &#8211;rf build $(OBJECTS) $(TESTS) $(PROGRAMS)</p>
+<p class="noindent">Finally, you just need a target at the end to build them all:</p>
+<p class="codelink"><a id="p316pro04" href="ch45_images.html#p316pro04a">Click here to view code image</a></p>
+<p class="pre">$(PROGRAMS): CFLAGS += $(TARGET)</p>
+<p class="noindent">With these changes, you can drop simple <code>.c</code> files into <code>bin</code>, and <code>make</code> will build them and link them to the library just like unit tests do.</p>
+<div class="heading">
+<h3 id="ch45lev1sec2">The <span class="EmpStrong">netclient</span> Code</h3>
+<p class="noindent">The code for the little netclient looks like this:</p>
+</div>
+<p class="ex-caption"><code>netclient.c</code></p>
+<hr/>
+<p class="codelink"><a id="p316pro05" href="ch45_images.html#p316pro05a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#undef NDEBUG</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;sys/select.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/ringbuffer.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;sys/socket.h&gt;</span></span><br/>
+<a id="page_317"/>&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;sys/types.h&gt;</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;sys/uio.h&gt;</span></span><br/>
+&#160;10&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;arpa/inet.h&gt;</span></span><br/>
+&#160;11&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;netdb.h&gt;</span></span><br/>
+&#160;12&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;unistd.h&gt;</span></span><br/>
+&#160;13&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;fcntl.h&gt;</span></span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring NL <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"\n"</span><span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring CRLF <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"\r\n"</span><span class="EmpStrong">);</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> nonblock<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> fd<span class="EmpStrong">)</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> flags <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fcntl<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> F_GETFL<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>flags <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Invalid flags on nonblock."</span><span class="EmpStrong">);</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fcntl<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> F_SETFL<span class="EmpStrong">,</span> flags <span class="pd_brown-1"><span class="EmpStrong">|</span></span> O_NONBLOCK<span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Can't set nonblocking."</span><span class="EmpStrong">);</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;29&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> client_connect<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>host<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>port<span class="EmpStrong">)</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> addrinfo <span class="pd_brown-1"><span class="EmpStrong">*</span></span>addr <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> getaddrinfo<span class="EmpStrong">(</span>host<span class="EmpStrong">,</span> port<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>addr<span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to lookup %s:%s"</span><span class="EmpStrong">,</span> host<span class="EmpStrong">,</span> port<span class="EmpStrong">);</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> sock <span class="pd_brown-1"><span class="EmpStrong">=</span></span> socket<span class="EmpStrong">(</span>AF_INET<span class="EmpStrong">,</span> SOCK_STREAM<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>sock <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Cannot create a socket."</span><span class="EmpStrong">);</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> connect<span class="EmpStrong">(</span>sock<span class="EmpStrong">,</span> addr<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>ai_addr<span class="EmpStrong">,</span> addr<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>ai_addrlen<span class="EmpStrong">);</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Connect failed."</span><span class="EmpStrong">);</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> nonblock<span class="EmpStrong">(</span>sock<span class="EmpStrong">);</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Can't set nonblocking."</span><span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;freeaddrinfo<span class="EmpStrong">(</span>addr<span class="EmpStrong">);</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> sock<span class="EmpStrong">;</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;freeaddrinfo<span class="EmpStrong">(</span>addr<span class="EmpStrong">);</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> read_some<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> fd<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> is_socket<span class="EmpStrong">)</span><br/>
+&#160;57&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;59<br/>
+<a id="page_318"/>&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;63<br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>is_socket<span class="EmpStrong">) {</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> recv<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> RingBuffer_starts_at<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_available_space<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> <span class="pd_blue"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> RingBuffer_starts_at<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_available_space<span class="EmpStrong">(</span>buffer<span class="EmpStrong">));</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read from fd: %d"</span><span class="EmpStrong">,</span> fd<span class="EmpStrong">);</span><br/>
+&#160;73<br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_commit_write<span class="EmpStrong">(</span>buffer<span class="EmpStrong">,</span> rc<span class="EmpStrong">);</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;80&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> write_some<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> fd<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> is_socket<span class="EmpStrong">)</span><br/>
+&#160;83&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RingBuffer_get_all<span class="EmpStrong">(</span>buffer<span class="EmpStrong">);</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>data <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to get from the buffer."</span><span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>bfindreplace<span class="EmpStrong">(</span>data<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>NL<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>CRLF<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> BSTR_OK<span class="EmpStrong">,</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to replace NL."</span><span class="EmpStrong">);</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>is_socket<span class="EmpStrong">) {</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> send<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>data<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span>data<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> write<span class="EmpStrong">(</span>fd<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>data<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span>data<span class="EmpStrong">));</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> blength<span class="EmpStrong">(</span>data<span class="EmpStrong">),</span> <span class="pd_green">"Failed to write everything to fd: %d."</span><span class="EmpStrong">,</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;fd<span class="EmpStrong">);</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+100<br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+102<br/>
+103&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+105&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+106<br/>
+107&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+<a id="page_319"/>108&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;fd_set allreads<span class="EmpStrong">;</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;fd_set readmask<span class="EmpStrong">;</span><br/>
+111<br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> socket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span>in_rb <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RingBuffer_create<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1024</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span>sock_rb <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RingBuffer_create<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1024</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">);</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> <span class="pd_green">"USAGE: netclient host port"</span><span class="EmpStrong">);</span><br/>
+118<br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;socket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> client_connect<span class="EmpStrong">(</span>argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">]);</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>socket <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"connect to %s:%s failed."</span><span class="EmpStrong">,</span> argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">]);</span><br/>
+121<br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;FD_ZERO<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>allreads<span class="EmpStrong">);</span><br/>
+123&#160;&#160;&#160;&#160;&#160;&#160;&#160;FD_SET<span class="EmpStrong">(</span>socket<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>allreads<span class="EmpStrong">);</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;FD_SET<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>allreads<span class="EmpStrong">);</span><br/>
+125<br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;readmask <span class="pd_brown-1"><span class="EmpStrong">=</span></span> allreads<span class="EmpStrong">;</span><br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> select<span class="EmpStrong">(</span>socket <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>readmask<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"select failed."</span><span class="EmpStrong">);</span><br/>
+130<br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>FD_ISSET<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>readmask<span class="EmpStrong">)) {</span><br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_some<span class="EmpStrong">(</span>in_rb<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+133&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read from stdin."</span><span class="EmpStrong">);</span><br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+135<br/>
+136&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>FD_ISSET<span class="EmpStrong">(</span>socket<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>readmask<span class="EmpStrong">)) {</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_some<span class="EmpStrong">(</span>sock_rb<span class="EmpStrong">,</span> socket<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+138&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read from socket."</span><span class="EmpStrong">);</span><br/>
+139&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+140<br/>
+141&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>RingBuffer_empty<span class="EmpStrong">(</span>sock_rb<span class="EmpStrong">)) {</span><br/>
+142&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> write_some<span class="EmpStrong">(</span>sock_rb<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+143&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to write to stdout."</span><span class="EmpStrong">);</span><br/>
+144&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+145<br/>
+146&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>RingBuffer_empty<span class="EmpStrong">(</span>in_rb<span class="EmpStrong">)) {</span><br/>
+147&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> write_some<span class="EmpStrong">(</span>in_rb<span class="EmpStrong">,</span> socket<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+148&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span> <span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to write to socket."</span><span class="EmpStrong">);</span><br/>
+149&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+150&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+151<br/>
+152&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+153<br/>
+154&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+155&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+156&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent"><a id="page_320"/>This code uses <code>select</code> to handle events from both <code>stdin</code> (file descriptor 0) and <code>socket</code>, which it uses to talk to a server. The code uses <code>RingBuffer</code>s to store the data and copy it around. You can consider the functions <code>read_some</code> and <code>write_some</code> early prototypes for similar functions in the <code>RingBuffer</code> library.</p>
+<p class="noindent">This little bit of code contains quite a few networking functions that you may not know. As you come across a function that you don&#8217;t know, look it up in the man pages and make sure you understand it. This one little file might inspire you to then research all of the APIs required to write a little server in C.</p>
+<div class="heading">
+<h3 id="ch45lev1sec3">What You Should See</h3>
+<p class="noindent">If you have everything building, then the quickest way to test the code is see if you can get a special file off of <a href="http://learncodethehardway.org">http://learncodethehardway.org</a>.</p>
+</div>
+<p class="ex-caption"><code>Exercise 45.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p320pro01" href="ch45_images.html#p320pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./bin/netclient learncodethehardway.org 80<br/>
+<span class="EmpItalic">GET /ex45.txt HTTP/1.1</span><br/>
+<span class="EmpItalic">Host: learncodethehardway.org</span><br/>
+<br/>
+<span class="EmpItalic">HTTP/1.1 200 OK</span><br/>
+<span class="EmpItalic">Date: Fri, 27 Apr 2012 00:41:25 GMT</span><br/>
+<span class="EmpItalic">Content-Type: text/plain</span><br/>
+<span class="EmpItalic">Content-Length: 41</span><br/>
+<span class="EmpItalic">Last-Modified: Fri, 27 Apr 2012 00:42:11 GMT</span><br/>
+<span class="EmpItalic">ETag: 4f99eb63-29</span><br/>
+<span class="EmpItalic">Server: Mongrel2/1.7.5</span><br/>
+<br/>
+<span class="EmpItalic">Learn C The Hard Way, Exercise 45 works.</span><br/>
+<span class="EmpItalic">^C</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">What I do here is type in the syntax needed to make the HTTP request for the file <code>/ex45.txt</code>, then the <code>Host:</code> header line, and then I press ENTER to get an empty line. I then get the response, with headers and the content. After that, I just hit CTRL-C to exit.</p>
+<div class="heading">
+<h3 id="ch45lev1sec4">How to Break It</h3>
+<p class="noindent">This code could definitely have bugs, and currently in the draft of this book, I&#8217;m going to have to keep working on it. In the meantime, try analyzing the code I have here and thrashing it against other servers. There&#8217;s a tool called <code>netcat</code> that&#8217;s great for setting up these kinds of servers. Another thing to do is use a language like <code>Python</code> or <code>Ruby</code> to create a simple junk server that spews out junk and bad data, randomly closes connections, and does other nasty things.</p>
+</div>
+<p class="noindent">If you find bugs, report them in the comments, and I&#8217;ll fix them up.</p>
+<div class="heading">
+<h3 id="ch45lev1sec5"><a id="page_321"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; As I mentioned, there are quite a few functions you may not know, so look them up. In fact, look them all up even if you think you know them.</p>
+</div>
+<p class="indenthangingB">&#8226; Run this under the debugger and look for errors.</p>
+<p class="indenthangingB">&#8226; Go back through and add various defensive programming checks to the functions to improve them.</p>
+<p class="indenthangingB">&#8226; Use the <code>getopt</code> function to allow the user the option <em>not</em> to translate <code>\n</code> to <code>\r\n</code>. This is only needed on protocols that require it for line endings, like HTTP. Sometimes you don&#8217;t want the translation, so give the user the option.</p>
+</body>
+</html>

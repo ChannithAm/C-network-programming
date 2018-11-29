@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 51. Storing the Statistics</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch51"><a id="page_344"/>Exercise 51. Storing the Statistics</h2>
+<p class="noindent">The next problem to solve is how to store the statistics. There is an advantage to having the statistics in memory, because it&#8217;s much faster than storing them. In fact, there are large data storage systems that do this very thing, but in our case, we want a smaller server that can store some of the data to a hard drive.</p>
+<div class="heading">
+<h3 id="ch51lev1sec1">The Specification</h3>
+<p class="noindent">For this exercise, you&#8217;ll add two commands for storing to and loading statistics from a hard drive:</p>
+</div>
+<p class="indenthanging"><strong>store</strong> If there&#8217;s a URL, store it to a hard drive.</p>
+<p class="indenthanging"><strong>load</strong> If there are two URLs, load the statistic from the hard drive based on the first URL, and then put it into the second URL that&#8217;s in memory.</p>
+<p class="noindent">This may seem simple, but you&#8217;ll have a few battles when implementing this feature:</p>
+<p class="indenthangingN"><strong>1.</strong> If URLs have <code>/</code> characters in them, then that conflicts with the filesystem&#8217;s use of slashes. How will you solve this?</p>
+<p class="indenthangingN"><strong>2.</strong> If URLs have <code>/</code> characters in them, then someone can use your server to overwrite files on a hard drive by giving paths to them. How will you solve this?</p>
+<p class="indenthangingN"><strong>3.</strong> If you choose to use deeply nested directories, then traversing directories to find files will be very slow. What will you do here?</p>
+<p class="indenthangingN"><strong>4.</strong> If you choose to use one directory and hash URLs (oops, I gave a hint), then directories with too many files in them are slow. How will you solve this?</p>
+<p class="indenthangingN"><strong>5.</strong> What happens when someone loads a statistic from a hard drive into a URL that already exists?</p>
+<p class="indenthangingN"><strong>6.</strong> How will someone running <code>statserve</code> know where the storage should be?</p>
+<p class="noindent">An alternative to using a filesystem to store the data is using something like SQLite and SQL. Another option is to use a system like GNU dbm (GDBM) to store them in a simpler database.</p>
+<p class="noindent">Research all of your options and watch the lecture video, and then pick the simplest option and try it. Take your time figuring out this feature because the next exercise will involve figuring out how to destroy your server.<a id="page_345"/></p>
+</body>
+</html>

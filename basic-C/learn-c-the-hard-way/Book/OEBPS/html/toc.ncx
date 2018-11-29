@@ -1,0 +1,1767 @@
+<?xml version="1.0"?>
+<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN" "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
+<ncx version="2005-1" xmlns="http://www.daisy.org/z3986/2005/ncx/">
+<head>
+<meta name="dtb:uid" content="9780133124378"/>
+<meta name="dtb:depth" content="1"/>
+<meta name="dtb:totalPageCount" content="0"/>
+<meta name="dtb:maxPageNumber" content="0"/>
+</head>
+<docTitle>
+<text>Learn C the Hard Way: Practical Exercises on the Computational Subjects You Keep Avoiding (Like C)</text>
+</docTitle>
+<navMap>
+<navPoint id="pref00" playOrder="1">
+<navLabel>
+<text>About This eBook</text>
+</navLabel>
+<content src="pref00.html#pref00"/>
+</navPoint>
+<navPoint id="title" playOrder="2">
+<navLabel>
+<text>Title Page</text>
+</navLabel>
+<content src="title.html#title"/>
+</navPoint>
+<navPoint id="copy" playOrder="3">
+<navLabel>
+<text>Copyright Page</text>
+</navLabel>
+<content src="copyright.html#copy"/>
+</navPoint>
+<navPoint id="toc" playOrder="4">
+<navLabel>
+<text>Contents</text>
+</navLabel>
+<content src="toc.html#toc"/>
+</navPoint>
+<navPoint id="pref02" playOrder="5">
+<navLabel>
+<text>Acknowledgments</text>
+</navLabel>
+<content src="pref02.html#pref02"/>
+</navPoint>
+<navPoint id="pref03" playOrder="6">
+<navLabel>
+<text>This Book Is Not Really about C</text>
+</navLabel>
+<content src="pref03.html#pref03"/>
+<navPoint id="pref03lev1sec1" playOrder="7">
+<navLabel>
+<text>The Undefined Behaviorists</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec1"/>
+</navPoint>
+<navPoint id="pref03lev1sec2" playOrder="8">
+<navLabel>
+<text>C Is a Pretty and Ugly Language</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec2"/>
+</navPoint>
+<navPoint id="pref03lev1sec3" playOrder="9">
+<navLabel>
+<text>What You Will Learn</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec3"/>
+</navPoint>
+<navPoint id="pref03lev1sec4" playOrder="10">
+<navLabel>
+<text>How to Read This Book</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec4"/>
+</navPoint>
+<navPoint id="pref03lev1sec5" playOrder="11">
+<navLabel>
+<text>The Videos</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec5"/>
+</navPoint>
+<navPoint id="pref03lev1sec6" playOrder="12">
+<navLabel>
+<text>The Core Competencies</text>
+</navLabel>
+<content src="pref03.html#pref03lev1sec6"/>
+<navPoint id="pref03lev2sec1" playOrder="13">
+<navLabel>
+<text>Reading and Writing</text>
+</navLabel>
+<content src="pref03.html#pref03lev2sec1"/>
+</navPoint>
+<navPoint id="pref03lev2sec2" playOrder="14">
+<navLabel>
+<text>Attention to Detail</text>
+</navLabel>
+<content src="pref03.html#pref03lev2sec2"/>
+</navPoint>
+<navPoint id="pref03lev2sec3" playOrder="15">
+<navLabel>
+<text>Spotting Differences</text>
+</navLabel>
+<content src="pref03.html#pref03lev2sec3"/>
+</navPoint>
+<navPoint id="pref03lev2sec4" playOrder="16">
+<navLabel>
+<text>Planning and Debugging</text>
+</navLabel>
+<content src="pref03.html#pref03lev2sec4"/>
+</navPoint>
+</navPoint>
+</navPoint>
+<navPoint id="ch00" playOrder="17">
+<navLabel>
+<text>Exercise 0. The Setup</text>
+</navLabel>
+<content src="ch00.html#ch00"/>
+<navPoint id="ch00lev1sec1" playOrder="18">
+<navLabel>
+<text>Linux</text>
+</navLabel>
+<content src="ch00.html#ch00lev1sec1"/>
+</navPoint>
+<navPoint id="ch00lev1sec2" playOrder="19">
+<navLabel>
+<text>Mac OS X</text>
+</navLabel>
+<content src="ch00.html#ch00lev1sec2"/>
+</navPoint>
+<navPoint id="ch00lev1sec3" playOrder="20">
+<navLabel>
+<text>Windows</text>
+</navLabel>
+<content src="ch00.html#ch00lev1sec3"/>
+</navPoint>
+<navPoint id="ch00lev1sec4" playOrder="21">
+<navLabel>
+<text>Text Editor</text>
+</navLabel>
+<content src="ch00.html#ch00lev1sec4"/>
+<navPoint id="ch00lev2sec1" playOrder="22">
+<navLabel>
+<text>Do Not Use an IDE</text>
+</navLabel>
+<content src="ch00.html#ch00lev2sec1"/>
+</navPoint>
+</navPoint>
+</navPoint>
+<navPoint id="ch01" playOrder="23">
+<navLabel>
+<text>Exercise 1. Dust Off That Compiler</text>
+</navLabel>
+<content src="ch01.html#ch01"/>
+<navPoint id="ch01lev1sec1" playOrder="24">
+<navLabel>
+<text>Breaking It Down</text>
+</navLabel>
+<content src="ch01.html#ch01lev1sec1"/>
+</navPoint>
+<navPoint id="ch01lev1sec2" playOrder="25">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch01.html#ch01lev1sec2"/>
+</navPoint>
+<navPoint id="ch01lev1sec3" playOrder="26">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch01.html#ch01lev1sec3"/>
+</navPoint>
+<navPoint id="ch01lev1sec4" playOrder="27">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch01.html#ch01lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch02" playOrder="28">
+<navLabel>
+<text>Exercise 2. Using Makefiles to Build</text>
+</navLabel>
+<content src="ch02.html#ch02"/>
+<navPoint id="ch02lev1sec1" playOrder="29">
+<navLabel>
+<text>Using Make</text>
+</navLabel>
+<content src="ch02.html#ch02lev1sec1"/>
+</navPoint>
+<navPoint id="ch02lev1sec2" playOrder="30">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch02.html#ch02lev1sec2"/>
+</navPoint>
+<navPoint id="ch02lev1sec3" playOrder="31">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch02.html#ch02lev1sec3"/>
+</navPoint>
+<navPoint id="ch02lev1sec4" playOrder="32">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch02.html#ch02lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch03" playOrder="33">
+<navLabel>
+<text>Exercise 3. Formatted Printing</text>
+</navLabel>
+<content src="ch03.html#ch03"/>
+<navPoint id="ch03lev1sec1" playOrder="34">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch03.html#ch03lev1sec1"/>
+</navPoint>
+<navPoint id="ch03lev1sec2" playOrder="35">
+<navLabel>
+<text>External Research</text>
+</navLabel>
+<content src="ch03.html#ch03lev1sec2"/>
+</navPoint>
+<navPoint id="ch03lev1sec3" playOrder="36">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch03.html#ch03lev1sec3"/>
+</navPoint>
+<navPoint id="ch03lev1sec4" playOrder="37">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch03.html#ch03lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch04" playOrder="38">
+<navLabel>
+<text>Exercise 4. Using a Debugger</text>
+</navLabel>
+<content src="ch04.html#ch04"/>
+<navPoint id="ch04lev1sec1" playOrder="39">
+<navLabel>
+<text>GDB Tricks</text>
+</navLabel>
+<content src="ch04.html#ch04lev1sec1"/>
+</navPoint>
+<navPoint id="ch04lev1sec2" playOrder="40">
+<navLabel>
+<text>GDB Quick Reference</text>
+</navLabel>
+<content src="ch04.html#ch04lev1sec2"/>
+</navPoint>
+<navPoint id="ch04lev1sec3" playOrder="41">
+<navLabel>
+<text>LLDB Quick Reference</text>
+</navLabel>
+<content src="ch04.html#ch04lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch05" playOrder="42">
+<navLabel>
+<text>Exercise 5. Memorizing C Operators</text>
+</navLabel>
+<content src="ch05.html#ch05"/>
+<navPoint id="ch05lev1sec1" playOrder="43">
+<navLabel>
+<text>How to Memorize</text>
+</navLabel>
+<content src="ch05.html#ch05lev1sec1"/>
+</navPoint>
+<navPoint id="ch05lev1sec2" playOrder="44">
+<navLabel>
+<text>The List of Operators</text>
+</navLabel>
+<content src="ch05.html#ch05lev1sec2"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch06" playOrder="45">
+<navLabel>
+<text>Exercise 6. Memorizing C Syntax</text>
+</navLabel>
+<content src="ch06.html#ch06"/>
+<navPoint id="ch06lev1sec1" playOrder="46">
+<navLabel>
+<text>The Keywords</text>
+</navLabel>
+<content src="ch06.html#ch06lev1sec1"/>
+</navPoint>
+<navPoint id="ch06lev1sec2" playOrder="47">
+<navLabel>
+<text>Syntax Structures</text>
+</navLabel>
+<content src="ch06.html#ch06lev1sec2"/>
+</navPoint>
+<navPoint id="ch06lev1sec3" playOrder="48">
+<navLabel>
+<text>A Word of Encouragement</text>
+</navLabel>
+<content src="ch06.html#ch06lev1sec3"/>
+</navPoint>
+<navPoint id="ch06lev1sec4" playOrder="49">
+<navLabel>
+<text>A Word of Warning</text>
+</navLabel>
+<content src="ch06.html#ch06lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch07" playOrder="50">
+<navLabel>
+<text>Exercise 7. Variables and Types</text>
+</navLabel>
+<content src="ch07.html#ch07"/>
+<navPoint id="ch07lev1sec1" playOrder="51">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch07.html#ch07lev1sec1"/>
+</navPoint>
+<navPoint id="ch07lev1sec2" playOrder="52">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch07.html#ch07lev1sec2"/>
+</navPoint>
+<navPoint id="ch07lev1sec3" playOrder="53">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch07.html#ch07lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch08" playOrder="54">
+<navLabel>
+<text>Exercise 8. If, Else-If, Else</text>
+</navLabel>
+<content src="ch08.html#ch08"/>
+<navPoint id="ch08lev1sec1" playOrder="55">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch08.html#ch08lev1sec1"/>
+</navPoint>
+<navPoint id="ch08lev1sec2" playOrder="56">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch08.html#ch08lev1sec2"/>
+</navPoint>
+<navPoint id="ch08lev1sec3" playOrder="57">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch08.html#ch08lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch09" playOrder="58">
+<navLabel>
+<text>Exercise 9. While-Loop and Boolean Expressions</text>
+</navLabel>
+<content src="ch09.html#ch09"/>
+<navPoint id="ch09lev1sec1" playOrder="59">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch09.html#ch09lev1sec1"/>
+</navPoint>
+<navPoint id="ch09lev1sec2" playOrder="60">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch09.html#ch09lev1sec2"/>
+</navPoint>
+<navPoint id="ch09lev1sec3" playOrder="61">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch09.html#ch09lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch10" playOrder="62">
+<navLabel>
+<text>Exercise 10. Switch Statements</text>
+</navLabel>
+<content src="ch10.html#ch10"/>
+<navPoint id="ch10lev1sec1" playOrder="63">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch10.html#ch10lev1sec1"/>
+</navPoint>
+<navPoint id="ch10lev1sec2" playOrder="64">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch10.html#ch10lev1sec2"/>
+</navPoint>
+<navPoint id="ch10lev1sec3" playOrder="65">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch10.html#ch10lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch11" playOrder="66">
+<navLabel>
+<text>Exercise 11. Arrays and Strings</text>
+</navLabel>
+<content src="ch11.html#ch11"/>
+<navPoint id="ch11lev1sec1" playOrder="67">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch11.html#ch11lev1sec1"/>
+</navPoint>
+<navPoint id="ch11lev1sec2" playOrder="68">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch11.html#ch11lev1sec2"/>
+</navPoint>
+<navPoint id="ch11lev1sec3" playOrder="69">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch11.html#ch11lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch12" playOrder="70">
+<navLabel>
+<text>Exercise 12. Sizes and Arrays</text>
+</navLabel>
+<content src="ch12.html#ch12"/>
+<navPoint id="ch12lev1sec1" playOrder="71">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch12.html#ch12lev1sec1"/>
+</navPoint>
+<navPoint id="ch12lev1sec2" playOrder="72">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch12.html#ch12lev1sec2"/>
+</navPoint>
+<navPoint id="ch12lev1sec3" playOrder="73">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch12.html#ch12lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch13" playOrder="74">
+<navLabel>
+<text>Exercise 13. For-Loops and Arrays of Strings</text>
+</navLabel>
+<content src="ch13.html#ch13"/>
+<navPoint id="ch13lev1sec1" playOrder="75">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch13.html#ch13lev1sec1"/>
+</navPoint>
+<navPoint id="ch13lev1sec2" playOrder="76">
+<navLabel>
+<text>Understanding Arrays of Strings</text>
+</navLabel>
+<content src="ch13.html#ch13lev1sec2"/>
+</navPoint>
+<navPoint id="ch13lev1sec3" playOrder="77">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch13.html#ch13lev1sec3"/>
+</navPoint>
+<navPoint id="ch13lev1sec4" playOrder="78">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch13.html#ch13lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch14" playOrder="79">
+<navLabel>
+<text>Exercise 14. Writing and Using Functions</text>
+</navLabel>
+<content src="ch14.html#ch14"/>
+<navPoint id="ch14lev1sec1" playOrder="80">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch14.html#ch14lev1sec1"/>
+</navPoint>
+<navPoint id="ch14lev1sec2" playOrder="81">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch14.html#ch14lev1sec2"/>
+</navPoint>
+<navPoint id="ch14lev1sec3" playOrder="82">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch14.html#ch14lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch15" playOrder="83">
+<navLabel>
+<text>Exercise 15. Pointers, Dreaded Pointers</text>
+</navLabel>
+<content src="ch15.html#ch15"/>
+<navPoint id="ch15lev1sec1" playOrder="84">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec1"/>
+</navPoint>
+<navPoint id="ch15lev1sec2" playOrder="85">
+<navLabel>
+<text>Explaining Pointers</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec2"/>
+</navPoint>
+<navPoint id="ch15lev1sec3" playOrder="86">
+<navLabel>
+<text>Practical Pointer Usage</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec3"/>
+</navPoint>
+<navPoint id="ch15lev1sec4" playOrder="87">
+<navLabel>
+<text>The Pointer Lexicon</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec4"/>
+</navPoint>
+<navPoint id="ch15lev1sec5" playOrder="88">
+<navLabel>
+<text>Pointers Aren&#8217;t Arrays</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec5"/>
+</navPoint>
+<navPoint id="ch15lev1sec6" playOrder="89">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec6"/>
+</navPoint>
+<navPoint id="ch15lev1sec7" playOrder="90">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch15.html#ch15lev1sec7"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch16" playOrder="91">
+<navLabel>
+<text>Exercise 16. Structs And Pointers to Them</text>
+</navLabel>
+<content src="ch16.html#ch16"/>
+<navPoint id="ch16lev1sec1" playOrder="92">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch16.html#ch16lev1sec1"/>
+</navPoint>
+<navPoint id="ch16lev1sec2" playOrder="93">
+<navLabel>
+<text>Explaining Structures</text>
+</navLabel>
+<content src="ch16.html#ch16lev1sec2"/>
+</navPoint>
+<navPoint id="ch16lev1sec3" playOrder="94">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch16.html#ch16lev1sec3"/>
+</navPoint>
+<navPoint id="ch16lev1sec4" playOrder="95">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch16.html#ch16lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch17" playOrder="96">
+<navLabel>
+<text>Exercise 17. Heap and Stack Memory Allocation</text>
+</navLabel>
+<content src="ch17.html#ch17"/>
+<navPoint id="ch17lev1sec1" playOrder="97">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch17.html#ch17lev1sec1"/>
+</navPoint>
+<navPoint id="ch17lev1sec2" playOrder="98">
+<navLabel>
+<text>Heap versus Stack Allocation</text>
+</navLabel>
+<content src="ch17.html#ch17lev1sec2"/>
+</navPoint>
+<navPoint id="ch17lev1sec3" playOrder="99">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch17.html#ch17lev1sec3"/>
+</navPoint>
+<navPoint id="ch17lev1sec4" playOrder="100">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch17.html#ch17lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch18" playOrder="101">
+<navLabel>
+<text>Exercise 18. Pointers to Functions</text>
+</navLabel>
+<content src="ch18.html#ch18"/>
+<navPoint id="ch18lev1sec1" playOrder="102">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch18.html#ch18lev1sec1"/>
+</navPoint>
+<navPoint id="ch18lev1sec2" playOrder="103">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch18.html#ch18lev1sec2"/>
+</navPoint>
+<navPoint id="ch18lev1sec3" playOrder="104">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch18.html#ch18lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch19" playOrder="105">
+<navLabel>
+<text>Exercise 19. Zed&#8217;s Awesome Debug Macros</text>
+</navLabel>
+<content src="ch19.html#ch19"/>
+<navPoint id="ch19lev1sec1" playOrder="106">
+<navLabel>
+<text>The C Error-Handling Problem</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec1"/>
+</navPoint>
+<navPoint id="ch19lev1sec2" playOrder="107">
+<navLabel>
+<text>The Debug Macros</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec2"/>
+</navPoint>
+<navPoint id="ch19lev1sec3" playOrder="108">
+<navLabel>
+<text>Using dbg.h</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec3"/>
+</navPoint>
+<navPoint id="ch19lev1sec4" playOrder="109">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec4"/>
+</navPoint>
+<navPoint id="ch19lev1sec5" playOrder="110">
+<navLabel>
+<text>How the CPP Expands Macros</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec5"/>
+</navPoint>
+<navPoint id="ch19lev1sec6" playOrder="111">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch19.html#ch19lev1sec6"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch20" playOrder="112">
+<navLabel>
+<text>Exercise 20. Advanced Debugging Techniques</text>
+</navLabel>
+<content src="ch20.html#ch20"/>
+<navPoint id="ch20lev1sec1" playOrder="113">
+<navLabel>
+<text>Debug Printing versus GDB</text>
+</navLabel>
+<content src="ch20.html#ch20lev1sec1"/>
+</navPoint>
+<navPoint id="ch20lev1sec2" playOrder="114">
+<navLabel>
+<text>A Debugging Strategy</text>
+</navLabel>
+<content src="ch20.html#ch20lev1sec2"/>
+</navPoint>
+<navPoint id="ch20lev1sec3" playOrder="115">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch20.html#ch20lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch21" playOrder="116">
+<navLabel>
+<text>Exercise 21. Advanced Data Types and Flow Control</text>
+</navLabel>
+<content src="ch21.html#ch21"/>
+<navPoint id="ch21lev1sec1" playOrder="117">
+<navLabel>
+<text>Available Data Types</text>
+</navLabel>
+<content src="ch21.html#ch21lev1sec1"/>
+<navPoint id="ch21lev2sec1" playOrder="118">
+<navLabel>
+<text>Type Modifiers</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec1"/>
+</navPoint>
+<navPoint id="ch21lev2sec2" playOrder="119">
+<navLabel>
+<text>Type Qualifiers</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec2"/>
+</navPoint>
+<navPoint id="ch21lev2sec3" playOrder="120">
+<navLabel>
+<text>Type Conversion</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec3"/>
+</navPoint>
+<navPoint id="ch21lev2sec4" playOrder="121">
+<navLabel>
+<text>Type Sizes</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch21lev1sec2" playOrder="122">
+<navLabel>
+<text>Available Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev1sec2"/>
+<navPoint id="ch21lev2sec5" playOrder="123">
+<navLabel>
+<text>Math Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec5"/>
+</navPoint>
+<navPoint id="ch21lev2sec6" playOrder="124">
+<navLabel>
+<text>Data Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec6"/>
+</navPoint>
+<navPoint id="ch21lev2sec7" playOrder="125">
+<navLabel>
+<text>Logic Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec7"/>
+</navPoint>
+<navPoint id="ch21lev2sec8" playOrder="126">
+<navLabel>
+<text>Bit Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec8"/>
+</navPoint>
+<navPoint id="ch21lev2sec9" playOrder="127">
+<navLabel>
+<text>Boolean Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec9"/>
+</navPoint>
+<navPoint id="ch21lev2sec10" playOrder="128">
+<navLabel>
+<text>Assignment Operators</text>
+</navLabel>
+<content src="ch21.html#ch21lev2sec10"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch21lev1sec3" playOrder="129">
+<navLabel>
+<text>Available Control Structures</text>
+</navLabel>
+<content src="ch21.html#ch21lev1sec3"/>
+</navPoint>
+<navPoint id="ch21lev1sec4" playOrder="130">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch21.html#ch21lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch22" playOrder="131">
+<navLabel>
+<text>Exercise 22. The Stack, Scope, and Globals</text>
+</navLabel>
+<content src="ch22.html#ch22"/>
+<navPoint id="ch22lev1sec1" playOrder="132">
+<navLabel>
+<text>ex22.h and ex22.c</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec1"/>
+</navPoint>
+<navPoint id="ch22lev1sec2" playOrder="133">
+<navLabel>
+<text>ex22_main.c</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec2"/>
+</navPoint>
+<navPoint id="ch22lev1sec3" playOrder="134">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec3"/>
+</navPoint>
+<navPoint id="ch22lev1sec4" playOrder="135">
+<navLabel>
+<text>Scope, Stack, and Bugs</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec4"/>
+</navPoint>
+<navPoint id="ch22lev1sec5" playOrder="136">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec5"/>
+</navPoint>
+<navPoint id="ch22lev1sec6" playOrder="137">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch22.html#ch22lev1sec6"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch23" playOrder="138">
+<navLabel>
+<text>Exercise 23. Meet Duff&#8217;s Device</text>
+</navLabel>
+<content src="ch23.html#ch23"/>
+<navPoint id="ch23lev1sec1" playOrder="139">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch23.html#ch23lev1sec1"/>
+</navPoint>
+<navPoint id="ch23lev1sec2" playOrder="140">
+<navLabel>
+<text>Solving the Puzzle</text>
+</navLabel>
+<content src="ch23.html#ch23lev1sec2"/>
+<navPoint id="ch23lev2sec1" playOrder="141">
+<navLabel>
+<text>Why Bother?</text>
+</navLabel>
+<content src="ch23.html#ch23lev2sec1"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch23lev1sec3" playOrder="142">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch23.html#ch23lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch24" playOrder="143">
+<navLabel>
+<text>Exercise 24. Input, Output, Files</text>
+</navLabel>
+<content src="ch24.html#ch24"/>
+<navPoint id="ch24lev1sec1" playOrder="144">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch24.html#ch24lev1sec1"/>
+</navPoint>
+<navPoint id="ch24lev1sec2" playOrder="145">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch24.html#ch24lev1sec2"/>
+</navPoint>
+<navPoint id="ch24lev1sec3" playOrder="146">
+<navLabel>
+<text>The I/O Functions</text>
+</navLabel>
+<content src="ch24.html#ch24lev1sec3"/>
+</navPoint>
+<navPoint id="ch24lev1sec4" playOrder="147">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch24.html#ch24lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch25" playOrder="148">
+<navLabel>
+<text>Exercise 25. Variable Argument Functions</text>
+</navLabel>
+<content src="ch25.html#ch25"/>
+<navPoint id="ch25lev1sec1" playOrder="149">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch25.html#ch25lev1sec1"/>
+</navPoint>
+<navPoint id="ch25lev1sec2" playOrder="150">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch25.html#ch25lev1sec2"/>
+</navPoint>
+<navPoint id="ch25lev1sec3" playOrder="151">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch25.html#ch25lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch26" playOrder="152">
+<navLabel>
+<text>Exercise 26. Project logfind</text>
+</navLabel>
+<content src="ch26.html#ch26"/>
+<navPoint id="ch26lev1sec1" playOrder="153">
+<navLabel>
+<text>The logfind Specification</text>
+</navLabel>
+<content src="ch26.html#ch26lev1sec1"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch27" playOrder="154">
+<navLabel>
+<text>Exercise 27. Creative and Defensive Programming</text>
+</navLabel>
+<content src="ch27.html#ch27"/>
+<navPoint id="ch27lev1sec1" playOrder="155">
+<navLabel>
+<text>The Creative Programmer Mind-Set</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec1"/>
+</navPoint>
+<navPoint id="ch27lev1sec2" playOrder="156">
+<navLabel>
+<text>The Defensive Programmer Mind-Set</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec2"/>
+</navPoint>
+<navPoint id="ch27lev1sec3" playOrder="157">
+<navLabel>
+<text>The Eight Defensive Programmer Strategies</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec3"/>
+</navPoint>
+<navPoint id="ch27lev1sec4" playOrder="158">
+<navLabel>
+<text>Applying the Eight Strategies</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec4"/>
+<navPoint id="ch27lev2sec1" playOrder="159">
+<navLabel>
+<text>Never Trust Input</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec1"/>
+</navPoint>
+<navPoint id="ch27lev2sec2" playOrder="160">
+<navLabel>
+<text>Prevent Errors</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec2"/>
+</navPoint>
+<navPoint id="ch27lev2sec3" playOrder="161">
+<navLabel>
+<text>Fail Early and Openly</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec3"/>
+</navPoint>
+<navPoint id="ch27lev2sec4" playOrder="162">
+<navLabel>
+<text>Document Assumptions</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec4"/>
+</navPoint>
+<navPoint id="ch27lev2sec5" playOrder="163">
+<navLabel>
+<text>Prevention over Documentation</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec5"/>
+</navPoint>
+<navPoint id="ch27lev2sec6" playOrder="164">
+<navLabel>
+<text>Automate Everything</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec6"/>
+</navPoint>
+<navPoint id="ch27lev2sec7" playOrder="165">
+<navLabel>
+<text>Simplify and Clarify</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec7"/>
+</navPoint>
+<navPoint id="ch27lev2sec8" playOrder="166">
+<navLabel>
+<text>Question Authority</text>
+</navLabel>
+<content src="ch27.html#ch27lev2sec8"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch27lev1sec5" playOrder="167">
+<navLabel>
+<text>Order Is Not Important</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec5"/>
+</navPoint>
+<navPoint id="ch27lev1sec6" playOrder="168">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch27.html#ch27lev1sec6"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch28" playOrder="169">
+<navLabel>
+<text>Exercise 28. Intermediate Makefiles</text>
+</navLabel>
+<content src="ch28.html#ch28"/>
+<navPoint id="ch28lev1sec1" playOrder="170">
+<navLabel>
+<text>The Basic Project Structure</text>
+</navLabel>
+<content src="ch28.html#ch28lev1sec1"/>
+</navPoint>
+<navPoint id="ch28lev1sec2" playOrder="171">
+<navLabel>
+<text>Makefile</text>
+</navLabel>
+<content src="ch28.html#ch28lev1sec2"/>
+<navPoint id="ch28lev2sec1" playOrder="172">
+<navLabel>
+<text>The Header</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec1"/>
+</navPoint>
+<navPoint id="ch28lev2sec2" playOrder="173">
+<navLabel>
+<text>The Target Build</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec2"/>
+</navPoint>
+<navPoint id="ch28lev2sec3" playOrder="174">
+<navLabel>
+<text>The Unit Tests</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec3"/>
+</navPoint>
+<navPoint id="ch28lev2sec4" playOrder="175">
+<navLabel>
+<text>The Cleaner</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec4"/>
+</navPoint>
+<navPoint id="ch28lev2sec5" playOrder="176">
+<navLabel>
+<text>The Install</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec5"/>
+</navPoint>
+<navPoint id="ch28lev2sec6" playOrder="177">
+<navLabel>
+<text>The Checker</text>
+</navLabel>
+<content src="ch28.html#ch28lev2sec6"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch28lev1sec3" playOrder="178">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch28.html#ch28lev1sec3"/>
+</navPoint>
+<navPoint id="ch28lev1sec4" playOrder="179">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch28.html#ch28lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch29" playOrder="180">
+<navLabel>
+<text>Exercise 29. Libraries and Linking</text>
+</navLabel>
+<content src="ch29.html#ch29"/>
+<navPoint id="ch29lev1sec1" playOrder="181">
+<navLabel>
+<text>Dynamically Loading a Shared Library</text>
+</navLabel>
+<content src="ch29.html#ch29lev1sec1"/>
+</navPoint>
+<navPoint id="ch29lev1sec2" playOrder="182">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch29.html#ch29lev1sec2"/>
+</navPoint>
+<navPoint id="ch29lev1sec3" playOrder="183">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch29.html#ch29lev1sec3"/>
+</navPoint>
+<navPoint id="ch29lev1sec4" playOrder="184">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch29.html#ch29lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch30" playOrder="185">
+<navLabel>
+<text>Exercise 30. Automated Testing</text>
+</navLabel>
+<content src="ch30.html#ch30"/>
+<navPoint id="ch30lev1sec1" playOrder="186">
+<navLabel>
+<text>Wiring Up the Test Framework</text>
+</navLabel>
+<content src="ch30.html#ch30lev1sec1"/>
+</navPoint>
+<navPoint id="ch30lev1sec2" playOrder="187">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch30.html#ch30lev1sec2"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch31" playOrder="188">
+<navLabel>
+<text>Exercise 31. Common Undefined Behavior</text>
+</navLabel>
+<content src="ch31.html#ch31"/>
+<navPoint id="ch31lev1sec1" playOrder="189">
+<navLabel>
+<text>UB 20</text>
+</navLabel>
+<content src="ch31.html#ch31lev1sec1"/>
+<navPoint id="ch31lev2sec1" playOrder="190">
+<navLabel>
+<text>Common UBs</text>
+</navLabel>
+<content src="ch31.html#ch31lev2sec1"/>
+</navPoint>
+</navPoint>
+</navPoint>
+<navPoint id="ch32" playOrder="191">
+<navLabel>
+<text>Exercise 32. Double Linked Lists</text>
+</navLabel>
+<content src="ch32.html#ch32"/>
+<navPoint id="ch32lev1sec1" playOrder="192">
+<navLabel>
+<text>What Are Data Structures</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec1"/>
+</navPoint>
+<navPoint id="ch32lev1sec2" playOrder="193">
+<navLabel>
+<text>Making the Library</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec2"/>
+</navPoint>
+<navPoint id="ch32lev1sec3" playOrder="194">
+<navLabel>
+<text>Doubly Linked Lists</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec3"/>
+<navPoint id="ch32lev2sec1" playOrder="195">
+<navLabel>
+<text>Definition</text>
+</navLabel>
+<content src="ch32.html#ch32lev2sec1"/>
+</navPoint>
+<navPoint id="ch32lev2sec2" playOrder="196">
+<navLabel>
+<text>Implementation</text>
+</navLabel>
+<content src="ch32.html#ch32lev2sec2"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch32lev1sec4" playOrder="197">
+<navLabel>
+<text>Tests</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec4"/>
+</navPoint>
+<navPoint id="ch32lev1sec5" playOrder="198">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec5"/>
+</navPoint>
+<navPoint id="ch32lev1sec6" playOrder="199">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec6"/>
+</navPoint>
+<navPoint id="ch32lev1sec7" playOrder="200">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch32.html#ch32lev1sec7"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch33" playOrder="201">
+<navLabel>
+<text>Exercise 33. Linked List Algorithms</text>
+</navLabel>
+<content src="ch33.html#ch33"/>
+<navPoint id="ch33lev1sec1" playOrder="202">
+<navLabel>
+<text>Bubble and Merge Sorts</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec1"/>
+</navPoint>
+<navPoint id="ch33lev1sec2" playOrder="203">
+<navLabel>
+<text>The Unit Test</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec2"/>
+</navPoint>
+<navPoint id="ch33lev1sec3" playOrder="204">
+<navLabel>
+<text>The Implementation</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec3"/>
+</navPoint>
+<navPoint id="ch33lev1sec4" playOrder="205">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec4"/>
+</navPoint>
+<navPoint id="ch33lev1sec5" playOrder="206">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec5"/>
+</navPoint>
+<navPoint id="ch33lev1sec6" playOrder="207">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch33.html#ch33lev1sec6"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch34" playOrder="208">
+<navLabel>
+<text>Exercise 34. Dynamic Array</text>
+</navLabel>
+<content src="ch34.html#ch34"/>
+<navPoint id="ch34lev1sec1" playOrder="209">
+<navLabel>
+<text>Advantages and Disadvantages</text>
+</navLabel>
+<content src="ch34.html#ch34lev1sec1"/>
+</navPoint>
+<navPoint id="ch34lev1sec2" playOrder="210">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch34.html#ch34lev1sec2"/>
+</navPoint>
+<navPoint id="ch34lev1sec3" playOrder="211">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch34.html#ch34lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch35" playOrder="212">
+<navLabel>
+<text>Exercise 35. Sorting and Searching</text>
+</navLabel>
+<content src="ch35.html#ch35"/>
+<navPoint id="ch35lev1sec1" playOrder="213">
+<navLabel>
+<text>Radix Sort and Binary Search</text>
+</navLabel>
+<content src="ch35.html#ch35lev1sec1"/>
+<navPoint id="ch35lev2sec1" playOrder="214">
+<navLabel>
+<text>C Unions</text>
+</navLabel>
+<content src="ch35.html#ch35lev2sec1"/>
+</navPoint>
+<navPoint id="ch35lev2sec2" playOrder="215">
+<navLabel>
+<text>The Implementation</text>
+</navLabel>
+<content src="ch35.html#ch35lev2sec2"/>
+</navPoint>
+<navPoint id="ch35lev2sec3" playOrder="216">
+<navLabel>
+<text>RadixMap_find and Binary Search</text>
+</navLabel>
+<content src="ch35.html#ch35lev2sec3"/>
+</navPoint>
+<navPoint id="ch35lev2sec4" playOrder="217">
+<navLabel>
+<text>RadixMap_sort and radix_sort</text>
+</navLabel>
+<content src="ch35.html#ch35lev2sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch35lev1sec2" playOrder="218">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch35.html#ch35lev1sec2"/>
+</navPoint>
+<navPoint id="ch35lev1sec3" playOrder="219">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch35.html#ch35lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch36" playOrder="220">
+<navLabel>
+<text>Exercise 36. Safer Strings</text>
+</navLabel>
+<content src="ch36.html#ch36"/>
+<navPoint id="ch36lev1sec1" playOrder="221">
+<navLabel>
+<text>Why C Strings Were a Horrible Idea</text>
+</navLabel>
+<content src="ch36.html#ch36lev1sec1"/>
+</navPoint>
+<navPoint id="ch36lev1sec2" playOrder="222">
+<navLabel>
+<text>Using bstrlib</text>
+</navLabel>
+<content src="ch36.html#ch36lev1sec2"/>
+</navPoint>
+<navPoint id="ch36lev1sec3" playOrder="223">
+<navLabel>
+<text>Learning the Library</text>
+</navLabel>
+<content src="ch36.html#ch36lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch37" playOrder="224">
+<navLabel>
+<text>Exercise 37. Hashmaps</text>
+</navLabel>
+<content src="ch37.html#ch37"/>
+<navPoint id="ch37lev1sec1" playOrder="225">
+<navLabel>
+<text>The Unit Test</text>
+</navLabel>
+<content src="ch37.html#ch37lev1sec1"/>
+</navPoint>
+<navPoint id="ch37lev1sec2" playOrder="226">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch37.html#ch37lev1sec2"/>
+</navPoint>
+<navPoint id="ch37lev1sec3" playOrder="227">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch37.html#ch37lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch38" playOrder="228">
+<navLabel>
+<text>Exercise 38. Hashmap Algorithms</text>
+</navLabel>
+<content src="ch38.html#ch38"/>
+<navPoint id="ch38lev1sec1" playOrder="229">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch38.html#ch38lev1sec1"/>
+</navPoint>
+<navPoint id="ch38lev1sec2" playOrder="230">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch38.html#ch38lev1sec2"/>
+</navPoint>
+<navPoint id="ch38lev1sec3" playOrder="231">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch38.html#ch38lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch39" playOrder="232">
+<navLabel>
+<text>Exercise 39. String Algorithms</text>
+</navLabel>
+<content src="ch39.html#ch39"/>
+<navPoint id="ch39lev1sec1" playOrder="233">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch39.html#ch39lev1sec1"/>
+</navPoint>
+<navPoint id="ch39lev1sec2" playOrder="234">
+<navLabel>
+<text>Analyzing the Results</text>
+</navLabel>
+<content src="ch39.html#ch39lev1sec2"/>
+</navPoint>
+<navPoint id="ch39lev1sec3" playOrder="235">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch39.html#ch39lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch40" playOrder="236">
+<navLabel>
+<text>Exercise 40. Binary Search Trees</text>
+</navLabel>
+<content src="ch40.html#ch40"/>
+<navPoint id="ch40lev1sec1" playOrder="237">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch40.html#ch40lev1sec1"/>
+</navPoint>
+<navPoint id="ch40lev1sec2" playOrder="238">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch40.html#ch40lev1sec2"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch41" playOrder="239">
+<navLabel>
+<text>Exercise 41. Project devpkg</text>
+</navLabel>
+<content src="ch41.html#ch41"/>
+<navPoint id="ch41lev1sec1" playOrder="240">
+<navLabel>
+<text>What Is devpkg?</text>
+</navLabel>
+<content src="ch41.html#ch41lev1sec1"/>
+<navPoint id="ch41lev2sec1" playOrder="241">
+<navLabel>
+<text>What We Want to Make</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec1"/>
+</navPoint>
+<navPoint id="ch41lev2sec2" playOrder="242">
+<navLabel>
+<text>The Design</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec2"/>
+</navPoint>
+<navPoint id="ch41lev2sec3" playOrder="243">
+<navLabel>
+<text>The Apache Portable Runtime</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch41lev1sec2" playOrder="244">
+<navLabel>
+<text>Project Layout</text>
+</navLabel>
+<content src="ch41.html#ch41lev1sec2"/>
+<navPoint id="ch41lev2sec4" playOrder="245">
+<navLabel>
+<text>Other Dependencies</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch41lev1sec3" playOrder="246">
+<navLabel>
+<text>The Makefile</text>
+</navLabel>
+<content src="ch41.html#ch41lev1sec3"/>
+</navPoint>
+<navPoint id="ch41lev1sec4" playOrder="247">
+<navLabel>
+<text>The Source Files</text>
+</navLabel>
+<content src="ch41.html#ch41lev1sec4"/>
+<navPoint id="ch41lev2sec5" playOrder="248">
+<navLabel>
+<text>The DB Functions</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec5"/>
+</navPoint>
+<navPoint id="ch41lev2sec6" playOrder="249">
+<navLabel>
+<text>The Shell Functions</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec6"/>
+</navPoint>
+<navPoint id="ch41lev2sec7" playOrder="250">
+<navLabel>
+<text>The Command Functions</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec7"/>
+</navPoint>
+<navPoint id="ch41lev2sec8" playOrder="251">
+<navLabel>
+<text>The devpkg Main Function</text>
+</navLabel>
+<content src="ch41.html#ch41lev2sec8"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch41lev1sec5" playOrder="252">
+<navLabel>
+<text>The Final Challenge</text>
+</navLabel>
+<content src="ch41.html#ch41lev1sec5"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch42" playOrder="253">
+<navLabel>
+<text>Exercise 42. Stacks and Queues</text>
+</navLabel>
+<content src="ch42.html#ch42"/>
+<navPoint id="ch42lev1sec1" playOrder="254">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch42.html#ch42lev1sec1"/>
+</navPoint>
+<navPoint id="ch42lev1sec2" playOrder="255">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch42.html#ch42lev1sec2"/>
+</navPoint>
+<navPoint id="ch42lev1sec3" playOrder="256">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch42.html#ch42lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch43" playOrder="257">
+<navLabel>
+<text>Exercise 43. A Simple Statistics Engine</text>
+</navLabel>
+<content src="ch43.html#ch43"/>
+<navPoint id="ch43lev1sec1" playOrder="258">
+<navLabel>
+<text>Rolling Standard Deviation and Mean</text>
+</navLabel>
+<content src="ch43.html#ch43lev1sec1"/>
+</navPoint>
+<navPoint id="ch43lev1sec2" playOrder="259">
+<navLabel>
+<text>Implementation</text>
+</navLabel>
+<content src="ch43.html#ch43lev1sec2"/>
+</navPoint>
+<navPoint id="ch43lev1sec3" playOrder="260">
+<navLabel>
+<text>How to Use It</text>
+</navLabel>
+<content src="ch43.html#ch43lev1sec3"/>
+</navPoint>
+<navPoint id="ch43lev1sec4" playOrder="261">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch43.html#ch43lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch44" playOrder="262">
+<navLabel>
+<text>Exercise 44. Ring Buffer</text>
+</navLabel>
+<content src="ch44.html#ch44"/>
+<navPoint id="ch44lev1sec1" playOrder="263">
+<navLabel>
+<text>The Unit Test</text>
+</navLabel>
+<content src="ch44.html#ch44lev1sec1"/>
+</navPoint>
+<navPoint id="ch44lev1sec2" playOrder="264">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch44.html#ch44lev1sec2"/>
+</navPoint>
+<navPoint id="ch44lev1sec3" playOrder="265">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch44.html#ch44lev1sec3"/>
+</navPoint>
+<navPoint id="ch44lev1sec4" playOrder="266">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch44.html#ch44lev1sec4"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch45" playOrder="267">
+<navLabel>
+<text>Exercise 45. A Simple TCP/IP Client</text>
+</navLabel>
+<content src="ch45.html#ch45"/>
+<navPoint id="ch45lev1sec1" playOrder="268">
+<navLabel>
+<text>Augment the Makefile</text>
+</navLabel>
+<content src="ch45.html#ch45lev1sec1"/>
+</navPoint>
+<navPoint id="ch45lev1sec2" playOrder="269">
+<navLabel>
+<text>The netclient Code</text>
+</navLabel>
+<content src="ch45.html#ch45lev1sec2"/>
+</navPoint>
+<navPoint id="ch45lev1sec3" playOrder="270">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch45.html#ch45lev1sec3"/>
+</navPoint>
+<navPoint id="ch45lev1sec4" playOrder="271">
+<navLabel>
+<text>How to Break It</text>
+</navLabel>
+<content src="ch45.html#ch45lev1sec4"/>
+</navPoint>
+<navPoint id="ch45lev1sec5" playOrder="272">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch45.html#ch45lev1sec5"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch46" playOrder="273">
+<navLabel>
+<text>Exercise 46. Ternary Search Tree</text>
+</navLabel>
+<content src="ch46.html#ch46"/>
+<navPoint id="ch46lev1sec1" playOrder="274">
+<navLabel>
+<text>Advantages and Disadvantages</text>
+</navLabel>
+<content src="ch46.html#ch46lev1sec1"/>
+</navPoint>
+<navPoint id="ch46lev1sec2" playOrder="275">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch46.html#ch46lev1sec2"/>
+</navPoint>
+<navPoint id="ch46lev1sec3" playOrder="276">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch46.html#ch46lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch47" playOrder="277">
+<navLabel>
+<text>Exercise 47. A Fast URL Router</text>
+</navLabel>
+<content src="ch47.html#ch47"/>
+<navPoint id="ch47lev1sec1" playOrder="278">
+<navLabel>
+<text>What You Should See</text>
+</navLabel>
+<content src="ch47.html#ch47lev1sec1"/>
+</navPoint>
+<navPoint id="ch47lev1sec2" playOrder="279">
+<navLabel>
+<text>How to Improve It</text>
+</navLabel>
+<content src="ch47.html#ch47lev1sec2"/>
+</navPoint>
+<navPoint id="ch47lev1sec3" playOrder="280">
+<navLabel>
+<text>Extra Credit</text>
+</navLabel>
+<content src="ch47.html#ch47lev1sec3"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch48" playOrder="281">
+<navLabel>
+<text>Exercise 48. A Simple Network Server</text>
+</navLabel>
+<content src="ch48.html#ch48"/>
+<navPoint id="ch48lev1sec1" playOrder="282">
+<navLabel>
+<text>The Specification</text>
+</navLabel>
+<content src="ch48.html#ch48lev1sec1"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch49" playOrder="283">
+<navLabel>
+<text>Exercise 49. A Statistics Server</text>
+</navLabel>
+<content src="ch49.html#ch49"/>
+<navPoint id="ch49lev1sec1" playOrder="284">
+<navLabel>
+<text>Specification</text>
+</navLabel>
+<content src="ch49.html#ch49lev1sec1"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch50" playOrder="285">
+<navLabel>
+<text>Exercise 50. Routing the Statistics</text>
+</navLabel>
+<content src="ch50.html#ch50"/>
+</navPoint>
+<navPoint id="ch51" playOrder="286">
+<navLabel>
+<text>Exercise 51. Storing the Statistics</text>
+</navLabel>
+<content src="ch51.html#ch51"/>
+<navPoint id="ch51lev1sec1" playOrder="287">
+<navLabel>
+<text>The Specification</text>
+</navLabel>
+<content src="ch51.html#ch51lev1sec1"/>
+</navPoint>
+</navPoint>
+<navPoint id="ch52" playOrder="288">
+<navLabel>
+<text>Exercise 52. Hacking and Improving Your Server</text>
+</navLabel>
+<content src="ch52.html#ch52"/>
+</navPoint>
+<navPoint id="app01" playOrder="289">
+<navLabel>
+<text>Next Steps</text>
+</navLabel>
+<content src="app01.html#app01"/>
+</navPoint>
+<navPoint id="index" playOrder="290">
+<navLabel>
+<text>Index</text>
+</navLabel>
+<content src="index.html#index"/>
+</navPoint>
+<navPoint id="app03" playOrder="291">
+<navLabel>
+<text>Where are the Companion Content Files?</text>
+</navLabel>
+<content src="app03.html#app03"/>
+</navPoint>
+<navPoint id="ch00_images" playOrder="292">
+<navLabel>
+<text>Code Snippets</text>
+</navLabel>
+<content src="ch00_images.html#ch00_images"/>
+</navPoint>
+</navMap>
+</ncx>

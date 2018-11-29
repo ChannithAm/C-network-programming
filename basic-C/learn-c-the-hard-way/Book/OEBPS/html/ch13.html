@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 13. For-Loops and Arrays of Strings</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch13"><a id="page_54"/>Exercise 13. <span class="EmpStrong">For-Loops</span> and Arrays of Strings</h2>
+<p class="noindent">You can make an array of various types with the idea that a string and an array of bytes are the same thing. The next step is to do an array that has strings in it. We&#8217;ll also introduce your first looping construct, the <code>for-loop</code>, to help print out this new data structure.</p>
+<p class="noindent">The fun part of this is that there&#8217;s been an array of strings hiding in your programs for a while now: the <code>char *argv[]</code> in the <code>main</code> function arguments. Here&#8217;s code that will print out any command line arguments you pass it:</p>
+<p class="ex-caption"><code>ex13.c</code></p>
+<hr/>
+<p class="codelink"><a id="p054pro01" href="ch13_images.html#p054pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">) {</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"ERROR: You need one argument.\n"</span><span class="EmpStrong">);</span><br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this is how you abort a program</span></span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+10<br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">][</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> letter <span class="pd_brown-1"><span class="EmpStrong">=</span></span> argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">][</span>i<span class="EmpStrong">];</span><br/>
+14<br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>letter<span class="EmpStrong">) {</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'a'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'A'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'A'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'e'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'E'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'E'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+25<br/>
+26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'i'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'I'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'I'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+30<br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'o'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'O'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'O'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+35<br/>
+<a id="page_55"/>36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'u'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'U'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+38&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'U'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+40<br/>
+41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'y'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_green">'Y'</span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">) {</span><br/>
+44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// it's only sometimes Y</span></span><br/>
+45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: 'Y'\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+48<br/>
+49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">default</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d: %c is not a vowel\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> letter<span class="EmpStrong">);</span><br/>
+51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+52&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+53<br/>
+54&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="EmpStrong"><span class="pd_blue-1">0</span>;</span><br/>
+55&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">The format of a <code>for-loop</code> is this:</p>
+<p class="codelink"><a id="p055pro01" href="ch13_images.html#p055pro01a">Click here to view code image</a></p>
+<p class="pre">for(INITIALIZER; TEST; INCREMENTER) {<br/>
+&#160;&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">Here&#8217;s how the <code>for-loop</code> works:</p>
+<p class="indenthangingB">&#8226; The <code>INITIALIZER</code> is code that&#8217;s run to set up the loop, which in this case is <code>i = 0</code>.</p>
+<p class="indenthangingB">&#8226; Next, the <code>TEST</code> Boolean expression is checked. If it&#8217;s false (0), then <code>CODE</code> is skipped, doing nothing.</p>
+<p class="indenthangingB">&#8226; The <code>CODE</code> runs and does whatever it does.</p>
+<p class="indenthangingB">&#8226; After the <code>CODE</code> runs, the <code>INCREMENTER</code> part is run, usually incrementing something, such as in <code>i++</code>.</p>
+<p class="indenthangingB">&#8226; And it continues again with step 2 until the <code>TEST</code> is false (0).</p>
+<p class="noindent">This <code>for-loop</code> is going through the command line arguments using <code>argc</code> and <code>argv</code> like this:</p>
+<p class="indenthangingB">&#8226; The OS passes each command line argument as a string in the <code>argv</code> array. The program&#8217;s name (./ex10) is at 0, with the rest coming after it.</p>
+<p class="indenthangingB">&#8226; The OS also sets <code>argc</code> to the number of arguments in the <code>argv</code> array, so you can process them without going past the end. Remember that if you give one argument, the program&#8217;s name is the first, so <code>argc</code> is 2.</p>
+<p class="indenthangingB"><a id="page_56"/>&#8226; The <code>for-loop</code> sets up with <code>i = 1</code> in the initializer.</p>
+<p class="indenthangingB">&#8226; It then tests that <code>i</code> is less than <code>argc</code> with the test <code>i &lt; argc</code>. Since <code>$1</code> &lt; <code>2$</code>, it&#8217;ll pass.</p>
+<p class="indenthangingB">&#8226; It then runs the code that just prints out the <code>i</code> and uses <code>i</code> to index into <code>argv</code>.</p>
+<p class="indenthangingB">&#8226; The incrementer is then run using the <code>i++</code> syntax, which is a handy way of writing <code>i = i + 1</code>.</p>
+<p class="indenthangingB">&#8226; This then repeats until <code>i &lt; argc</code> is finally false (0), the loop exits, and the program continues on.</p>
+<div class="heading">
+<h3 id="ch13lev1sec1">What You Should See</h3>
+<p class="noindent">To play with this program, then, you have to run it two ways. The first way is to pass in some command line arguments so that <code>argc</code> and <code>argv</code> get set. The second is to run it with no arguments so you can see that the first <code>for-loop</code> doesn&#8217;t run if <code>i &lt; argc</code> is false.</p>
+</div>
+<p class="ex-caption"><code>Exercise 13 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p056pro01" href="ch13_images.html#p056pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex13<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex13.c&#160;&#160;&#160;-o ex13</span><br/>
+<span class="pd_brown">$</span> ./ex13 i am a bunch of arguments<br/>
+<span class="EmpItalic">arg 1: i</span><br/>
+<span class="EmpItalic">arg 2: am</span><br/>
+<span class="EmpItalic">arg 3: a</span><br/>
+<span class="EmpItalic">arg 4: bunch</span><br/>
+<span class="EmpItalic">arg 5: of</span><br/>
+<span class="EmpItalic">arg 6: arguments</span><br/>
+<span class="EmpItalic">state 0: California</span><br/>
+<span class="EmpItalic">state 1: Oregon</span><br/>
+<span class="EmpItalic">state 2: Washington</span><br/>
+<span class="EmpItalic">state 3: Texas</span><br/>
+<span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./ex13<br/>
+<span class="EmpItalic">state 0: California</span><br/>
+<span class="EmpItalic">state 1: Oregon</span><br/>
+<span class="EmpItalic">state 2: Washington</span><br/>
+<span class="EmpItalic">state 3: Texas</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch13lev1sec2">Understanding Arrays of Strings</h3>
+<p class="noindent">In C you make an <em>array of strings</em> by combining the <code>char *str = "blah"</code> syntax with the <code>char str[] = {'b','l','a','h'}</code> syntax to construct a two-dimensional array. The syntax <code>char *states[] = {...}</code> on line 14 is this two-dimensional combination, each string being one element, and each character in the string being another.</p>
+</div>
+<p class="noindent"><a id="page_57"/>Confusing? The concept of multiple dimensions is something most people never think about, so what you should do is build this array of strings on paper:</p>
+<p class="indenthangingB">&#8226; Make a grid with the index of each <em>string</em> on the left.</p>
+<p class="indenthangingB">&#8226; Then put the index of each <em>character</em> on the top.</p>
+<p class="indenthangingB">&#8226; Then fill in the squares in the middle with what single character goes in each square.</p>
+<p class="indenthangingB">&#8226; Once you have the grid, trace through the code using this grid of paper.</p>
+<p class="noindent">Another way to figure this is out is to build the same structure in a programming language you are more familiar with, like Python or Ruby.</p>
+<div class="heading">
+<h3 id="ch13lev1sec3">How to Break It</h3>
+<p class="indenthangingB">&#8226; Take your favorite other language and use it to run this program, but include as many command line arguments as possible. See if you can bust it by giving it way too many arguments.</p>
+</div>
+<p class="indenthangingB">&#8226; Initialize <code>i</code> to 0 and see what that does. Do you have to adjust <code>argc</code> as well, or does it just work? Why does 0-based indexing work here?</p>
+<p class="indenthangingB">&#8226; Set <code>num_states</code> wrong so that it&#8217;s a higher value and see what it does.</p>
+<div class="heading">
+<h3 id="ch13lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Figure out what kind of code you can put into the parts of a <code>for-loop</code>.</p>
+</div>
+<p class="indenthangingB">&#8226; Look up how to use the comma character (,) to separate multiple statements in the parts of the <code>for-loop</code>, but between the semicolon characters (;).</p>
+<p class="indenthangingB">&#8226; Read about what a <code>NULL</code> is and try to use it in one of the elements from the <code>states</code> array to see what it&#8217;ll print.</p>
+<p class="indenthangingB">&#8226; See if you can assign an element from the <code>states</code> array to the <code>argv</code> array before printing both. Try the inverse.</p>
+</body>
+</html>

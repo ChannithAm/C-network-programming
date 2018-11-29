@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 9. While-Loop and Boolean Expressions</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch09"><a id="page_40"/>Exercise 9. <span class="EmpStrong">While-Loop</span> and Boolean Expressions</h2>
+<p class="noindent">The first looping construct I&#8217;ll show you is the <code>while-loop</code>, and it&#8217;s the simplest, useful loop you could possibly use in C. Here&#8217;s this exercise&#8217;s code for discussion:</p>
+<p class="ex-caption"><code>ex9.c</code></p>
+<hr/>
+<p class="codelink"><a id="p040pro01" href="ch09_images.html#p040pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">25</span></span><span class="EmpStrong">) {</span><br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+10<br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+12&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">From this code, and from your memorization of the basic syntax, you can see that a <code>while-loop</code> is simply this:</p>
+<p class="pre">while(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">It simply runs the <code>CODE</code> as long as <code>TEST</code> is true (1). So to replicate how the <code>for-loop</code> works, we need to do our own initializing and incrementing of <code>i</code>. Remember that <code>i++</code> increments <code>i</code> with the <code>post-increment operator</code>. Refer back to your list of tokens if you didn&#8217;t recognize that.</p>
+<div class="heading">
+<h3 id="ch09lev1sec1">What You Should See</h3>
+<p class="noindent">The output is basically the same, so I just did it a little differently so that you can see it run another way.</p>
+</div>
+<p class="ex-caption"><code>Exercise 9 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p040pro02" href="ch09_images.html#p040pro02a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex9<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex9.c&#160;&#160;&#160;-o ex9</span><br/>
+<span class="pd_brown">$</span> ./ex9<br/>
+<span class="EmpItalic">arg 0: ./ex9</span><br/>
+<span class="EmpItalic">state 0: California</span><br/>
+<span class="EmpItalic">state 1: Oregon</span><br/>
+<a id="page_41"/><span class="EmpItalic">state 2: Washington</span><br/>
+<span class="EmpItalic">state 3: Texas</span><br/>
+<span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./ex9 <span class="pd_blue">test</span> it<br/>
+<span class="EmpItalic">arg 0: ./ex9</span><br/>
+<span class="EmpItalic">arg 1: test</span><br/>
+<span class="EmpItalic">arg 2: it</span><br/>
+<span class="EmpItalic">state 0: California</span><br/>
+<span class="EmpItalic">state 1: Oregon</span><br/>
+<span class="EmpItalic">state 2: Washington</span><br/>
+<span class="EmpItalic">state 3: Texas</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch09lev1sec2">How to Break It</h3>
+<p class="noindent">There are several ways to get a <code>while-loop</code> wrong, so I don&#8217;t recommend you use it unless you must. Here are a few easy ways to break it:</p>
+</div>
+<p class="indenthangingB">&#8226; Forget to initialize the first <code>int i;</code>. Depending on what <code>i</code> starts with, the loop might not run at all, or run for an extremely long time.</p>
+<p class="indenthangingB">&#8226; Forget to initialize the second loop&#8217;s <code>i</code> so that it retains the value from the end of the first loop. Now your second loop might or might not run.</p>
+<p class="indenthangingB">&#8226; Forget to do a <code>i++</code> increment at the end of the loop and you&#8217;ll get a <em>forever loop</em>, one of the dreaded problems common in the first decade or two of programming.</p>
+<div class="heading">
+<h3 id="ch09lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Make the loop count backward by using <code>i--</code> to start at 25 and go to 0.</p>
+</div>
+<p class="indenthangingB">&#8226; Write a few more complex <code>while-loops</code> using what you know so far.</p>
+</body>
+</html>

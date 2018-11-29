@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 12. Sizes and Arrays</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch12"><a id="page_50"/>Exercise 12. Sizes and Arrays</h2>
+<p class="noindent">In the last exercise, you did math but with, a <code>'\0'</code> (nul) character. This may seem odd if you&#8217;re coming from other languages, since they try to treat <em>strings</em> and <em>byte arrays</em> as different beasts. C treats strings as just arrays of bytes, and it&#8217;s only the different printing functions that recognize a difference.</p>
+<p class="noindent">Before I can really explain the significance of this, I have to introduce a couple more concepts: <code>sizeof</code> and arrays. Here&#8217;s the code we&#8217;ll be talking about:</p>
+<p class="ex-caption"><code>ex12.c</code></p>
+<hr/>
+<p class="codelink"><a id="p050pro01" href="ch12_images.html#p050pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> areas<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">12</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">13</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">14</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span> <span class="EmpStrong">};</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> name<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Zed"</span><span class="EmpStrong">;</span><br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> full_name<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">'Z'</span><span class="EmpStrong">,</span> <span class="pd_green">'e'</span><span class="EmpStrong">,</span> <span class="pd_green">'d'</span><span class="EmpStrong">,</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">' '</span><span class="EmpStrong">,</span> <span class="pd_green">'A'</span><span class="EmpStrong">,</span> <span class="pd_green">'.'</span><span class="EmpStrong">,</span> <span class="pd_green">' '</span><span class="EmpStrong">,</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">'S'</span><span class="EmpStrong">,</span> <span class="pd_green">'h'</span><span class="EmpStrong">,</span> <span class="pd_green">'a'</span><span class="EmpStrong">,</span> <span class="pd_green">'w'</span><span class="EmpStrong">,</span> <span class="pd_green">'\0'</span><br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+12<br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// WARNING: On some systems you may have to change the</span></span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// %ld in this code to a %u since it will use unsigned ints</span></span><br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The size of an int: %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">));</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The size of areas (int[]): %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>areas<span class="EmpStrong">));</span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The number of ints in areas: %ld\n"</span><span class="EmpStrong">,</span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>areas<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">));</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The first area is %d, the 2nd %d.\n"</span><span class="EmpStrong">,</span> areas<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> areas<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]);</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The size of a char: %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span><span class="EmpStrong">));</span><br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The size of name (char[]): %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>name<span class="EmpStrong">));</span><br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The number of chars: %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>name<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span><span class="EmpStrong">));</span><br/>
+24<br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The size of full_name (char[]): %ld\n"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>full_name<span class="EmpStrong">));</span><br/>
+26&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The number of chars: %ld\n"</span><span class="EmpStrong">,</span><br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>full_name<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span><span class="EmpStrong">));</span><br/>
+28<br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"name=\"%s\" and full_name=\"%s\"\n"</span><span class="EmpStrong">,</span> name<span class="EmpStrong">,</span> full_name<span class="EmpStrong">);</span><br/>
+30<br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+32&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">In this code, we create a few arrays with different data types in them. Because arrays of data are so central to how C works, there are a huge number of ways to create them. For now, just use the <a id="page_51"/>syntax <code>type name[] = {initializer};</code> and we&#8217;ll explore more later. What this syntax means is, &#8220;I want an array of type that is initialized to {..}.&#8221; When C sees this, it knows to:</p>
+<p class="indenthangingB">&#8226; Look at the type, and in this first case, it&#8217;s <code>int</code>.</p>
+<p class="indenthangingB">&#8226; Look at the <code>[]</code> and see that there&#8217;s no length given.</p>
+<p class="indenthangingB">&#8226; Look at the initializer <code>{10, 12, 13, 14, 20}</code> and figure out that you want those five integers in your array.</p>
+<p class="indenthangingB">&#8226; Create a piece of memory in the computer that can hold 5 integers one after another.</p>
+<p class="indenthangingB">&#8226; Take the name you want, <code>areas</code>, and assign it this location.</p>
+<p class="noindent">In the case of <code>areas</code>, it&#8217;s creating an array of five integers that contain those numbers. When it gets to <code>char name[] = "Zed";</code> it&#8217;s doing the same thing, except it&#8217;s creating an array of three characters and assigning that to <code>name</code>. The final array we make is <code>full_name</code>, but we use the annoying syntax of spelling it out one character at a time. To C, <code>name</code> and <code>full_name</code> are identical methods of creating a char array.</p>
+<p class="noindent">In the rest of the file, we&#8217;re using a keyword called <code>sizeof</code> to ask C how big things are in <em>bytes</em>. C is all about the size and location of pieces of memory, and what you do with them. To help you keep this straight, it gives you <code>sizeof</code> so that you can ask how big something is before you work with it.</p>
+<p class="noindent">This is where stuff gets tricky, so let&#8217;s run this code first and then explain it later.</p>
+<div class="heading">
+<h3 id="ch12lev1sec1">What You Should See</h3>
+<p class="ex-caption"><code>Exercise 12 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p051pro01" href="ch12_images.html#p051pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex12<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex12.c&#160;&#160;&#160;-o ex12</span><br/>
+<span class="pd_brown">$</span> ./ex12<br/>
+<span class="EmpItalic">The size of an int: 4</span><br/>
+<span class="EmpItalic">The size of areas (int[]): 20</span><br/>
+<span class="EmpItalic">The number of ints in areas: 5</span><br/>
+<span class="EmpItalic">The first area is 10, the 2nd 12.</span><br/>
+<span class="EmpItalic">The size of a char: 1</span><br/>
+<span class="EmpItalic">The size of name (char[]): 4</span><br/>
+<span class="EmpItalic">The number of chars: 4</span><br/>
+<span class="EmpItalic">The size of full_name (char[]): 12</span><br/>
+<span class="EmpItalic">The number of chars: 12</span><br/>
+<span class="EmpItalic">name="Zed" and full_name="Zed A. Shaw"</span><br/>
+<span class="pd_brown">$</span></p>
+</div>
+<p class="noindent"><a id="page_52"/>Now you see the output of these different <code>printf</code> calls and start to get a glimpse of what C is doing. Your output could actually be totally different from mine, since your computer might have different size integers. I&#8217;ll go through my output:</p>
+<p class="indenthangingB2"><strong>5</strong> My computer thinks an <code>int</code> is 4 bytes in size. Your computer might use a different size if it&#8217;s a 32-bit versus 64-bit CPU.</p>
+<p class="indenthangingB2"><strong>6</strong> The <code>areas</code> array has five integers in it, so it makes sense that my computer requires 20 bytes to store it.</p>
+<p class="indenthangingB2"><strong>7</strong> If we divide the size of <code>areas</code> by the size of an <code>int</code>, then we get five elements. Looking at the code, this matches what we put in the initializer.</p>
+<p class="indenthangingB2"><strong>8</strong> We then did an array access to get <code>areas[0]</code> and <code>areas[1]</code>, which means C is <em>zero indexed</em> like Python and Ruby.</p>
+<p class="indenthangingB2"><strong>9-11</strong> We repeat this for the <code>name</code> array, but do you notice something odd about the size of the array? It says it&#8217;s <em>4</em> bytes long, but we only typed &#8220;Zed&#8221; for three characters. Where&#8217;s the fourth one coming from?</p>
+<p class="indenthangingB2"><strong>12-13</strong> We do the same thing with <code>full_name</code>, and now notice it gets this correct.</p>
+<p class="indenthangingB"><strong>13</strong> Finally, we just print out the <code>name</code> and <code>full_name</code> to prove that they actually are &#8220;strings&#8221; according to <code>printf</code>.</p>
+<p class="noindent">Make sure you can go through and see how these output lines match what was created. We&#8217;ll be building on this, and exploring more about arrays and storage next.</p>
+<div class="heading">
+<h3 id="ch12lev1sec2">How to Break It</h3>
+<p class="noindent">Breaking this program is fairly easy. Try some of these:</p>
+</div>
+<p class="indenthangingB">&#8226; Get rid of the <code>'\0'</code> at the end of <code>full_name</code> and rerun it. Run it under the debugger too. Now, move the definition of <code>full_name</code> to the top of <code>main</code> before <code>areas</code>. Try running it under the debugger a few times and see if you get some new errors. In some cases, you might still get lucky and not catch any errors.</p>
+<p class="indenthangingB">&#8226; Change it so that instead of <code>areas[0]</code> you try to print <code>areas[10]</code>. See what the debugger thinks of that.</p>
+<p class="indenthangingB">&#8226; Try other ways to break it like this, doing it to <code>name</code> and <code>full_name</code>, too.</p>
+<div class="heading">
+<h3 id="ch12lev1sec3"><a id="page_53"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; Try assigning to elements in the <code>areas</code> array with <code>areas[0] = 100;</code> and similar.</p>
+</div>
+<p class="indenthangingB">&#8226; Try assigning to elements of <code>name</code> and <code>full_name</code>.</p>
+<p class="indenthangingB">&#8226; Try setting one element of <code>areas</code> to a character from <code>name</code>.</p>
+<p class="indenthangingB">&#8226; Search online for the different sizes used for integers on different CPUs.</p>
+</body>
+</html>

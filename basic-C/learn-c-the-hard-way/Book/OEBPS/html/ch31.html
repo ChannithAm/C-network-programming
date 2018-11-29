@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 31. Common Undefined Behavior</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch31"><a id="page_172"/>Exercise 31. Common Undefined Behavior</h2>
+<p class="noindent">At this point in the book, it&#8217;s time to introduce you to the most common kinds of UB that you will encounter. C has 191 behaviors that the standards committee has decided aren&#8217;t defined by the standard, and therefore anything goes. Some of these behaviors are legitimately not the compiler&#8217;s job, but the vast majority are simply lazy capitulations by the standards committee that cause annoyances, or worse, defects. An example of laziness:</p>
+<p class="uln-indent"><em>An unmatched &#8220;or&#8221; character is encountered on a logical source line during tokenization.</em></p>
+<p class="noindent">In this instance, the C99 standard actually allows a compiler writer to fail at a parsing task that a junior in college could get right. Why is this? Who knows, but most likely someone on the standards committee was working on a C compiler with this defect and managed to get this in the standard rather than fix their compiler. Or, as I said, simple laziness.</p>
+<p class="noindent">The crux of the issue with UB is the difference between the C abstract machine, defined in the standard and real computers. The C standard describes the C language according to a strictly defined abstract machine. This is a perfectly valid way to design a language, except where the C standard goes wrong: It doesn&#8217;t require compilers to implement this abstract machine and enforce its specification. Instead, a compiler writer can completely ignore the abstract machine in 191 instances of the standard. It should really be called an &#8220;abstract machine, but&#8221;, as in, &#8220;It&#8217;s a strictly defined abstract machine, but...&#8221;</p>
+<p class="noindent">This allows the standards committee and compiler implementers to have their cake and eat it, too. They can have a standard that is full of omissions, lax specification, and errors, but when <em>you</em> encounter one of these, they can point at the abstract machine and simply say in their best robot voice, &#8220;THE ABSTRACT MACHINE IS ALL THAT MATTERS. YOU DO NOT CONFORM!&#8221; Yet, in 191 instances that compiler writers don&#8217;t have to conform, you do. You are a second class citizen, even though the language is really written for you to use.</p>
+<p class="noindent">This means that <em>you</em>, not the compiler writer, are left to enforce the rules of an abstract computational machine, and when you inevitably fail, it&#8217;s your fault. The compiler doesn&#8217;t have to flag the UB, do anything reasonable, and it&#8217;s your fault for not memorizing all 191 rules that should be avoided. You are just stupid for not memorizing 191 complex potholes on the road to C. This is a wonderful situation for the classic know-it-all type who can memorize these 191 finer points of annoyance with which to beat beginners to intellectual death.</p>
+<p class="noindent">There&#8217;s an additional hypocrisy with UB that is doubly infuriating. If you show a C fanatic code that properly uses C strings but can overwrite the string terminator, they will say, &#8220;That&#8217;s UB. It&#8217;s not the C language&#8217;s fault!&#8221; However, if you show them UB that has <code>while(x) x &lt;&lt;= 1</code> in it, they will say, &#8220;That&#8217;s UB idiot! Fix your damn code!&#8221; This lets the C fanatic simultaneously use UB to defend <a id="page_173"/>the purity of C&#8217;s design, and also beat you up for being an idiot who writes bad code. Some UB is meant as, &#8220;you can ignore the security of this since it&#8217;s not C&#8217;s fault&#8221;, and other UB is meant as, &#8220;you are an idiot for writing this code,&#8221; and the distinction between the two is not specified in the standard.</p>
+<p class="noindent">As you can see, I am <em>not</em> a fan of the huge list of UB. I had to memorize all of these before the C99 standard, and just didn&#8217;t bother to memorize the changes. I&#8217;d simply moved on to a way and found a way to avoid as much UB as I possibly could, trying to stay within the abstract machine specification while also working with real machines. This turns out to be almost impossible, so I just don&#8217;t write new code in C anymore because of its glaringly obvious problems.</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">The technical explanation as to why C UB is wrong comes from Alan Turing:</p>
+<p class="indenthangingN"><strong>1.</strong> C UB contains behaviors that are lexical, semantic, and execution based.</p>
+<p class="indenthangingN"><strong>2.</strong> The lexical and semantic behaviors can be detected by the compiler.</p>
+<p class="indenthangingN"><strong>3.</strong> The execution-based behaviors fall into Turing&#8217;s definition of the <em>halting problem</em>, and are therefore NP-complete.</p>
+<p class="indenthangingN"><strong>4.</strong> This means that to avoid C UB, it requires solving one of the oldest proven unsolvable problems in computer science, making UB effectively impossible for a computer to avoid.</p>
+<p class="noindent">To put it more succinctly: &#8220;If the only way to know that you&#8217;ve violated the abstract machine with UB is to run your C program, then you will never be able to completely avoid UB.&#8221;</p>
+<hr/></div>
+<div class="heading">
+<h3 id="ch31lev1sec1">UB 20</h3>
+<p class="noindent">Because of this, I&#8217;m going to list the top 20 undefined behaviors in C, and tell you how to avoid them as best I can. In general, the way to avoid UB is to write clean code, but some of these behaviors are impossible to avoid. For example, writing past the end of a C string is an undefined behavior, yet it&#8217;s easily done by accident and externally accessible to an attacker. This list will also include related UB that all fall into the same category but with differing contexts.</p>
+</div>
+<div class="heading">
+<h4 id="ch31lev2sec1">Common UBs</h4>
+<p class="indenthangingN"><strong>1.</strong> An object is referred to outside of its lifetime (6.2.4).</p>
+</div>
+<p class="indenthangingNB">&#8226; The value of a pointer to an object whose lifetime has ended is used (6.2.4).</p>
+<p class="indenthangingNB">&#8226; The value of an object with automatic storage duration is used while it is indeterminate (6.2.4, 6.7.8, 6.8).</p>
+<p class="indenthangingN"><a id="page_174"/><strong>2.</strong> Conversion to or from an integer type produces a value outside the range that can be represented (6.3.1.4).</p>
+<p class="indenthangingNB">&#8226; Demotion of one real floating type to another produces a value outside the range that can be represented (6.3.1.5).</p>
+<p class="indenthangingN"><strong>3.</strong> Two declarations of the same object or function specify types that are not compatible (6.2.7).</p>
+<p class="indenthangingN"><strong>4.</strong> An lvalue having array type is converted to a pointer to the initial element of the array, and the array object has register storage class (6.3.2.1).</p>
+<p class="indenthangingNB">&#8226; An attempt is made to use the value of a void expression, or an implicit or explicit conversion (except to void) is applied to a void expression (6.3.2.2).</p>
+<p class="indenthangingNB">&#8226; Conversion of a pointer to an integer type produces a value outside the range that can be represented (6.3.2.3).</p>
+<p class="indenthangingNB">&#8226; Conversion between two pointer types produces a result that is incorrectly aligned (6.3.2.3).</p>
+<p class="indenthangingNB">&#8226; A pointer is used to call a function whose type is not compatible with the pointed-to type (6.3.2.3).</p>
+<p class="indenthangingNB">&#8226; The operand of the unary * operator has an invalid value (6.5.3.2).</p>
+<p class="indenthangingNB">&#8226; A pointer is converted to other than an integer or pointer type (6.5.4).</p>
+<p class="indenthangingNB">&#8226; Addition or subtraction of a pointer into, or just beyond, an array object and an integer type produces a result that does not point into, or just beyond, the same array object (6.5.6).</p>
+<p class="indenthangingNB">&#8226; Addition or subtraction of a pointer into, or just beyond, an array object and an integer type produces a result that points just beyond the array object and is used as the operand of a unary * operator that is evaluated (6.5.6).</p>
+<p class="indenthangingNB">&#8226; Pointers that do not point into, or just beyond, the same array object are subtracted (6.5.6).</p>
+<p class="indenthangingNB">&#8226; An array subscript is out of range, even if an object is apparently accessible with the given subscript (as in the <code>lvalue</code> expression <code>a[1][7]</code> given the declaration <code>int a[4][5])</code> (6.5.6).</p>
+<p class="indenthangingNB">&#8226; The result of subtracting two pointers is not representable in an object of type <code>ptrdiff_t</code>(6.5.6).</p>
+<p class="indenthangingNB">&#8226; Pointers that do not point to the same aggregate or union (nor just beyond the same array object) are compared using relational operators (6.5.8).</p>
+<p class="indenthangingNB">&#8226; An attempt is made to access, or generate a pointer to just past, a flexible array member of a structure when the referenced object provides no elements for that array (6.7.2.1).</p>
+<p class="indenthangingNB"><a id="page_175"/>&#8226; Two pointer types that are required to be compatible are not identically qualified, or are not pointers to compatible types (6.7.5.1).</p>
+<p class="indenthangingNB">&#8226; The size expression in an array declaration is not a constant expression and evaluates at program execution time to a nonpositive value (6.7.5.2).</p>
+<p class="indenthangingNB">&#8226; The pointer passed to a library function array parameter does not have a value such that all address computations and object accesses are valid (7.1.4).</p>
+<p class="indenthangingN"><strong>5.</strong> The program attempts to modify a string literal (6.4.5).</p>
+<p class="indenthangingN"><strong>6.</strong> An object has its stored value accessed other than by an lvalue of an allowable type (6.5).</p>
+<p class="indenthangingN"><strong>7.</strong> An attempt is made to modify the result of a function call, a conditional operator, an assignment operator, or a comma operator, or to access it after the next sequence point (6.5.2.2, 6.5.15, 6.5.16, 6.5.17).</p>
+<p class="indenthangingN"><strong>8.</strong> The value of the second operand of the / or % operator is zero (6.5.5).</p>
+<p class="indenthangingN"><strong>9.</strong> An object is assigned to an inexactly overlapping object or to an exactly overlapping object with incompatible type (6.5.16.1).</p>
+<p class="indenthangingN1"><strong>10.</strong> A constant expression in an initializer is not, or does not evaluate to, one of the following: an arithmetic constant expression, a null pointer constant, an address constant, or an address constant for an object type plus or minus an integer constant expression (6.6).</p>
+<p class="indenthangingNB">&#8226; An arithmetic constant expression does not have arithmetic type; has operands that are not integer constants, floating constants, enumeration constants, character constants, or sizeof expressions; or contains casts (outside operands to sizeof operators) other than conversions of arithmetic types to arithmetic types (6.6).</p>
+<p class="indenthangingN1"><strong>11.</strong> An attempt is made to modify an object defined with a const-qualified type through use of an lvalue with non-const-qualified type (6.7.3).</p>
+<p class="indenthangingN1"><strong>12.</strong> A function with external linkage is declared with an inline function specifier, but is not also defined in the same translation unit (6.7.4).</p>
+<p class="indenthangingN1"><strong>13.</strong> The value of an unnamed member of a structure or union is used (6.7.8).</p>
+<p class="indenthangingN1"><strong>14.</strong> The } that terminates a function is reached, and the value of the function call is used by the caller (6.9.1).</p>
+<p class="indenthangingN1"><strong>15.</strong> A file with the same name as one of the standard headers, not provided as part of the implementation, is placed in any of the standard places that are searched for included source files (7.1.2).</p>
+<p class="indenthangingN1"><strong>16.</strong> The value of an argument to a character handling function is neither equal to the value of EOF nor representable as an unsigned char (7.4).</p>
+<p class="indenthangingN1"><strong>17.</strong> The value of the result of an integer arithmetic or conversion function cannot be represented (7.8.2.1, 7.8.2.2, 7.8.2.3, 7.8.2.4, 7.20.6.1, 7.20.6.2, 7.20.1).</p>
+<p class="indenthangingN1"><a id="page_176"/><strong>18.</strong> The value of a pointer to a FILE object is used after the associated file is closed (7.19.3).</p>
+<p class="indenthangingNB">&#8226; The stream for the <code>fflush</code> function points to an input stream or to an update stream in which the most recent operation was input (7.19.5.2).</p>
+<p class="indenthangingNB">&#8226; The string pointed to by the <code>mode</code> argument in a call to the <code>fopen</code> function does not exactly match one of the specified character sequences (7.19.5.3).</p>
+<p class="indenthangingNB">&#8226; An output operation on an update stream is followed by an input operation without an intervening call to the <code>fflush</code> function or a file positioning function, or an input operation on an update stream is followed by an output operation with an intervening call to a file positioning function (7.19.5.3).</p>
+<p class="indenthangingN1"><strong>19.</strong> A conversion specification for a formatted output function uses a # or 0 flag with a conversion specifier other than those described (7.19.6.1, 7.24.2.1). * An s conversion specifier is encountered by one of the formatted output functions, and the argument is missing the null terminator (unless a precision is specified that does not require null termination) (7.19.6.1, 7.24.2.1). * The contents of the array supplied in a call to the <code>fgets</code>, <code>gets</code>, or <code>fgetws</code> function are used after a read error occurred (7.19.7.2, 7.19.7.7, 7.24.3.2).</p>
+<p class="indenthangingN1"><strong>20.</strong> A non-null pointer returned by a call to the <code>calloc</code>, <code>malloc</code>, or <code>realloc</code> function with a zero requested size is used to access an object (7.20.3). * The value of a pointer that refers to space deallocated by a call to the <code>free</code> or <code>realloc</code> function is used (7.20.3). * The pointer argument to the <code>free</code> or <code>realloc</code> function does not match a pointer earlier returned by <code>calloc</code>, <code>malloc</code>, or <code>realloc</code>, or the space has been deallocated by a call to <code>free</code> or <code>realloc</code> (7.20.3.2, 7.20.3.4).</p>
+<p class="noindent">There are many more, but these seem to be the ones that I run into the most often or that come up the most often in C code. They are also the most difficult to avoid, so if you at least remember these, you&#8217;ll be able to avoid the major ones.<a id="page_177"/></p>
+</body>
+</html>

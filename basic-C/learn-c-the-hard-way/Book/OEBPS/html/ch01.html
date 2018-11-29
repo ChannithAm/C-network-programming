@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 1. Dust Off That Compiler</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch01"><a id="page_6"/>Exercise 1. Dust Off That Compiler</h2>
+<p class="noindent">After you have everything installed, you need to confirm that your compiler works. The easiest way to do that is to write a C program. Since you should already know at least one programming language, I believe you can start with a small but extensive example.</p>
+<p class="ex-caption"><code>ex1.c</code></p>
+<hr/>
+<p class="codelink"><a id="p006pro01" href="ch01_images.html#p006pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/* This is a comment. */</span></span><br/>
+&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> distance <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong"><span class="pd_blue-1">100</span>;</span><br/>
+&#160;7<br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this is also a comment</span></span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You are %d miles away.\n"</span><span class="EmpStrong">,</span> distance<span class="EmpStrong">);</span><br/>
+10<br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="EmpStrong"><span class="pd_blue-1">0</span>;</span><br/>
+12&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">If you have problems getting the code up and running, watch the video for this exercise to see me do it first.</p>
+<div class="heading">
+<h3 id="ch01lev1sec1">Breaking It Down</h3>
+<p class="noindent">There are a few features of the C language in this code that you might or might not have figured out while you were typing it. I&#8217;ll break this down, line by line, quickly, and then we can do exercises to understand each part better. Don&#8217;t worry if you don&#8217;t understand everything in this breakdown. I am simply giving you a quick dive into C and <em>promise</em> you will learn all of these concepts later in the book.</p>
+</div>
+<p class="noindent">Here&#8217;s a line-by-line description of the code:</p>
+<p class="indenthanging"><strong>ex1.c:1</strong> An <code>include</code>, and it is the way to import the contents of one file into this source file. C has a convention of using <code>.h</code> extensions for <em>header</em> files, which contain lists of functions to use in your program.</p>
+<p class="indenthanging"><strong>ex1.c:3</strong> This is a multiline <code>comment</code>, and you could put as many lines of text between the opening <code>/*</code> and closing <code>*/</code> characters as you want.</p>
+<p class="indenthanging"><strong>ex1.c:4</strong> A more complex version of the <code>main</code> function you&#8217;ve been using so far. How C programs work is that the operating system loads your program, and then it runs the function <a id="page_7"/>named <code>main</code>. For the function to be totally complete it needs to return an <code>int</code> and take two parameters: an <code>int</code> for the argument count and an array of <code>char *</code> strings for the arguments. Did that just fly over your head? Don&#8217;t worry, we&#8217;ll cover this soon.</p>
+<p class="indenthanging"><strong>ex1.c:5</strong> To start the body of any function, you write a <code>{</code> character that indicates the beginning of a <em>block</em>. In Python, you just did a <code>:</code> and indented. In other languages, you might have a <code>begin</code> or <code>do</code> word to start.</p>
+<p class="indenthanging"><strong>ex1.c:6</strong> A variable declaration and assignment at the same time. This is how you create a variable, with the syntax <code>type name = value;</code>. In C, statements (except for logic) end in a <code>;</code> (semicolon) character.</p>
+<p class="indenthanging"><strong>ex1.c:8</strong> Another kind of comment. It works like in Python or Ruby, where the comment starts at the <code>//</code> and goes until the end of the line.</p>
+<p class="indenthanging"><strong>ex1.c:9</strong> A call to your old friend <code>printf</code>. Like in many languages, function calls work with the syntax <code>name(arg1, arg2);</code> and can have no arguments or any number of them. The <code>printf</code> function is actually kind of weird in that it can take multiple arguments. You&#8217;ll see that later.</p>
+<p class="indenthanging"><strong>ex1.c:11</strong> A return from the main function that gives the operating system (OS) your exit value. You may not be familiar with how UNIX software uses return codes, so we&#8217;ll cover that as well.</p>
+<p class="indenthanging"><strong>ex1.c:12</strong> Finally, we end the main function with a closing brace <code>}</code> character, and that&#8217;s the end of the program.</p>
+<p class="noindent">There&#8217;s a lot of information in this breakdown, so study it line by line and make sure you at least have a grasp of what&#8217;s going on. You won&#8217;t know everything, but you can probably guess before we continue.</p>
+<div class="heading">
+<h3 id="ch01lev1sec2">What You Should See</h3>
+<p class="noindent">You can put this into an <code>ex1.c</code> and then run the commands shown here in this sample shell output. If you&#8217;re not sure how this works, watch the video that goes with this exercise to see me do it.</p>
+</div>
+<p class="ex-caption"><code>Exercise 1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p007pro01" href="ch01_images.html#p007pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex1<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex1.c&#160;&#160;-o ex1</span><br/>
+<span class="pd_brown">$</span> ./ex1<br/>
+<span class="EmpItalic">You are 100 miles away.</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">The first command <code>make</code> is a tool that knows how to build C programs (and many others). When you run it and give it <code>ex1</code> you are telling <code>make</code> to look for the <code>ex1.c</code> file, run the compiler to build <a id="page_8"/>it, and leave the results in a file named <code>ex1</code>. This <code>ex1</code> file is an executable that you can run with <code>./ex1</code>, which outputs your results.</p>
+<div class="heading">
+<h3 id="ch01lev1sec3">How to Break It</h3>
+<p class="noindent">In this book, I&#8217;m going to have a small section for each program teaching you how to break the program if it&#8217;s possible. I&#8217;ll have you do odd things to the programs, run them in weird ways, or change code so that you can see crashes and compiler errors.</p>
+</div>
+<p class="noindent">For this program, simply try removing things at random and still get it to compile. Just make a guess at what you can remove, recompile it, and then see what you get for an error.</p>
+<div class="heading">
+<h3 id="ch01lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Open the <code>ex1</code> file in your text editor and change or delete random parts. Try running it and see what happens.</p>
+</div>
+<p class="indenthangingB">&#8226; Print out five more lines of text or something more complex than &#8220;hello world.&#8221;</p>
+<p class="indenthangingB">&#8226; Run <code>man 3 printf</code> and read about this function and many others.</p>
+<p class="indenthangingB">&#8226; For each line, write out the symbols you don&#8217;t understand and see if you can guess what they mean. Write a little chart on paper with your guess so you can check it later to see if you got it right.<a id="page_9"/></p>
+</body>
+</html>

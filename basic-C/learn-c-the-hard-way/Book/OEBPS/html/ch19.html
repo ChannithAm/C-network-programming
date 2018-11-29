@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 19. Zed&#8217;s Awesome Debug Macros</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch19"><a id="page_90"/>Exercise 19. Zed&#8217;s Awesome Debug Macros</h2>
+<p class="noindent">There&#8217;s a reoccurring problem in C that we&#8217;ve been dancing around, but I&#8217;m going to solve it in this exercise using a set of macros I developed. You can thank me later when you realize how insanely awesome these macros are. Right now, you don&#8217;t know how awesome they are, so you&#8217;ll just have to use them, and then you can walk up to me one day and say, &#8220;Zed, those debug macros were the bomb. I owe you my firstborn child because you saved me a decade of heartache and prevented me from killing myself more than once. Thank you, good sir, here&#8217;s a million dollars and the original Snakehead Telecaster prototype signed by Leo Fender.&#8221;</p>
+<p class="noindent">Yes, they are that awesome.</p>
+<div class="heading">
+<h3 id="ch19lev1sec1">The C Error-Handling Problem</h3>
+<p class="noindent">Handling errors is a difficult activity in almost every programming language. There are entire programming languages that try as hard as they can to avoid even the concept of an error. Other languages invent complex control structures like exceptions to pass error conditions around. The problem exists mostly because programmers assume errors don&#8217;t happen, and this optimism infects the types of languages they use and create.</p>
+</div>
+<p class="noindent">C tackles the problem by returning error codes and setting a global <code>errno</code> value that you check. This makes for complex code that simply exists to check if something you did had an error. As you write more and more C code, you&#8217;ll write code with this pattern:</p>
+<p class="indenthangingB">&#8226; Call a function.</p>
+<p class="indenthangingB">&#8226; Check if the return value is an error (and it must look that up each time, too).</p>
+<p class="indenthangingB">&#8226; Then, clean up all the resources created so far.</p>
+<p class="indenthangingB">&#8226; Lastly, print out an error message that hopefully helps.</p>
+<p class="noindent">This means for every function call (and yes, <em>every</em> function), you are potentially writing three or four more lines just to make sure it worked. That doesn&#8217;t include the problem of cleaning up all of the junk you&#8217;ve built to that point. If you have ten different structures, three files, and a database connection, you&#8217;d have 14 more lines when you get an error.</p>
+<p class="noindent">In the past, this wasn&#8217;t a problem because C programs did what you&#8217;ve been doing when there was an error: die. No point in bothering with cleanup when the OS will do it for you. Today, though, many C programs need to run for weeks, months, or years, and handle errors from many different sources gracefully. You can&#8217;t just have your Web server die at the slightest touch, and you definitely can&#8217;t have a library that you&#8217;ve written nuke the program it&#8217;s used in. That&#8217;s just rude.</p>
+<p class="noindent"><a id="page_91"/>Other languages solve this problem with exceptions, but those have problems in C (and in other languages, too). In C, you only have one return value, but exceptions make up an entire stack-based return system with arbitrary values. Trying to marshal exceptions up the stack in C is difficult, and no other libraries will understand it.</p>
+<div class="heading">
+<h3 id="ch19lev1sec2">The Debug Macros</h3>
+<p class="noindent">The solution I&#8217;ve been using for years is a small set of debug macros that implements a basic debugging and error-handling system for C. This system is easy to understand, works with every library, and makes C code more solid and clearer.</p>
+</div>
+<p class="noindent">It does this by adopting the convention that whenever there&#8217;s an error, your function will jump to an <code>error:</code> part of the function that knows how to clean up everything and return an error code. You can use a macro called <code>check</code> to check return codes, print an error message, and then jump to the cleanup section. You can combine that with a set of logging functions for printing out useful debug messages.</p>
+<p class="noindent">I&#8217;ll now show you the entire contents of the most awesome set of brilliance you&#8217;ve ever seen.</p>
+<p class="ex-caption"><code>dbg.h</code></p>
+<hr/>
+<p class="codelink"><a id="p091pro01" href="ch19_images.html#p091pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef __dbg_h__</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define __dbg_h__</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;errno.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#ifdef NDEBUG</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define debug(M, ...)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#else</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n",\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">__FILE__, __LINE__, ##__VA_ARGS__)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define clean_errno() (errno == 0 ? "None" : strerror(errno))</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define log_err(M, ...) fprintf(stderr,\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">"[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__,\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">clean_errno(), ##__VA_ARGS__)</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define log_warn(M, ...) fprintf(stderr,\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">"[WARN] (%s:%d: errno: %s) " M "\n",\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">__FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define log_info(M, ...) fprintf(stderr, "[INFO] (%s:%d) " M "\n",\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">__FILE__, __LINE__, ##__VA_ARGS__)</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define check(A, M, ...) if(!(A)) {\</span><br/>
+&#160;&#160;&#160;&#160;<span class="EmpItalic">log_err(M, ##__VA_ARGS__); errno=0; goto error; }</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define sentinel(M, ...) { log_err(M, ##__VA_ARGS__);\</span><br/>
+&#160;&#160;&#160;&#160;<span class="EmpItalic">errno=0; goto error; }</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define check_mem(A) check((A), "Out of memory.")</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__);\</span><br/>
+&#160;&#160;&#160;&#160;<span class="EmpItalic">errno=0; goto error; }</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent"><a id="page_92"/>Yes, that&#8217;s it, and here&#8217;s a breakdown of every line:</p>
+<p class="indenthanging"><strong>dbg.h:1-2</strong> The usual defense against accidentally including the file twice, which you saw in the last exercise.</p>
+<p class="indenthanging"><strong>dbg.h:4-6</strong> <code>Include</code>s for the functions that these macros need.</p>
+<p class="indenthanging"><strong>dbg.h:8</strong> The start of a <code>#ifdef</code> that lets you recompile your program so that all of the debug log messages are removed.</p>
+<p class="indenthanging"><strong>dbg.h:9</strong> If you compile with <code>NDEBUG</code> defined, then &#8220;no debug&#8221; messages will remain. You can see in this case the <code>#define debug()</code> is just replaced with nothing (the right side is empty).</p>
+<p class="indenthanging"><strong>dbg.h:10</strong> The matching <code>#else</code> for the above <code>#ifdef</code>.</p>
+<p class="indenthanging"><strong>dbg.h:11</strong> The alternative <code>#define debug</code> that translates any use of <code>debug("format", arg1, arg2)</code> into an <code>fprintf</code> call to <code>stderr</code>. Many C programmers don&#8217;t know this, but you can create macros that actually work like <code>printf</code> and take variable arguments. Some C compilers (actually CPP) don&#8217;t support this, but the ones that matter do. The magic here is the use of <code>##__VA_ARGS__</code> that says &#8220;put whatever they had for extra arguments (...) here.&#8221; Also notice the use of <code>__FILE__</code> and <code>__LINE__</code> to get the current <code>file:line</code> for the debug message. <em>Very</em> helpful.</p>
+<p class="indenthanging"><strong>dbg.h:12</strong> The end of the <code>#ifdef</code>.</p>
+<p class="indenthanging"><strong>dbg.h:14</strong> The <code>clean_errno</code> macro that&#8217;s used in the others to get a safe, readable version of <code>errno</code>. That strange syntax in the middle is a ternary operator and you&#8217;ll learn what it does later.</p>
+<p class="indenthanging"><strong>dbg.h:16-20</strong> The <code>log_err</code>, <code>log_warn</code>, and <code>log_info</code>, macros for logging messages that are meant for the end user. They work like <code>debug</code> but can&#8217;t be compiled out.</p>
+<p class="indenthanging"><strong>dbg.h:22</strong> The best macro ever, <code>check</code>, will make sure the condition <code>A</code> is true, and if not, it logs the error <code>M</code> (with variable arguments for <code>log_err</code>), and then jumps to the function&#8217;s <code>error:</code> for cleanup.</p>
+<p class="indenthanging"><strong>dbg.h:24</strong> The second best macro ever, <code>sentinel</code>, is placed in any part of a function that shouldn&#8217;t run, and if it does, it prints an error message and then jumps to the <code>error:</code> <a id="page_93"/>label. You put this in <code>if-statements</code> and <code>switch-statements</code> to catch conditions that shouldn&#8217;t happen, like the <code>default:</code>.</p>
+<p class="indenthanging"><strong>dbg.h:26</strong> A shorthand macro called <code>check_mem</code> that makes sure a pointer is valid, and if it isn&#8217;t, it reports it as an error with &#8220;Out of memory.&#8221;</p>
+<p class="indenthanging"><strong>dbg.h:28</strong> An alternative macro, <code>check_debug</code>, which still checks and handles an error, but if the error is common, then it doesn&#8217;t bother reporting it. In this one, it will use <code>debug</code> instead of <code>log_err</code> to report the message. So when you define <code>NDEBUG</code>, the check still happens, and the error jump goes off, but the message isn&#8217;t printed.</p>
+<div class="heading">
+<h3 id="ch19lev1sec3">Using dbg.h</h3>
+<p class="noindent">Here&#8217;s an example of using all of <code>dbg.h</code> in a small program. This doesn&#8217;t actually do anything but demonstrate how to use each macro. However, we&#8217;ll be using these macros in all of the programs we write from now on, so be sure to understand how to use them.</p>
+</div>
+<p class="ex-caption"><code>ex19.c</code></p>
+<hr/>
+<p class="codelink"><a id="p093pro01" href="ch19_images.html#p093pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> test_debug<span class="EmpStrong">()</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// notice you don't need the \n</span></span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"I have Brown Hair."</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// passing in arguments like printf</span></span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"I am %d years old."</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">37</span></span><span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> test_log_err<span class="EmpStrong">()</span><br/>
+&#160;15&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_err<span class="EmpStrong">(</span><span class="pd_green">"I believe everything is broken."</span><span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_err<span class="EmpStrong">(</span><span class="pd_green">"There are %d problems in %s."</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"space"</span><span class="EmpStrong">);</span><br/>
+&#160;18&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> test_log_warn<span class="EmpStrong">()</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_warn<span class="EmpStrong">(</span><span class="pd_green">"You can safely ignore this."</span><span class="EmpStrong">);</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_warn<span class="EmpStrong">(</span><span class="pd_green">"Maybe consider looking at: %s."</span><span class="EmpStrong">,</span> <span class="pd_green">"/etc/passwd"</span><span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> test_log_info<span class="EmpStrong">()</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Well I did something mundane."</span><span class="EmpStrong">);</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"It happened %f times today."</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1.3f</span></span><span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_94"/>&#160;31<br/>
+&#160;32&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> test_check<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>file_name<span class="EmpStrong">)</span><br/>
+&#160;33&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>input <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>block <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;block <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>block<span class="EmpStrong">);</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// should work</span></span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;input <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fopen<span class="EmpStrong">(</span>file_name<span class="EmpStrong">,</span> <span class="pd_green">"r"</span><span class="EmpStrong">);</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>input<span class="EmpStrong">,</span> <span class="pd_green">"Failed to open %s."</span><span class="EmpStrong">,</span> file_name<span class="EmpStrong">);</span><br/>
+&#160;42<br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>block<span class="EmpStrong">);</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;fclose<span class="EmpStrong">(</span>input<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>block<span class="EmpStrong">)</span> free<span class="EmpStrong">(</span>block<span class="EmpStrong">);</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>input<span class="EmpStrong">)</span> fclose<span class="EmpStrong">(</span>input<span class="EmpStrong">);</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> test_sentinel<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> code<span class="EmpStrong">)</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>temp<span class="EmpStrong">);</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>code<span class="EmpStrong">) {</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"It worked."</span><span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">default</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sentinel<span class="EmpStrong">(</span><span class="pd_green">"I shouldn't run."</span><span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>temp<span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;68<br/>
+&#160;69&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>temp<span class="EmpStrong">)</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>temp<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;73&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> test_check_mem<span class="EmpStrong">()</span><br/>
+&#160;76&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>test<span class="EmpStrong">);</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>test<span class="EmpStrong">);</span><br/>
+<a id="page_95"/>&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;85&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> test_check_debug<span class="EmpStrong">()</span><br/>
+&#160;88&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Oops, I was 0."</span><span class="EmpStrong">);</span><br/>
+&#160;91<br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;93&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;95&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;98&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Need an argument."</span><span class="EmpStrong">);</span><br/>
+100<br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_debug<span class="EmpStrong">();</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_log_err<span class="EmpStrong">();</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_log_warn<span class="EmpStrong">();</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_log_info<span class="EmpStrong">();</span><br/>
+105<br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_check<span class="EmpStrong">(</span><span class="pd_green">"ex19.c"</span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"failed with ex19.c"</span><span class="EmpStrong">);</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_check<span class="EmpStrong">(</span>argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">])</span> <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"failed with argv"</span><span class="EmpStrong">);</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_sentinel<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"test_sentinel failed."</span><span class="EmpStrong">);</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_sentinel<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"test_sentinel failed."</span><span class="EmpStrong">);</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_check_mem<span class="EmpStrong">()</span> <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span>, <span class="pd_green">"test_check_mem failed."</span><span class="EmpStrong">);</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>test_check_debug<span class="EmpStrong">()</span> <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"test_check_debug failed."</span><span class="EmpStrong">);</span><br/>
+112<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+114<br/>
+115&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+117&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">Pay attention to how <code>check</code> is used, and when it&#8217;s <code>false</code>, it jumps to the <code>error:</code> label to do a cleanup. The way to read those lines is, &#8220;check that A is true, and if not, say M and jump out.&#8221;</p>
+<div class="heading">
+<h3 id="ch19lev1sec4">What You Should See</h3>
+<p class="noindent">When you run this, give it some bogus first parameter to see this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 19 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p095pro01" href="ch19_images.html#p095pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex19<br/>
+<span class="EmpItalic">cc -Wall -g -DNDEBUG&#160;&#160;&#160;&#160;ex19.c&#160;&#160;&#160;-o ex19</span><br/>
+<span class="pd_brown">$</span> ./ex19 <span class="pd_blue">test</span><br/>
+<a id="page_96"/><span class="EmpItalic">[ERROR] (ex19.c:16: errno: None) I believe everything is broken.</span><br/>
+<span class="EmpItalic">[ERROR] (ex19.c:17: errno: None) There are 0 problems in space.</span><br/>
+<span class="EmpItalic">[WARN] (ex19.c:22: errno: None) You can safely ignore this.</span><br/>
+<span class="EmpItalic">[WARN] (ex19.c:23: errno: None) Maybe consider looking at: /etc/passwd.</span><br/>
+<span class="EmpItalic">[INFO] (ex19.c:28) Well I did something mundane.</span><br/>
+<span class="EmpItalic">[INFO] (ex19.c:29) It happened 1.300000 times today.</span><br/>
+<span class="EmpItalic">[ERROR] (ex19.c:38: errno: No such file or directory) Failed to open test.</span><br/>
+<span class="EmpItalic">[INFO] (ex19.c:57) It worked.</span><br/>
+<span class="EmpItalic">[ERROR] (ex19.c:60: errno: None) I shouldn't run.</span><br/>
+<span class="EmpItalic">[ERROR] (ex19.c:74: errno: None) Out of memory.</span></p>
+<p class="noindent">See how it reports the exact line number where the <code>check</code> failed? That&#8217;s going to save you hours of debugging later. Also, see how it prints the error message for you when <code>errno</code> is set? Again, that will save you hours of debugging.</p>
+<div class="heading">
+<h3 id="ch19lev1sec5">How the CPP Expands Macros</h3>
+<p class="noindent">It&#8217;s now time for you to get a short introduction to the CPP so that you know how these macros actually work. To do this, I&#8217;m going to break down the most complex macro from <code>dbg.h</code>, and have you run <code>cpp</code> so you can see what it&#8217;s actually doing.</p>
+</div>
+<p class="noindent">Imagine that I have a function called <code>dosomething()</code> that returns the typical 0 for success and -1 for an error. Every time I call <code>dosomething</code>, I have to check for this error code, so I&#8217;d write code like this:</p>
+<p class="codelink"><a id="p096pro01" href="ch19_images.html#p096pro01a">Click here to view code image</a></p>
+<p class="pre">int rc = dosomething();<br/>
+<br/>
+if(rc != 0) {<br/>
+&#160;&#160;&#160;&#160;fprintf(stderr, "There was an error: %s\n", strerror());<br/>
+&#160;&#160;&#160;&#160;goto error;<br/>
+}</p>
+<p class="noindent">What I want to use the CPP for is to encapsulate this <code>if-statement</code> into a more readable and memorable line of code. I want what you&#8217;ve been doing in <code>dbg.h</code> with the <code>check</code> macro:</p>
+<p class="codelink"><a id="p096pro02" href="ch19_images.html#p096pro02a">Click here to view code image</a></p>
+<p class="pre">int rc = dosomething();<br/>
+check(rc == 0, "There was an error.");</p>
+<p class="noindent">This is <em>much</em> clearer and explains exactly what&#8217;s going on: Check that the function worked, and if not, report an error. To do this, we need some special CPP tricks that make the CPP useful as a code generation tool. Take a look at the <code>check</code> and <code>log_err</code> macros again:</p>
+<p class="codelink"><a id="p096pro03" href="ch19_images.html#p096pro03a">Click here to view code image</a></p>
+<p class="pre">#define log_err(M, ...) fprintf(stderr,\<br/>
+&#160;&#160;&#160;&#160;"[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__,\<br/>
+&#160;&#160;&#160;&#160;clean_errno(), ##__VA_ARGS__)<br/>
+#define check(A, M, ...) if(!(A)) {\<br/>
+&#160;&#160;&#160;&#160;log_err(M, ##__VA_ARGS__); errno=0; goto error; }</p>
+<p class="noindent"><a id="page_97"/>The first macro, <code>log_err</code>, is simpler. It simply replaces itself with a call to <code>fprintf</code> to <code>stderr</code>. The only tricky part of this macro is the use of <code>...</code> in the definition <code>log_err(M, ...)</code>. What this does is let you pass variable arguments to the macro, so you can pass in the arguments that should go to <code>fprintf</code>. How do they get injected into the <code>fprintf</code> call? Look at the end for the <code>##__VA_ARGS__</code>, which is telling the CPP to take the args entered where the <code>...</code> is, and inject them at that part of the <code>fprintf</code> call. You can then do things like this:</p>
+<p class="codelink"><a id="p097pro01" href="ch19_images.html#p097pro01a">Click here to view code image</a></p>
+<p class="pre">log_err("Age: %d, name: %s", age, name);</p>
+<p class="noindent">The arguments <code>age, name</code> are the <code>...</code> part of the definition, and those get injected into the fprintf output:</p>
+<p class="codelink"><a id="p097pro02" href="ch19_images.html#p097pro02a">Click here to view code image</a></p>
+<p class="pre">fprintf(stderr, "[ERROR] (%s:%d: errno: %s) Age %d: name %d\n",<br/>
+&#160;&#160;&#160;&#160;__FILE__, __LINE__, clean_errno(), age, name);</p>
+<p class="noindent">See the <code>age, name</code> at the end? That&#8217;s how <code>...</code> and <code>##__VA_ARGS__</code> work together, which will work in macros that call other variable argument macros. Look at the <code>check</code> macro now and see that it calls <code>log_err</code>, but <code>check</code> is <em>also</em> using the <code>...</code> and <code>##__VA_ARGS__</code> to do the call. That&#8217;s how you can pass full <code>printf</code> style format strings to <code>check</code>, which go to <code>log_err</code>, and then make both work like <code>printf</code>.</p>
+<p class="noindent">The next thing to study is how <code>check</code> crafts the <code>if-statement</code> for the error checking. If we strip out the <code>log_err</code> usage, we see this:</p>
+<p class="codelink"><a id="p097pro03" href="ch19_images.html#p097pro03a">Click here to view code image</a></p>
+<p class="pre">if(!(A)) { errno=0; goto error; }</p>
+<p class="noindent">Which means: If <code>A</code> is false, then clear <code>errno</code> and <code>goto</code> the <code>error</code> label. The <code>check</code> macro is being replaced with the <code>if-statement</code>, so if we manually expand out the macro <code>check(rc == 0, "There was an error.")</code>, we get this:</p>
+<p class="codelink"><a id="p097pro04" href="ch19_images.html#p097pro04a">Click here to view code image</a></p>
+<p class="pre">if(!(rc == 0)) {<br/>
+&#160;&#160;&#160;&#160;log_err("There was an error.");<br/>
+&#160;&#160;&#160;&#160;errno=0;<br/>
+&#160;&#160;&#160;&#160;goto error;<br/>
+}</p>
+<p class="noindent">What you should be getting from this trip through these two macros is that the CPP replaces macros with the expanded version of their definition, and it will do this <em>recursively</em>, expanding all of the macros in macros. The CPP, then, is just a recursive templating system, as I mentioned before. Its power comes from its ability to generate whole blocks of parameterized code, thus becoming a handy code generation tool.</p>
+<p class="noindent">That leaves one question: Why not just use a function like <code>die</code>? The reason is that you want <code>file:line</code> numbers and the <code>goto</code> operation for an error handling exit. If you did this inside a function, you wouldn&#8217;t get a line number where the error actually happened, and the goto would be much more complicated.</p>
+<p class="noindent"><a id="page_98"/>Another reason is that you still have to write the raw <code>if-statement</code>, which looks like all of the other <code>if-statements</code> in your code, so it&#8217;s not as clear that this one is an error check. By wrapping the <code>if-statement</code> in a macro called <code>check</code>, you make it clear that this is just error checking, and not part of the main flow.</p>
+<p class="noindent">Finally, CPP has the ability to <em>conditionally compile</em> portions of code, so you can have code that&#8217;s only present when you build a developer or debug version of the program. You can see this already in the <code>dbg.h</code> file where the <code>debug</code> macro only has a body if the compiler asks for it. Without this ability, you&#8217;d need a wasted <code>if-statement</code> that checks for debug mode, and then wastes CPU capacity doing that check for no value.</p>
+<div class="heading">
+<h3 id="ch19lev1sec6">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Put <code>#define NDEBUG</code> at the top of the file and check that all of the debug messages go away.</p>
+</div>
+<p class="indenthangingB">&#8226; Undo that line, and add <code>-DNDEBUG</code> to <code>CFLAGS</code> at the top of the <code>Makefile</code>, and then recompile to see the same thing.</p>
+<p class="indenthangingB">&#8226; Modify the logging so that it includes the function name, as well as the <code>file:line</code>.<a id="page_99"/></p>
+</body>
+</html>

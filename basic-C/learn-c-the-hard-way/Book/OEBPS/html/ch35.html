@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 35. Sorting and Searching</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch35"><a id="page_208"/>Exercise 35. Sorting and Searching</h2>
+<p class="noindent">In this exercise, I&#8217;m going to cover four sorting algorithms and one search algorithm. The sorting algorithms are going to be quick sort, heap sort, merge sort, and radix sort. I&#8217;m then going to show you how do a to binary search after you&#8217;ve done a radix sort.</p>
+<p class="noindent">However, I&#8217;m a lazy guy, and in most standard C libraries you have existing implementations of the heapsort, quicksort, and merge sort algorithms. Here&#8217;s how you use them:</p>
+<p class="ex-caption"><code>darray_algos.c</code></p>
+<hr/>
+<p class="codelink"><a id="p208pro01" href="ch35_images.html#p208pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray_algos.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_qsort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;qsort<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">,</span> DArray_count<span class="EmpStrong">(</span>array<span class="EmpStrong">),</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="pd_blue"><span class="EmpStrong">(void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">),</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_heapsort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> heapsort<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">,</span> DArray_count<span class="EmpStrong">(</span>array<span class="EmpStrong">),</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(<span class="pd_blue">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">),</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_mergesort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;17&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> mergesort<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">,</span> DArray_count<span class="EmpStrong">(</span>array<span class="EmpStrong">),</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(<span class="pd_blue">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">),</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">That&#8217;s the whole implementation of the <code>darray_algos.c</code> file, and it should work on most modern UNIX systems. What each of these does is sort the <code>contents</code> store of void pointers using the <code>DArray_compare</code> that you give it. I&#8217;ll show you the header file for this, too:</p>
+<p class="ex-caption"><code>darray_algos.h</code></p>
+<hr/>
+<p class="codelink"><a id="p208pro02" href="ch35_images.html#p208pro02a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef darray_algos_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define darray_algos_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_compare<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">const void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_qsort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_209"/><span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_heapsort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_mergesort<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> DArray_compare cmp<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">It&#8217;s about the same size and should be what you expect. Next, you can see how these functions are used in the unit test for these three:</p>
+<p class="ex-caption"><code>darray_algos_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p209pro01" href="ch35_images.html#p209pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray_algos.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> testcmp<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>b<span class="EmpStrong">)</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> strcmp<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">);</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>create_words<span class="EmpStrong">()</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_create<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">5</span></span><span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>words<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_green">"asdfasfd"</span><span class="EmpStrong">,</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"werwar"</span><span class="EmpStrong">,</span> <span class="pd_green">"13234"</span><span class="EmpStrong">,</span> <span class="pd_green">"asdfasfd"</span><span class="EmpStrong">,</span> <span class="pd_green">"oioj"</span> <span class="EmpStrong">};</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">5</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_push<span class="EmpStrong">(</span>result<span class="EmpStrong">,</span> words<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> result<span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> is_sorted<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>array<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>strcmp<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> i<span class="EmpStrong">),</span> DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> i <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">))</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;34&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>run_sort_test<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>func<span class="EmpStrong">) (</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">,</span> DArray_compare<span class="EmpStrong">),</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>name<span class="EmpStrong">)</span><br/>
+&#160;38&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>words <span class="pd_brown-1"><span class="EmpStrong">=</span></span> create_words<span class="EmpStrong">();</span><br/>
+<a id="page_210"/>&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>is_sorted<span class="EmpStrong">(</span>words<span class="EmpStrong">),</span> <span class="pd_green">"Words should start not sorted."</span><span class="EmpStrong">);</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"--- Testing %s sorting algorithm"</span><span class="EmpStrong">,</span> name<span class="EmpStrong">);</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> func<span class="EmpStrong">(</span>words<span class="EmpStrong">, (</span>DArray_compare<span class="EmpStrong">)</span> testcmp<span class="EmpStrong">);</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"sort failed"</span><span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>words<span class="EmpStrong">),</span> <span class="pd_green">"didn't sort it"</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>words<span class="EmpStrong">);</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;50&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;51<br/>
+&#160;52&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_qsort<span class="EmpStrong">()</span><br/>
+&#160;53&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> run_sort_test<span class="EmpStrong">(</span>DArray_qsort<span class="EmpStrong">,</span> <span class="pd_green">"qsort"</span><span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_heapsort<span class="EmpStrong">()</span><br/>
+&#160;58&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> run_sort_test<span class="EmpStrong">(</span>DArray_heapsort<span class="EmpStrong">,</span> <span class="pd_green">"heapsort"</span><span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_mergesort<span class="EmpStrong">()</span><br/>
+&#160;63&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> run_sort_test<span class="EmpStrong">(</span>DArray_mergesort<span class="EmpStrong">,</span> <span class="pd_green">"mergesort"</span><span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;66<br/>
+&#160;67&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;68&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_qsort<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_heapsort<span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_mergesort<span class="EmpStrong">);</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;76&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">The thing to notice, and actually what tripped me up for a whole day, is the definition of <code>testcmp</code> on line 4. You have to use a <code>char **</code> and <em>not</em> a <code>char *</code> because <code>qsort</code> gives you a pointer to <em>the pointers</em> in the <code>contents</code> array. The function <code>qsort</code> and friends are scanning the array, and handing <em>pointers</em> to each element in the array to your comparison function. Since what I have in the <code>contents</code> array are pointers, that means you get a pointer to a pointer.</p>
+<p class="noindent">With that out of the way, you have just implemented three difficult sorting algorithms in about 20 lines of code. You could stop there, but part of this book is learning how these algorithms work, so the Extra Credit section is going to involve implementing each of these.</p>
+<div class="heading">
+<h3 id="ch35lev1sec1"><a id="page_211"/>Radix Sort and Binary Search</h3>
+<p class="noindent">Since you&#8217;re going to implement quicksort, heapsort, and merge sort on your own, I&#8217;m going to show you a funky algorithm called radix sort. It has a slightly narrow usefulness in sorting arrays of integers, but seems to work like magic. In this case, I&#8217;m going to create a special data structure called a <code>RadixMap</code> that&#8217;s used to map one integer to another.</p>
+</div>
+<p class="noindent">Here&#8217;s the header file for the new algorithm, which is both algorithm and data structure in one:</p>
+<p class="ex-caption"><code>radixmap.h</code></p>
+<hr/>
+<p class="codelink"><a id="p211pro01" href="ch35_images.html#p211pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _radixmap_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdint.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef union</span></span> RMElement <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> raw<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> value<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> data<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> RMElement<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> RadixMap <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> max<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> end<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> counter<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>contents<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>temp<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> RadixMap<span class="EmpStrong">;</span><br/>
+<br/>
+RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RadixMap_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">size_t</span></span> max<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> RadixMap_destroy<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> RadixMap_sort<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">);</span><br/>
+<br/>
+RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RadixMap_find<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> RadixMap_add<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> value<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> RadixMap_delete<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span> el<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">You see that I have a lot of the same operations as in a <code>Dynamic Array</code> or a <code>List</code> data structure, but the difference is I&#8217;m working only with fixed size 32-bit <code>uin32_t</code> integers. I&#8217;m also introducing you to a new C concept called the <code>union</code> here.</p>
+<div class="heading">
+<h4 id="ch35lev2sec1"><a id="page_212"/>C Unions</h4>
+<p class="noindent">A union is a way to refer to the same piece of memory in a number of different ways. You define it like a <code>struct</code>, except every element is sharing the same space with all of the others. You can think of a union as a picture of the memory, and the elements in the union as different colored lenses to view the picture.</p>
+</div>
+<p class="noindent">What they are used for is to either save memory or convert chunks of memory between formats. The first usage is typically done with variant types, where you create a structure that has tag for the type, and then a union inside it for each type. When used for converting between formats of memory, you can simply define the two structures, and then access the right one.</p>
+<p class="noindent">First, let me show you how to make a variant type with C unions:</p>
+<p class="ex-caption"><code>ex35.c</code></p>
+<hr/>
+<p class="codelink"><a id="p212pro01" href="ch35_images.html#p212pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;2<br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef enum</span></span> <span class="EmpStrong">{</span><br/>
+&#160;&#160;4&#160;&#160;&#160;&#160;&#160;&#160;&#160;TYPE_INT<span class="EmpStrong">,</span><br/>
+&#160;&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;TYPE_FLOAT<span class="EmpStrong">,</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;TYPE_STRING<span class="EmpStrong">,</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">}</span> VariantType<span class="EmpStrong">;</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Variant <span class="EmpStrong">{</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;VariantType type<span class="EmpStrong">;</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">union</span></span> <span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> as_integer<span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">float</span></span> as_float<span class="EmpStrong">;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>as_string<span class="EmpStrong">;</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> data<span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> Variant Variant<span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Variant_print<span class="EmpStrong">(</span>Variant <span class="pd_brown-1"><span class="EmpStrong">*</span></span> var<span class="EmpStrong">)</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">switch</span></span> <span class="EmpStrong">(</span>var<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>type<span class="EmpStrong">) {</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">TYPE_INT</span><span class="EmpStrong">:</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"INT: %d\n"</span><span class="EmpStrong">,</span> var<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>as_integer<span class="EmpStrong">);</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">TYPE_FLOAT</span><span class="EmpStrong">:</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"FLOAT: %f\n"</span><span class="EmpStrong">,</span> var<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>as_float<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">case</span></span> <span class="pd_orange">TYPE_STRING</span><span class="EmpStrong">:</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"STRING: %s\n"</span><span class="EmpStrong">,</span> var<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>as_string<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">break</span></span><span class="EmpStrong">;</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">default</span></span><span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"UNKNOWN TYPE: %d"</span><span class="EmpStrong">,</span> var<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>type<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_213"/>&#160;36<br/>
+&#160;37&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;38&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant a_int <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>type <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TYPE_INT<span class="EmpStrong">, .</span>data<span class="EmpStrong">.</span>as_integer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span> <span class="EmpStrong">};</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant a_float <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>type <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TYPE_FLOAT<span class="EmpStrong">, .</span>data<span class="EmpStrong">.</span>as_float <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">100.34</span></span> <span class="EmpStrong">};</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant a_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>type <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TYPE_STRING<span class="EmpStrong">,</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>as_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"YO DUDE!"</span> <span class="EmpStrong">};</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_int<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_float<span class="EmpStrong">);</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_string<span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// here's how you access them</span></span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;a_int<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>as_integer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">200</span></span><span class="EmpStrong">;</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;a_float<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>as_float <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2.345</span></span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;a_string<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>as_string <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Hi there."</span><span class="EmpStrong">;</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_int<span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_float<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;Variant_print<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>a_string<span class="EmpStrong">);</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;58&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">You find this in many implementations of dynamic languages. The language will define some base variant type with tags for all the base types of the language, and then usually there&#8217;s a generic object tag for the types you can create. The advantage of doing this is that the <code>Variant</code> only takes up as much space as the <code>VariantType type</code> tag and the largest member of the union. This is because C is layering each element of the <code>Variant.data</code> union together, so they overlap. To do that, C sizes the union big enough to hold the largest element.</p>
+<p class="noindent">In the <code>radixmap.h</code> file, I have the <code>RMElement</code> union, which demonstrates using a union to convert blocks of memory between types. In this case, I want to store a <code>uint64_t</code>-sized integer for sorting purposes, but I want two <code>uint32_t</code> integers for the data to represent a <code>key</code> and <code>value</code> pair. By using a union, I&#8217;m able to cleanly access the same block of memory in the two different ways I need.</p>
+<div class="heading">
+<h4 id="ch35lev2sec2">The Implementation</h4>
+<p class="noindent">I next have the actual <code>RadixMap</code> implementation for each of these operations:</p>
+</div>
+<p class="ex-caption"><code>radixmap.c</code></p>
+<hr/>
+<p class="codelink"><a id="p213pro01" href="ch35_images.html#p213pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/*</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* Based on code by Andre Reinald then heavily modified by Zed A. Shaw.</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+<a id="page_214"/>&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/radixmap.h&gt;</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RadixMap_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">size_t</span></span> max<span class="EmpStrong">)</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>RadixMap<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>RMElement<span class="EmpStrong">),</span> max <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">);</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>RMElement<span class="EmpStrong">),</span> max <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>temp<span class="EmpStrong">);</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> max<span class="EmpStrong">;</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> map<span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;28&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> RadixMap_destroy<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;31&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="EmpStrong">) {</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>temp<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define ByteOf(x,y) (((uint8_t *)x)[(y)])</span></span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> radix_sort<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">short</span></span> offset<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> max<span class="EmpStrong">,</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> source<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> dest<span class="EmpStrong">)</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> count<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">256</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="EmpStrong">};</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>cp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>sp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> s <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> c <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// count occurences of every byte value</span></span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>sp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> source<span class="EmpStrong">,</span> end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> source <span class="pd_brown-1"><span class="EmpStrong">+</span></span> max<span class="EmpStrong">;</span> sp <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> end<span class="EmpStrong">;</span> sp<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;count<span class="EmpStrong">[</span>ByteOf<span class="EmpStrong">(</span>sp<span class="EmpStrong">,</span> offset<span class="EmpStrong">)]</span><span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// transform count into index by summing</span></span><br/>
+<a id="page_215"/>&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// elements and storing into same array</span></span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>s <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> cp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> count<span class="EmpStrong">,</span> end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> count <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">256</span></span><span class="EmpStrong">;</span> cp <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> end<span class="EmpStrong">;</span> cp<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;c <span class="pd_brown-1"><span class="EmpStrong">= *</span></span>cp<span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>cp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;s <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> c<span class="EmpStrong">;</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;63<br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// fill dest with the right values in the right place</span></span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>sp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> source<span class="EmpStrong">,</span> end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> source <span class="pd_brown-1"><span class="EmpStrong">+</span></span> max<span class="EmpStrong">;</span> sp <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> end<span class="EmpStrong">;</span> sp<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;cp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> count <span class="pd_brown-1"><span class="EmpStrong">+</span></span> ByteOf<span class="EmpStrong">(</span>sp<span class="EmpStrong">,</span> offset<span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;dest<span class="EmpStrong">[</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>cp<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">= *</span></span>sp<span class="EmpStrong">;</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>cp<span class="EmpStrong">);</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;70&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> RadixMap_sort<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;73&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>source <span class="pd_brown-1"><span class="EmpStrong">= &#38;</span></span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">].</span>raw<span class="EmpStrong">;</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint64_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>temp <span class="pd_brown-1"><span class="EmpStrong">= &#38;</span></span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>temp<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">].</span>raw<span class="EmpStrong">;</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;radix_sort<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">,</span> source<span class="EmpStrong">,</span> temp<span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;radix_sort<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">,</span> temp<span class="EmpStrong">,</span> source<span class="EmpStrong">);</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;radix_sort<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">,</span> source<span class="EmpStrong">,</span> temp<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;radix_sort<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">,</span> temp<span class="EmpStrong">,</span> source<span class="EmpStrong">);</span><br/>
+&#160;81&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RadixMap_find<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> to_find<span class="EmpStrong">)</span><br/>
+&#160;84&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> low <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> high <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">;</span><br/>
+&#160;88<br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>low <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> high<span class="EmpStrong">) {</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> middle <span class="pd_brown-1"><span class="EmpStrong">=</span></span> low <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="EmpStrong">(</span>high <span class="pd_brown-1"><span class="EmpStrong">-</span></span> low<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">;</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> data<span class="EmpStrong">[</span>middle<span class="EmpStrong">].</span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">;</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>to_find <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> key<span class="EmpStrong">) {</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;high <span class="pd_brown-1"><span class="EmpStrong">=</span></span> middle <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>to_find <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> key<span class="EmpStrong">) {</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;low <span class="pd_brown-1"><span class="EmpStrong">=</span></span> middle <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>data<span class="EmpStrong">[</span>middle<span class="EmpStrong">];</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+103&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104<br/>
+105&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RadixMap_add<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> value<span class="EmpStrong">)</span><br/>
+106&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+<a id="page_216"/>107&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>key <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> UINT32_MAX<span class="EmpStrong">,</span> <span class="pd_green">"Key can't be equal to UINT32_MAX."</span><span class="EmpStrong">);</span><br/>
+108<br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement element <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> key<span class="EmpStrong">,.</span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> value<span class="EmpStrong">} };</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">,</span> <span class="pd_green">"RadixMap is full."</span><span class="EmpStrong">);</span><br/>
+111<br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> element<span class="EmpStrong">;</span><br/>
+113<br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap_sort<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+115<br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+117<br/>
+118&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span>;<br/>
+120&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+121<br/>
+122&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RadixMap_delete<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span> el<span class="EmpStrong">)</span><br/>
+123&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"There is nothing to delete."</span><span class="EmpStrong">);</span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>el <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Can't delete a NULL element."</span><span class="EmpStrong">);</span><br/>
+126<br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;el<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> UINT32_MAX<span class="EmpStrong">;</span><br/>
+128<br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// don't bother resorting a map of 1 length</span></span><br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap_sort<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+133<br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">;</span><br/>
+135<br/>
+136&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+137&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+138&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+139&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">As usual, enter this in and get it working, along with the unit test, and then I&#8217;ll explain what&#8217;s happening. Take <em>special care</em> with the <code>radix_sort</code> function since it&#8217;s very particular in how it&#8217;s implemented.</p>
+<p class="ex-caption"><code>radixmap_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p216pro01" href="ch35_images.html#p216pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/radixmap.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;time.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> make_random<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(uint32_t</span></span><span class="EmpStrong">) (</span>rand<span class="EmpStrong">()</span> <span class="pd_brown-1"><span class="EmpStrong">|</span></span> <span class="EmpStrong">(</span>rand<span class="EmpStrong">()</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">16</span></span><span class="EmpStrong">));</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>RadixMap_add<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> i<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to add key %u."</span><span class="EmpStrong">,</span><br/>
+<a id="page_217"/>&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;key<span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> i<span class="EmpStrong">;</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> check_order<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement d1<span class="EmpStrong">,</span> d2<span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// only signal errors if any (should not be)</span></span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;d1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;d2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">];</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>d1<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>key <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> d2<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">) {</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"FAIL:i=%u, key: %u, value: %u, equals max? %d\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">,</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;d1<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>key, d1.data.value,<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;d2<span class="EmpStrong">.</span>data<span class="EmpStrong">.</span>key <span class="pd_brown-1"><span class="EmpStrong">==</span></span> UINT32_MAX<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> test_search<span class="EmpStrong">(</span>RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>d <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;d <span class="pd_brown-1"><span class="EmpStrong">= &#38;</span></span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RadixMap_find<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> d<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>found <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Didn't find %u at %u."</span><span class="EmpStrong">,</span> d<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>found<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key <span class="pd_brown-1"><span class="EmpStrong">==</span></span> d<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">,</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Got the wrong result: %p:%u looking for %u at %u"</span>, found<span class="EmpStrong">,</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">,</span> d<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;58&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61<br/>
+<a id="page_218"/>&#160;62&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test for big number of elements</span></span><br/>
+&#160;63&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_operations<span class="EmpStrong">()</span><br/>
+&#160;64&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> N <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">200</span></span><span class="EmpStrong">;</span><br/>
+&#160;66<br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RadixMap_create<span class="EmpStrong">(</span>N<span class="EmpStrong">);</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>map <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make the map."</span><span class="EmpStrong">);</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>make_random<span class="EmpStrong">(</span>map<span class="EmpStrong">),</span> <span class="pd_green">"Didn't make a random fake radix map."</span><span class="EmpStrong">);</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap_sort<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_order<span class="EmpStrong">(</span>map<span class="EmpStrong">),</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to properly sort the RadixMap."</span><span class="EmpStrong">);</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>test_search<span class="EmpStrong">(</span>map<span class="EmpStrong">),</span> <span class="pd_green">"Failed the search test."</span><span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_order<span class="EmpStrong">(</span>map<span class="EmpStrong">),</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"RadixMap didn't stay sorted after search."</span><span class="EmpStrong">);</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RMElement <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el <span class="pd_brown-1"><span class="EmpStrong">=</span></span> RadixMap_find<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">].</span>data<span class="EmpStrong">.</span>key<span class="EmpStrong">);</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>el <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should get a result."</span><span class="EmpStrong">);</span><br/>
+&#160;83<br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> old_end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">;</span><br/>
+&#160;85<br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>RadixMap_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> el<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Didn't delete it."</span><span class="EmpStrong">);</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>old_end <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">,</span> <span class="pd_green">"Wrong size after delete."</span><span class="EmpStrong">);</span><br/>
+&#160;88<br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test that the end is now the old value,</span></span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// but uint32 max so it trails off</span></span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_order<span class="EmpStrong">(</span>map<span class="EmpStrong">),</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"RadixMap didn't stay sorted after delete."</span><span class="EmpStrong">);</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;94<br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;RadixMap_destroy<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;98&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;99<br/>
+100&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+101&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;srand<span class="EmpStrong">(</span>time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">));</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_operations<span class="EmpStrong">);</span><br/>
+106<br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+108&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+109<br/>
+110&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent"><a id="page_219"/>I shouldn&#8217;t have to explain too much about the test. It&#8217;s simply simulating placing random integers into the <code>RadixMap</code>, and then making sure it can get them out reliably. Not too interesting.</p>
+<p class="noindent">In the <code>radixmap.c</code> file, most of the operations are easy to understand if you read the code. Here&#8217;s a description of what the basic functions are doing and how they work:</p>
+<p class="indenthanging"><strong>RadixMap_create</strong> As usual, I&#8217;m allocating all of the memory needed for the structures defined in <code>radixmap.h</code>. I&#8217;ll be using the <code>temp</code> and <code>contents</code> later when I talk about <code>radix_sort</code>.</p>
+<p class="indenthanging"><strong>RadixMap_destroy</strong> Again, I&#8217;m just destroying what was created.</p>
+<p class="indenthanging"><strong>radix_sort</strong> Here&#8217;s the meat of the data structure, but I&#8217;ll explain what it&#8217;s doing in the next section.</p>
+<p class="indenthanging"><strong>RadixMap_sort</strong> This uses the <code>radix_sort</code> function to actually sort the <code>contents</code>. It does this by sorting between the <code>contents</code> and <code>temp</code> until finally <code>contents</code> is sorted. You&#8217;ll see how this works when I describe <code>radix_sort</code> later.</p>
+<p class="indenthanging"><strong>RadixMap_find</strong> This is using a binary search algorithm to find a key you give it. I&#8217;ll explain how this works shortly.</p>
+<p class="indenthanging"><strong>RadixMap_add</strong> Using the <code>RadixMap_sort</code> function, this will add the key and value you request at the end, then simply sort it again so that everything is in the right place. Once everything is sorted, the <code>RadixMap_find</code> will work properly because it&#8217;s a binary search.</p>
+<p class="indenthanging"><strong>RadixMap_delete</strong> This works the same as <code>RadixMap_add</code>, except it deletes elements of the structure by setting their values to the max for a unsigned 32-bit integer, <code>UINT32_MAX</code>. This means that you can&#8217;t use that value as an key value, but it makes deleting elements easy. Simply set it to that and then sort, and it&#8217;ll get moved to the end. Now it&#8217;s deleted.</p>
+<p class="noindent">Study the code for the functions I described. That just leaves <code>RadixMap_sort</code>, <code>radix_sort</code>, and <code>RadixMap_find</code> to understand.</p>
+<div class="heading">
+<h4 id="ch35lev2sec3"><span class="EmpStrong">RadixMap_find</span> and Binary Search</h4>
+<p class="noindent">I&#8217;ll start with how the binary search is implemented. Binary search is a simple algorithm that most people can understand intuitively. In fact, you could take a deck of playing cards and do this manually. Here&#8217;s how this function works, and how a binary search is done, step by step:</p>
+</div>
+<p class="indenthangingB">&#8226; Set a high and low mark based on the size of the array.</p>
+<p class="indenthangingB">&#8226; Get the middle element between the low and high marks.</p>
+<p class="indenthangingB"><a id="page_220"/>&#8226; If the key is less-than, then the key must be below the middle. Set high to one less than middle.</p>
+<p class="indenthangingB">&#8226; If the key is greater-than, then the key must be above the middle. Set the low mark one greater than the middle.</p>
+<p class="indenthangingB">&#8226; If it&#8217;s equal, you found it. Stop.</p>
+<p class="indenthangingB">&#8226; Keep looping until low and high pass each other. You won&#8217;t find it if you exit the loop.</p>
+<p class="noindent">What you&#8217;re effectively doing is guessing where the key might be by picking the middle and comparing it to the high and low marks. Since the data is sorted, you know that the the key has to be above or below your guess. If it&#8217;s below, then you just divided the search space in half. You keep going until you either find it or you overlap the boundaries and exhaust the search space.</p>
+<div class="heading">
+<h4 id="ch35lev2sec4"><span class="EmpStrong">RadixMap_sort</span> and <span class="EmpStrong">radix_sort</span></h4>
+<p class="noindent">A radix sort is easy to understand if you try to do it manually first. What this algorithm does is exploit the fact that numbers are stored with a sequence of digits that go from least significant to most significant. It then takes the numbers and buckets them by the digit, and when it has processed all of the digits, the numbers come out sorted. At first it seems like magic, and honestly, looking at the code sure seems like it is, so try doing it manually once.</p>
+</div>
+<p class="noindent">To do this algorithm, write out a bunch of three-digit numbers in a random order. Let&#8217;s say we do 223, 912, 275, 100, 633, 120, and 380.</p>
+<p class="indenthangingB">&#8226; Place the number in buckets by the ones digit: <code>[380, 100, 120], [912], [633, 223], [275]</code>.</p>
+<p class="indenthangingB">&#8226; I now have to go through each of these buckets in order, and then sort it by the tens digit: <code>[100], [912], [120, 223], [633], [275], [380]</code>.</p>
+<p class="indenthangingB">&#8226; Now each bucket contains numbers that are sorted by the ones digit and then the tens digit. I need to then go through these in order and fill in the final hundreds digit: <code>[100, 120], [223, 275], [380], [633], [912]</code>.</p>
+<p class="indenthangingB">&#8226; At this point each bucket is sorted by hundreds, tens and ones, and if I take each bucket in order, I get the final sorted list: <code>100, 120, 223, 275, 380, 633, 912</code>.</p>
+<p class="noindent">Make sure you do this a few times so you understand how it works. It really is a slick little algorithm. Most importantly, it will work on numbers of arbitrary size, so you can sort really huge numbers because you&#8217;re just doing them 1 byte at a time.</p>
+<p class="noindent">In my situation, the digits (also called place values) are individual 8-bit bytes, so I need 256 buckets to store the distribution of the numbers by their digits. I also need a way to store them such that I <a id="page_221"/>don&#8217;t use too much space. If you look at <code>radix_sort</code>, you&#8217;ll see that the first thing I do is build a <code>count</code> histogram so I know how many occurrences of each digit there are for the given <code>offset</code>.</p>
+<p class="noindent">Once I know the counts for each digit (all 256 of them), I can then use them as distribution points into a target array. For example, if I have 10 bytes that are 0x00, then I know I can place them in the first ten slots of the target array. This gives me an index for where they go in the target array, which is the second <code>for-loop</code> in <code>radix_sort</code>.</p>
+<p class="noindent">Finally, once I know where they can go in the target array I simply go through all of the digits in the <code>source</code> array for this <code>offset</code>, and place the numbers in their slots in order. Using the <code>ByteOf</code> macro helps keep the code clean, since there&#8217;s a bit of pointer hackery to make it work. However, the end result is that all of the integers will be placed in the bucket for their digit when the final <code>for-loop</code> is done.</p>
+<p class="noindent">What becomes interesting is how I use this in <code>RadixMap_sort</code> to sort these 64-bit integers by just the first 32 bits. Remember how I have the key and value in a union for the <code>RMElement</code> type? That means that to sort this array by the key, I only need to sort the first 4 bytes (32 bits / 8 bits per byte) of every integer.</p>
+<p class="noindent">If you look at the <code>RadixMap_sort</code>, you see that I grab a quick pointer to the <code>contents</code> and <code>temp</code> for source and target arrays, and then I call <code>radix_sort</code> four times. Each time I call it, I alternate source and target, and do the next byte. When I&#8217;m done, the <code>radix_sort</code> has done its job and the final copy has been sorted into the <code>contents</code>.</p>
+<div class="heading">
+<h3 id="ch35lev1sec2">How to Improve It</h3>
+<p class="noindent">There is a big disadvantage to this implementation because it has to process the entire array four times on every insertion. It does do it fast, but it&#8217;d be better if you could limit the amount of sorting by the size of what needs to be sorted.</p>
+</div>
+<p class="noindent">There are two ways you can improve this implementation:</p>
+<p class="indenthangingB">&#8226; Use a binary search to find the minimum position for the new element, then only sort from there to the end. You find the minimum, put the new element on the end, and then just sort from the minimum on. This will cut your sort space down considerably most of the time.</p>
+<p class="indenthangingB">&#8226; Keep track of the biggest key currently being used, and then only sort enough digits to handle that key. You can also keep track of the smallest number, and then only sort the digits necessary for the range. To do this, you&#8217;ll have to start caring about CPU integer ordering (endianness).</p>
+<p class="noindent">Try these optimizations, but only after you augment the unit test with some timing information so you can see if you&#8217;re actually improving the speed of the implementation.</p>
+<div class="heading">
+<h3 id="ch35lev1sec3"><a id="page_222"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; Implement quicksort, heapsort, and merge sort and then provide a <code>#define</code> that lets you pick among the three, or create a second set of functions you can call. Use the technique I taught you to read the Wikipedia page for the algorithm, and then implement it with the pseudo-code.</p>
+</div>
+<p class="indenthangingB">&#8226; Compare the performance of your optimizations to the original implementations.</p>
+<p class="indenthangingB">&#8226; Use these sorting functions to create a <code>DArray_sort_add</code> that adds elements to the <code>DArray</code> but sorts the array afterward.</p>
+<p class="indenthangingB">&#8226; Write a <code>DArray_find</code> that uses the binary search algorithm from <code>RadixMap_find</code> and the <code>DArray_compare</code> to find elements in a sorted <code>DArray</code>.<a id="page_223"/></p>
+</body>
+</html>

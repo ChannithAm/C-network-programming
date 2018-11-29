@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 49. A Statistics Server</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch49"><a id="page_340"/>Exercise 49. A Statistics Server</h2>
+<p class="noindent">The next phase of your project is to implement the very first feature of the <code>statserve</code> server. Your program from <a href="ch48.html#ch48">Exercise 48</a> should be working and not crashing. Remember to think defensively and attempt to break and destroy your project as best you can before continuing. Watch both <a href="ch48.html#ch48">Exercise 48</a> videos to see how I do this.</p>
+<p class="noindent">The purpose of <code>statserve</code> is for clients to connect to it and submit commands for modifying statistics. If you remember, we learned a little bit about doing incremental basic statistics, and you know how to use data structures like hash maps, dynamic arrays, binary search trees, and ternary search trees. These are going to be used in <code>statserve</code> to implement this next feature.</p>
+<div class="heading">
+<h3 id="ch49lev1sec1">Specification</h3>
+<p class="noindent">You have to implement a protocol that your network client can use to store statistics. If you remember from <a href="ch43.html#ch43">Exercise 43</a>, you have three simple operations you can do to in the <code>stats.h</code> API:</p>
+</div>
+<p class="indenthanging"><strong>create</strong> Create a new statistic.</p>
+<p class="indenthanging"><strong>mean</strong> Get the current mean of a statistic.</p>
+<p class="indenthanging"><strong>sample</strong> Add a new sample to a statistic.</p>
+<p class="indenthanging"><strong>dump</strong> Get all of the elements of a statistic (sum, sumsq, n, min, and max).</p>
+<p class="noindent">This will make the beginning of your protocol, but you&#8217;ll need to do some more things:</p>
+<p class="indenthangingN"><strong>1.</strong> You&#8217;ll need to allow people to name these statistics, which means using one of the map style data structures to map names to <code>Stats</code> structs.</p>
+<p class="indenthangingN"><strong>2.</strong> You&#8217;ll need to add the <code>CRUD</code> standard operations for each name. CRUD stands for create read update delete. Currently, the list of commands above has create, mean, and dump for reading; and sample for updating. You need a delete command now.</p>
+<p class="indenthangingN"><strong>3.</strong> You may also need to have a <code>list</code> command for listing out all of the available statistics in the server.</p>
+<p class="noindent">Given that your <code>statserve</code> should handle a protocol that allows the above operations, let&#8217;s create statistics, update their sample, delete them, dump them, get the mean, and finally, list them.</p>
+<p class="noindent"><a id="page_341"/>Do your best to design a simple (and I mean <em>simple</em>) protocol for this using plain text, and see what you come up with. Do this on paper first, then watch the lecture video for this exercise to find out how to design a protocol and get more information about the exercise.</p>
+<p class="noindent">I also recommend using unit tests to test that the protocol is parsing separately from the server. Create separate .c and .h files for just processing strings with protocol in them, and then test those until you get them right. This will make things much easier when you add this feature to your server.</p>
+</body>
+</html>

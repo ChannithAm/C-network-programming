@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 43. A Simple Statistics Engine</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch43"><a id="page_300"/>Exercise 43. A Simple Statistics Engine</h2>
+<p class="noindent">This is a simple algorithm that I use for collecting summary statistics online, or without storing all of the samples. I use this in any software that needs to keep some statistics, such as mean, standard deviation, and sum, but can&#8217;t store all the samples needed. Instead, I can just store the rolling results of the calculations, which is only five numbers.</p>
+<div class="heading">
+<h3 id="ch43lev1sec1">Rolling Standard Deviation and Mean</h3>
+<p class="noindent">The first thing you need is a sequence of samples. This can be anything from the time it takes to complete a task to the number of times someone accesses something to star ratings on a Web site. It doesn&#8217;t really matter what it is, just so long as you have a stream of numbers and you want to know the following summary statistics about them:</p>
+</div>
+<p class="indenthanging"><strong>sum</strong> This is the total of all the numbers added together.</p>
+<p class="indenthanging"><strong>sum squared (sumsq)</strong> This is the sum of the square of each number.</p>
+<p class="indenthanging"><strong>count (n)</strong> This is the number samples that you&#8217;ve taken.</p>
+<p class="indenthanging"><strong>min</strong> This is the smallest sample you&#8217;ve seen.</p>
+<p class="indenthanging"><strong>max</strong> This is the largest sample you&#8217;ve seen.</p>
+<p class="indenthanging"><strong>mean</strong> This is the most likely middle number. It&#8217;s not actually the middle, since that&#8217;s the median, but it&#8217;s an accepted approximation for it.</p>
+<p class="indenthanging"><strong>stddev</strong> This is calculated using $sqrt(sumsq &#8211; (sum &#215; mean)) / (n &#8211; 1) ))$ where <code>sqrt</code> is the square root function in the <code>math.h</code> header.</p>
+<p class="noindent">I will confirm this calculation works using R, since I know R gets these right:</p>
+<p class="ex-caption"><code>Exercise 43.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p300pro01" href="ch43_images.html#p300pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">&gt;</span> s &lt;- runif<span class="pd_brown-1"><span class="EmpStrong">(</span></span>n<span class="pd_brown-1"><span class="EmpStrong">=</span></span>10, max<span class="pd_brown-1"><span class="EmpStrong">=</span></span>10<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="pd_brown">&gt;</span> s<br/>
+&#160;<span class="EmpItalic">[1] 6.1061334 9.6783204 1.2747090 8.2395131 0.3333483 6.9755066 1.0626275</span><br/>
+&#160;<span class="EmpItalic">[8] 7.6587523 4.9382973 9.5788115</span><br/>
+<span class="pd_brown">&gt;</span> summary<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;&#160;<span class="EmpItalic">Min. 1st Qu. Median&#160;&#160;&#160;Mean 3rd Qu.&#160;&#160;&#160;&#160;Max.</span><br/>
+&#160;<span class="EmpItalic">0.3333&#160;&#160;2.1910 6.5410 5.5850&#160;&#160;8.0940&#160;&#160;9.6780</span><br/>
+<span class="pd_brown">&gt;</span> sd<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 3.547868</span><br/>
+<span class="pd_brown">&gt;</span> sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 55.84602</span><br/>
+<span class="pd_brown">&gt;</span> sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s * s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 425.1641</span><br/>
+<span class="pd_brown">&gt;</span> sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> * mean<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 311.8778</span><br/>
+<span class="pd_brown">&gt;</span> sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s * s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> - sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> * mean<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 113.2863</span><br/>
+<a id="page_301"/><span class="pd_brown">&gt;</span> <span class="pd_brown-1"><span class="EmpStrong">(</span></span>sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s * s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> - sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> * mean<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">))</span></span> / <span class="pd_brown-1"><span class="EmpStrong">(</span></span>length<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> - 1<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="EmpItalic">[1] 12.58737</span><br/>
+<span class="pd_brown">&gt;</span> sqrt<span class="pd_brown-1"><span class="EmpStrong">((</span></span>sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s * s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> - sum<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> * mean<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">))</span></span> / <span class="pd_brown-1"><span class="EmpStrong">(</span></span>length<span class="pd_brown-1"><span class="EmpStrong">(</span></span>s<span class="pd_brown-1"><span class="EmpStrong">)</span></span> - 1<span class="pd_brown-1"><span class="EmpStrong">))</span></span><br/>
+<span class="EmpItalic">[1] 3.547868</span><br/>
+<span class="pd_brown">&gt;</span></p>
+<p class="noindent">You don&#8217;t need to know R. Just follow along while I explain how I&#8217;m breaking this down to check my math:</p>
+<p class="indenthanging"><strong>Lines 1-4</strong> I use the function <code>runif</code> to get a random uniform distribution of numbers, then print them out. I&#8217;ll use these in the unit test later.</p>
+<p class="indenthanging"><strong>Lines 5-7</strong> Here&#8217;s the summary, so you can see the values that R calculates for these.</p>
+<p class="indenthanging"><strong>Lines 8-9</strong> This is the <code>stddev</code> using the <code>sd</code> function.</p>
+<p class="indenthanging"><strong>Lines 10-11</strong> Now I begin to build this calculation manually, first by getting the <code>sum</code>.</p>
+<p class="indenthanging"><strong>Lines 12-13</strong> The next piece of the <code>stdev</code> formula is the <code>sumsq</code>, which I can get with <code>sum(s * s)</code> that tells R to multiply the whole <code>s</code> list by itself, and then <code>sum</code> those. The power of R is being able to do math on entire data structures like this.</p>
+<p class="indenthanging"><strong>Lines 14-15</strong> Looking at the formula, I then need the <code>sum</code> multiplied by <code>mean</code>, so I do <code>sum(s) * mean(s)</code>.</p>
+<p class="indenthanging"><strong>Lines 16-17</strong> I then combine the <code>sumsq</code> with this to get <code>sum(s * s) - sum(s) * mean(s)</code>.</p>
+<p class="indenthanging"><strong>Lines 18-19</strong> That needs to be divided by $n-1$, so I do <code>(sum(s * s) - sum(s) * mean(s)) / (length(s) - 1)</code>.</p>
+<p class="indenthanging"><strong>Lines 20-21</strong> Finally, I <code>sqrt</code> that and I get 3.547868, which matches the number R gave me for <code>sd</code> above.</p>
+<div class="heading">
+<h3 id="ch43lev1sec2">Implementation</h3>
+<p class="noindent">That&#8217;s how you calculate the <code>stddev</code>, so now I can make some simple code to implement this calculation.</p>
+</div>
+<p class="ex-caption"><code>stats.h</code></p>
+<hr/>
+<p class="codelink"><a id="p301pro01" href="ch43_images.html#p301pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef lcthw_stats_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define lcthw_stats_h</span></span><br/>
+<a id="page_302"/><br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> Stats <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> sum<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> sumsq<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> n<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> min<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> max<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> Stats<span class="EmpStrong">;</span><br/>
+<br/>
+Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Stats_recreate<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">double</span></span> sum<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> sumsq<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> n<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> min<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> max<span class="EmpStrong">);</span><br/>
+<br/>
+Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Stats_create<span class="EmpStrong">();</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">double</span></span> Stats_mean<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">double</span></span> Stats_stddev<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> Stats_sample<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> s<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> Stats_dump<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">Here you can see that I&#8217;ve put the calculations I need to store in a <code>struct</code>, and then I have functions for sampling and getting the numbers. Implementing this is then just an exercise in converting the math:</p>
+<p class="ex-caption"><code>stats.c</code></p>
+<hr/>
+<p class="codelink"><a id="p302pro01" href="ch43_images.html#p302pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;math.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/stats.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Stats_recreate<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">double</span></span> sum<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> sumsq<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> n<span class="EmpStrong">,</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> min<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> max<span class="EmpStrong">)</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>st <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>Stats<span class="EmpStrong">));</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>st<span class="EmpStrong">);</span><br/>
+&#160;11<br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">=</span></span> sum<span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq <span class="pd_brown-1"><span class="EmpStrong">=</span></span> sumsq<span class="EmpStrong">;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n <span class="pd_brown-1"><span class="EmpStrong">=</span></span> n<span class="EmpStrong">;</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min <span class="pd_brown-1"><span class="EmpStrong">=</span></span> min<span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> max<span class="EmpStrong">;</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> st<span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+<a id="page_303"/>&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Stats_create<span class="EmpStrong">()</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> Stats_recreate<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0.0</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0.0</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0L</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0.0</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0.0</span></span><span class="EmpStrong">);</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> Stats_mean<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">)</span><br/>
+&#160;30&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">/</span></span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n<span class="EmpStrong">;</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> Stats_stddev<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">)</span><br/>
+&#160;35&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> sqrt<span class="EmpStrong">((</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">/</span></span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n<span class="EmpStrong">))</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="EmpStrong"><span class="pd_blue-1">1</span>));</span><br/>
+&#160;38&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Stats_sample<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">double</span></span> s<span class="EmpStrong">)</span><br/>
+&#160;41&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> s <span class="pd_brown-1"><span class="EmpStrong">*</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min <span class="pd_brown-1"><span class="EmpStrong">=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> s<span class="EmpStrong">)</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min <span class="pd_brown-1"><span class="EmpStrong">=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> s<span class="EmpStrong">)</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> s<span class="EmpStrong">;</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;56&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Stats_dump<span class="EmpStrong">(</span>Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span> st<span class="EmpStrong">)</span><br/>
+&#160;59&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;fprintf<span class="EmpStrong">(</span>stderr<span class="EmpStrong">,</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"sum: %f, sumsq: %f, n: %ld, "</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"min: %f, max: %f, mean: %f, stddev: %f"</span>,<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum<span class="EmpStrong">,</span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq<span class="EmpStrong">,</span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n<span class="EmpStrong">,</span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min<span class="EmpStrong">,</span> st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">,</span> Stats_mean<span class="EmpStrong">(</span>st<span class="EmpStrong">),</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats_stddev<span class="EmpStrong">(</span>st<span class="EmpStrong">));</span><br/>
+&#160;65&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent"><a id="page_304"/>Here&#8217;s a breakdown of each function in <code>stats.c</code>:</p>
+<p class="indenthanging"><strong>Stats_recreate</strong> I&#8217;ll want to load these numbers from some kind of database, and this function let&#8217;s me recreate a <code>Stats</code> struct.</p>
+<p class="indenthanging"><strong>Stats_create</strong> This simply called <code>Stats_recreate</code> with all 0 (zero) values.</p>
+<p class="indenthanging"><strong>Stats_mean</strong> Using the <code>sum</code> and <code>n</code>, it gives the mean.</p>
+<p class="indenthanging"><strong>Stats_stddev</strong> This implements the formula I worked out; the only difference is that I calculate the mean with <code>st-&gt;sum / st-&gt;n</code> in this formula instead of calling <code>Stats_mean</code>.</p>
+<p class="indenthanging"><strong>Stats_sample</strong> This does the work of maintaining the numbers in the <code>Stats</code> struct. When you give it the first value, it sees that <code>n</code> is 0 and sets <code>min</code> and <code>max</code> accordingly. Every call after that keeps increasing <code>sum</code>, <code>sumsq</code>, and <code>n</code>. It then figures out if this new sample is a new <code>min</code> or <code>max</code>.</p>
+<p class="indenthanging"><strong>Stats_dump</strong> This is a simple debug function that dumps the statistics so you can view them.</p>
+<p class="noindent">The last thing I need to do is confirm that this math is correct. I&#8217;m going to use numbers and calculations from my R session to create a unit test that confirms that I&#8217;m getting the right results.</p>
+<p class="ex-caption"><code>stats_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p304pro01" href="ch43_images.html#p304pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/stats.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;math.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const int</span></span> NUM_SAMPLES <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> samples<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue-1"><span class="EmpStrong">6.1061334</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">9.6783204</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1.2747090</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">8.2395131</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0.3333483</span></span><span class="EmpStrong">,</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue-1"><span class="EmpStrong">6.9755066</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1.0626275</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">7.6587523</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">4.9382973</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">9.5788115</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;Stats expect <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>sumsq <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">425.1641</span></span><span class="EmpStrong">,</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>sum <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">55.84602</span></span><span class="EmpStrong">,</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>min <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0.333</span></span><span class="EmpStrong">,</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">9.678</span></span><span class="EmpStrong">,</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">.</span>n <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">,</span><br/>
+&#160;17&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> expect_mean <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">5.584602</span></span><span class="EmpStrong">;</span><br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> expect_stddev <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">3.547868</span></span><span class="EmpStrong">;</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define EQ(X,Y,N) (round((X) * pow(10, N)) == round((Y) * pow(10, N)))</span></span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_operations<span class="EmpStrong">()</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>st <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Stats_create<span class="EmpStrong">();</span><br/>
+<a id="page_305"/>&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create stats."</span><span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_SAMPLES<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats_sample<span class="EmpStrong">(</span>st<span class="EmpStrong">,</span> samples<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats_dump<span class="EmpStrong">(</span>st<span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>sumsq<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"sumsq not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>sum<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"sum not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>min<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"min not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>max<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"max not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>n<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"max not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>expect_mean<span class="EmpStrong">,</span> Stats_mean<span class="EmpStrong">(</span>st<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"mean not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>expect_stddev<span class="EmpStrong">,</span> Stats_stddev<span class="EmpStrong">(</span>st<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"stddev not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;46&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_recreate<span class="EmpStrong">()</span><br/>
+&#160;49&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stats <span class="pd_brown-1"><span class="EmpStrong">*</span></span>st <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Stats_recreate<span class="EmpStrong">(</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;expect<span class="EmpStrong">.</span>sum<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>sumsq<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>n<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>min<span class="EmpStrong">,</span> expect<span class="EmpStrong">.</span>max<span class="EmpStrong">);</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sum <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expect<span class="EmpStrong">.</span>sum<span class="EmpStrong">,</span> <span class="pd_green">"sum not equal"</span><span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>sumsq <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expect<span class="EmpStrong">.</span>sumsq<span class="EmpStrong">,</span> <span class="pd_green">"sumsq not equal"</span><span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>n <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expect<span class="EmpStrong">.</span>n<span class="EmpStrong">,</span> <span class="pd_green">"n not equal"</span><span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>min <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expect<span class="EmpStrong">.</span>min<span class="EmpStrong">,</span> <span class="pd_green">"min not equal"</span><span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>st<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expect<span class="EmpStrong">.</span>max<span class="EmpStrong">,</span> <span class="pd_green">"max not equal"</span><span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>expect_mean<span class="EmpStrong">,</span> Stats_mean<span class="EmpStrong">(</span>st<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span> <span class="pd_green">"mean not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>EQ<span class="EmpStrong">(</span>expect_stddev<span class="EmpStrong">,</span> Stats_stddev<span class="EmpStrong">(</span>st<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">),</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"stddev not valid"</span><span class="EmpStrong">);</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;63&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;64<br/>
+&#160;65&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;66&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;68<br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_operations<span class="EmpStrong">);</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_recreate<span class="EmpStrong">);</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;73&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent"><a id="page_306"/>There&#8217;s nothing new in this unit test, except maybe the <code>EQ</code> macro. I felt lazy and didn&#8217;t want to look up the standard way to tell if two <code>double</code> values are close, so I made this macro. The problem with <code>double</code> is that equality assumes totally equal results, but I&#8217;m using two different systems with slightly different rounding errors. The solution is to say that I want the numbers to be &#8220;equal to X decimal places.&#8221;</p>
+<p class="noindent">I do this with <code>EQ</code> by raising the number to a power of 10, then using the <code>round</code> function to get an integer. This is a simple way to round to N decimal places and compare the results as an integer. I&#8217;m sure there are a billion other ways to do the same thing, but this works for now.</p>
+<p class="noindent">The expected results are then in a <code>Stats struct</code> and I simply make sure that the number I get is close to the number R gave me.</p>
+<div class="heading">
+<h3 id="ch43lev1sec3">How to Use It</h3>
+<p class="noindent">You can use the standard deviation and mean to determine if a new sample is interesting, or you can use this to collect statistics on statistics. The first one is easy for people to understand, so I&#8217;ll explain that quickly using an example for login times.</p>
+</div>
+<p class="noindent">Imagine you&#8217;re tracking how long users spend on a server, and you&#8217;re using statistics to analyze it. Every time someone logs in, you keep track of how long they are there, then you call <code>Stats_sample</code>. I&#8217;m looking for people who are on too long and also people who seem to be on too quickly.</p>
+<p class="noindent">Instead of setting specific levels, what I&#8217;d do is compare how long someone is on with the <code>mean (plus or minus) 2 * stddev</code> range. I get the <code>mean</code> and <code>2 * stddev</code>, and consider login times to be interesting if they are outside these two ranges. Since I&#8217;m keeping these statistics using a rolling algorithm, this is a very fast calculation, and I can then have the software flag the users who are outside of this range.</p>
+<p class="noindent">This doesn&#8217;t necessarily point out people who are behaving badly, but instead it flags potential problems that you can review to see what&#8217;s going on. It&#8217;s also doing it based on the behavior of all of the users, which avoids the problem of picking some arbitrary number that&#8217;s not based on what&#8217;s really happening.</p>
+<p class="noindent">The general rule you can get from this is that the <code>mean (plus or minus) 2 * stddev</code> is an estimate of where 90% of the values are expected to fall, and anything outside that range is interesting.</p>
+<p class="noindent">The second way to use these statistics is to go meta and calculate them for other <code>Stats</code> calculations. You basically do your <code>Stats_sample</code> like normal, but then you run <code>Stats_sample</code> on the <code>min</code>, <code>max</code>, <code>n</code>, <code>mean</code>, and <code>stddev</code> on that sample. This gives a two-level measurement, and lets you compare samples of samples.</p>
+<p class="noindent"><a id="page_307"/>Confusing, right? I&#8217;ll continue my example above, but let&#8217;s say you have 100 servers that each hold a different application. You&#8217;re already tracking users&#8217; login times for each application server, but you want to compare all 100 applications and flag any users that are logging in too much on all of them. The easiest way to do that is to calculate the new login stats each time someone logs in, and then add <em>that</em> <code>Stats structs</code> element to a second <code>Stat</code>.</p>
+<p class="noindent">What you end up with is a series of statistics that can be named like this:</p>
+<p class="indenthanging"><strong>mean of means</strong> This is a full <code>Stats struct</code> that gives you <code>mean</code> and <code>stddev</code> of the means of all the servers. Any server or user who is outside of this is worth looking at on a global level.</p>
+<p class="indenthanging"><strong>mean of stddevs</strong> Another <code>Stats struct</code> that produces statistics on how <em>all</em> of the servers range. You can then analyze each server and see if any of them have unusually wide-ranging numbers by comparing their <code>stddev</code> to this <code>mean of stddevs</code> statistic.</p>
+<p class="noindent">You could do them all, but these are the most useful. If you then wanted to monitor servers for erratic login times, you&#8217;d do this:</p>
+<p class="indenthangingB">&#8226; User John logs in to and out of server A. Grab server A&#8217;s statistics and update them.</p>
+<p class="indenthangingB">&#8226; Grab the <code>mean of means</code> statistics, and then take A&#8217;s mean and add it as a sample. I&#8217;ll call this <code>m_of_m</code>.</p>
+<p class="indenthangingB">&#8226; Grab the <code>mean of stddevs</code> statistics, and add A&#8217;s stddev to it as a sample. I&#8217;ll call this <code>m_of_s</code>.</p>
+<p class="indenthangingB">&#8226; If A&#8217;s <code>mean</code> is outside of <code>m_of_m.mean + 2 * m_of_m.stddev</code>, then flag it as possibly having a problem.</p>
+<p class="indenthangingB">&#8226; If A&#8217;s <code>stddev</code> is outside of <code>m_of_s.mean + 2 * m_of_s.stddev</code>, then flag it as possibly behaving too erratically.</p>
+<p class="indenthangingB">&#8226; Finally, if John&#8217;s login time is outside of A&#8217;s range, or A&#8217;s <code>m_of_m</code> range, then flag it as interesting.</p>
+<p class="noindent">Using this mean of means and mean of stddevs calculation, you can efficiently track many metrics with a minimal amount of processing and storage.</p>
+<div class="heading">
+<h3 id="ch43lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Convert the <code>Stats_stddev</code> and <code>Stats_mean</code> to <code>static inline</code> functions in the <code>stats.h</code> file instead of in the <code>stats.c</code> file.</p>
+</div>
+<p class="indenthangingB">&#8226; Use this code to write a performance test of the <code>string_algos_test.c</code>. Make it optional, and have it run the base test as a series of samples, and then report the results.</p>
+<p class="indenthangingB"><a id="page_308"/>&#8226; Write a version of this in another programming language you know. Confirm that this version is correct based on what I have here.</p>
+<p class="indenthangingB">&#8226; Write a little program that can take a file full of numbers and spit these statistics out for them.</p>
+<p class="indenthangingB">&#8226; Make the program accept a table of data that has headers on one line, then all of the other numbers on lines after it are separated by any number of spaces. Your program should then print out these statistics for each column by the header name.<a id="page_309"/></p>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 33. Linked List Algorithms</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch33"><a id="page_190"/>Exercise 33. Linked List Algorithms</h2>
+<p class="noindent">Im going to cover two algorithms for a linked list that involve sorting. I&#8217;m going to warn you first that if you need to sort the data, then don&#8217;t use a linked list. These are horrible for sorting things, and there are much better data structures you can use if that&#8217;s a requirement. I&#8217;m covering these two algorithms because they are slightly difficult to pull off with a linked list, and to get you thinking about how to efficiently manipulate them.</p>
+<p class="noindent">In the interest of writing this book, I&#8217;m going to put the algorithms in two different files <code>list_algos.h</code> and <code>list_algos.c</code> then write a test in <code>list_algos_test.c</code>. For now, just follow my structure, since it keeps things clean, but if you ever work on other libraries, remember that this isn&#8217;t a common structure.</p>
+<p class="noindent">In this exercise, I&#8217;m also going to give you an extra challenge and I want you to try not to cheat. I&#8217;m going to give you the <em>unit test</em> first, and I want you to type it in. Then, I want you to try and implement the two algorithms based on their descriptions in Wikipedia before seeing if your code looks like my code.</p>
+<div class="heading">
+<h3 id="ch33lev1sec1">Bubble and Merge Sorts</h3>
+<p class="noindent">You know what&#8217;s awesome about the Internet? I can just refer you to the &#8220;bubble sort&#8221; and &#8220;merge sort&#8221; pages on Wikipedia and tell you to read those. Man, that saves me a boatload of typing. Now I can tell you how to actually implement each of these using the pseudo-code they have there. Here&#8217;s how you can tackle an algorithm like this:</p>
+</div>
+<p class="indenthangingB">&#8226; Read the description and look at any visualizations it has.</p>
+<p class="indenthangingB">&#8226; Either draw the algorithm on paper using boxes and lines, or actually take a deck of playing cards (or cards with numbers) and try to do the algorithm manually. This gives you a concrete demonstration of how the algorithm works.</p>
+<p class="indenthangingB">&#8226; Create the skeleton functions in your <code>list_algos.c</code> file and make a working <code>list_algos.h</code> file, then set up your test harness.</p>
+<p class="indenthangingB">&#8226; Write your first failing test and get everything to compile.</p>
+<p class="indenthangingB">&#8226; Go back to the Wikipedia page and copy-paste the pseudo-code (not the C code!) into the guts of the first function that you&#8217;re making.</p>
+<p class="indenthangingB">&#8226; Translate this pseudo-code into good C code the way I&#8217;ve taught you, using your unit test to make sure it&#8217;s working.</p>
+<p class="indenthangingB"><a id="page_191"/>&#8226; Fill out some more tests for edge cases like empty lists, already sorted lists, and the like.</p>
+<p class="indenthangingB">&#8226; Repeat this for the next algorithm and test it.</p>
+<p class="noindent">I just gave you the secret to figuring out most of the algorithms out there&#8212;until you get to some of the more insane ones, that is. In this case, you&#8217;re just doing the bubble and merge sorts from Wikipedia, but those will be good starters.</p>
+<div class="heading">
+<h3 id="ch33lev1sec2">The Unit Test</h3>
+<p class="noindent">Here is the unit test you should use for the pseudo-code:</p>
+</div>
+<p class="ex-caption"><code>list_algos_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p191pro01" href="ch33_images.html#p191pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/list_algos.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>values<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_green">"XXXX"</span><span class="EmpStrong">,</span> <span class="pd_green">"1234"</span><span class="EmpStrong">,</span> <span class="pd_green">"abcd"</span><span class="EmpStrong">,</span> <span class="pd_green">"xjvef"</span><span class="EmpStrong">,</span> <span class="pd_green">"NDSS"</span> <span class="EmpStrong">};</span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define NUM_VALUES 5</span></span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>create_words<span class="EmpStrong">()</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>words <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">();</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_VALUES<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>words<span class="EmpStrong">,</span> values<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> words<span class="EmpStrong">;</span><br/>
+&#160;20&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> is_sorted<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> words<span class="EmpStrong">)</span><br/>
+&#160;23&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;LIST_FOREACH<span class="EmpStrong">(</span>words<span class="EmpStrong">,</span> first<span class="EmpStrong">,</span> next<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> strcmp<span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">,</span> cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"%s %s"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">(char</span></span> <span class="EmpStrong">*)</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">,</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">(char</span></span> <span class="EmpStrong">*)</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;33&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;34<br/>
+&#160;35&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_bubble_sort<span class="EmpStrong">()</span><br/>
+&#160;36&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>words <span class="pd_brown-1"><span class="EmpStrong">=</span></span> create_words<span class="EmpStrong">();</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// should work on a list that needs sorting</span></span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_bubble_sort<span class="EmpStrong">(</span>words<span class="EmpStrong">, (</span>List_compare<span class="EmpStrong">)</span> strcmp<span class="EmpStrong">);</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bubble sort failed."</span><span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>words<span class="EmpStrong">),</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Words are not sorted after bubble sort."</span><span class="EmpStrong">);</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// should work on an already sorted list</span></span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_bubble_sort<span class="EmpStrong">(</span>words<span class="EmpStrong">, (</span>List_compare<span class="EmpStrong">)</span> strcmp<span class="EmpStrong">);</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bubble sort of already sorted failed."</span><span class="EmpStrong">);</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>words<span class="EmpStrong">),</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Words should be sort if already bubble sorted."</span><span class="EmpStrong">);</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>words<span class="EmpStrong">);</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// should work on an empty list</span></span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;words <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">(</span>words<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_bubble_sort<span class="EmpStrong">(</span>words<span class="EmpStrong">, (</span>List_compare<span class="EmpStrong">)</span> strcmp<span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bubble sort failed on empty list."</span><span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>words<span class="EmpStrong">),</span> <span class="pd_green">"Words should be sorted if empty."</span><span class="EmpStrong">);</span><br/>
+&#160;58<br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>words<span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;62&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;63<br/>
+&#160;64&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_merge_sort<span class="EmpStrong">()</span><br/>
+<a id="page_192"/>&#160;65&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>words <span class="pd_brown-1"><span class="EmpStrong">=</span></span> create_words<span class="EmpStrong">();</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// should work on a list that needs sorting</span></span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_merge_sort<span class="EmpStrong">(</span>words<span class="EmpStrong">, (</span>List_compare<span class="EmpStrong">)</span> strcmp<span class="EmpStrong">);</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>res<span class="EmpStrong">),</span> <span class="pd_green">"Words are not sorted after merge sort."</span><span class="EmpStrong">);</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>res2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_merge_sort<span class="EmpStrong">(</span>res<span class="EmpStrong">, (</span>List_compare<span class="EmpStrong">)</span> strcmp<span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>is_sorted<span class="EmpStrong">(</span>res<span class="EmpStrong">),</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Should still be sorted after merge sort."</span><span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>res2<span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>res<span class="EmpStrong">);</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>words<span class="EmpStrong">);</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;80&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;83&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;85<br/>
+<a id="page_193"/>&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_bubble_sort<span class="EmpStrong">);</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_merge_sort<span class="EmpStrong">);</span><br/>
+&#160;88<br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;90&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;91<br/>
+&#160;92&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">I suggest that you start with the bubble sort and get that working, and then move on to the merge sort. What I would do is lay out the function prototypes and skeletons that get all three files compiling, but not passing the test. Then, I&#8217;d just fill in the implementation until it starts working.</p>
+<div class="heading">
+<h3 id="ch33lev1sec3">The Implementation</h3>
+<p class="noindent">Are you cheating? In future exercises, I&#8217;ll just give you a unit test and tell you to implement it, so it&#8217;s good practice for you to not look at this code until you get your own working. Here&#8217;s the code for the <code>list_algos.c</code> and <code>list_algos.h</code>:</p>
+</div>
+<p class="ex-caption"><code>list_algos.h</code></p>
+<hr/>
+<p class="codelink"><a id="p193pro01" href="ch33_images.html#p193pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef lcthw_List_algos_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define lcthw_List_algos_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/list.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(<span class="pd_brown-1">*</span></span>List_compare<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">const void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> List_bubble_sort<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> List_compare cmp<span class="EmpStrong">);</span><br/>
+<br/>
+List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_merge_sort<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> List_compare cmp<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="ex-caption"><code>list_algos.c</code></p>
+<hr/>
+<p class="codelink"><a id="p193pro02" href="ch33_images.html#p193pro02a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/list_algos.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">inline void</span></span> ListNode_swap<span class="EmpStrong">(</span>ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> a<span class="EmpStrong">,</span> ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> b<span class="EmpStrong">)</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">;</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> temp<span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> List_bubble_sort<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> List_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> sorted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+<a id="page_194"/>&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// already sorted</span></span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="EmpStrong">{</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sorted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;LIST_FOREACH<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> first<span class="EmpStrong">,</span> next<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="EmpStrong">) {</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp<span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">,</span> cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode_swap<span class="EmpStrong">(</span>cur<span class="EmpStrong">,</span> cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="EmpStrong">);</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;sorted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(<span class="pd_brown-1">!</span></span>sorted<span class="EmpStrong">);</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">inline</span></span> List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_merge<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> left<span class="EmpStrong">,</span> List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> right<span class="EmpStrong">,</span> List_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;35&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">();</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>left<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> List_count<span class="EmpStrong">(</span>right<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>left<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> List_count<span class="EmpStrong">(</span>right<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp<span class="EmpStrong">(</span>List_first<span class="EmpStrong">(</span>left<span class="EmpStrong">),</span> List_first<span class="EmpStrong">(</span>right<span class="EmpStrong">))</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>left<span class="EmpStrong">);</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>right<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>result<span class="EmpStrong">,</span> val<span class="EmpStrong">);</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>left<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>left<span class="EmpStrong">);</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>result<span class="EmpStrong">,</span> val<span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>right<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>right<span class="EmpStrong">);</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>result<span class="EmpStrong">,</span> val<span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> result<span class="EmpStrong">;</span><br/>
+&#160;58&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;59<br/>
+&#160;60&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_merge_sort<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> List_compare cmp<span class="EmpStrong">)</span><br/>
+&#160;61&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> list<span class="EmpStrong">;</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;65<br/>
+<a id="page_195"/>&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>left <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">();</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>right <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">();</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> middle <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">;</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;LIST_FOREACH<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> first<span class="EmpStrong">,</span> next<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>middle <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>left<span class="EmpStrong">,</span> cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>right<span class="EmpStrong">,</span> cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;middle<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">;</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>sort_left <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_merge_sort<span class="EmpStrong">(</span>left<span class="EmpStrong">,</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>sort_right <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_merge_sort<span class="EmpStrong">(</span>right<span class="EmpStrong">,</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>sort_left <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> left<span class="EmpStrong">)</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>left<span class="EmpStrong">);</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>sort_right <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> right<span class="EmpStrong">)</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>right<span class="EmpStrong">);</span><br/>
+&#160;87<br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> List_merge<span class="EmpStrong">(</span>sort_left<span class="EmpStrong">,</span> sort_right<span class="EmpStrong">,</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;89&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">The bubble sort isn&#8217;t too hard to figure out, although it&#8217;s really slow. The merge sort is much more complicated, and honestly, I could probably spend a bit more time optimizing this code if I wanted to sacrifice clarity.</p>
+<p class="noindent">There is another way to implement a merge sort using a bottom-up method, but it&#8217;s a little harder to understand, so I didn&#8217;t do it. As I&#8217;ve already said, sorting algorithms on linked lists are entirely pointless. You could spend all day trying to make this faster and it will still be slower than almost any other sortable data structure. Simply don&#8217;t use linked lists if you need to sort things.</p>
+<div class="heading">
+<h3 id="ch33lev1sec4">What You Should See</h3>
+<p class="noindent">If everything works, then you should get something like this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 33 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p195pro01" href="ch33_images.html#p195pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make clean all<br/>
+<span class="EmpItalic">rm -rf build src/lcthw/list.o src/lcthw/list_algos.o\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">tests/list_algos_tests tests/list_tests</span><br/>
+<span class="EmpItalic">rm -f tests/tests.log</span><br/>
+<span class="EmpItalic">find . -name "*.gc*" -exec rm {} \;</span><br/>
+<span class="EmpItalic">rm -rf `find . -name "*.dSYM" -print`</span><br/>
+<a id="page_196"/><span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG&#160;&#160;-fPIC&#160;&#160;&#160;-c -o\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">src/lcthw/list.o src/lcthw/list.c</span><br/>
+<span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG&#160;&#160;-fPIC&#160;&#160;&#160;-c -o\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">src/lcthw/list_algos.o src/lcthw/list_algos.c</span><br/>
+<span class="EmpItalic">ar rcs build/liblcthw.a src/lcthw/list.o src/lcthw/list_algos.o</span><br/>
+<span class="EmpItalic">ranlib build/liblcthw.a</span><br/>
+<span class="EmpItalic">cc -shared -o build/liblcthw.so src/lcthw/list.o src/lcthw/list_algos.o</span><br/>
+<span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG&#160;&#160;build/liblcthw.a\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">tests/list_algos_tests.c&#160;&#160;&#160;&#160;-o tests/list_algos_tests</span><br/>
+<span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG&#160;&#160;build/liblcthw.a\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">tests/list_tests.c&#160;&#160;&#160;-o tests/list_tests</span><br/>
+<span class="EmpItalic">sh ./tests/runtests.sh</span><br/>
+<span class="EmpItalic">Running unit tests:</span><br/>
+<span class="EmpItalic">----</span><br/>
+<span class="EmpItalic">RUNNING: ./tests/list_algos_tests</span><br/>
+<span class="EmpItalic">ALL TESTS PASSED</span><br/>
+<span class="EmpItalic">Tests run: 2</span><br/>
+<span class="EmpItalic">tests/list_algos_tests PASS</span><br/>
+<span class="EmpItalic">----</span><br/>
+<span class="EmpItalic">RUNNING: ./tests/list_tests</span><br/>
+<span class="EmpItalic">ALL TESTS PASSED</span><br/>
+<span class="EmpItalic">Tests run: 6</span><br/>
+<span class="EmpItalic">tests/list_tests PASS</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">After this exercise, I&#8217;m not going to show you this output unless it&#8217;s necessary to show you how it works. From now on, you should know that I ran the tests and that they all passed and everything compiled.</p>
+<div class="heading">
+<h3 id="ch33lev1sec5">How to Improve It</h3>
+<p class="noindent">Going back to the description of the algorithms, there are several ways to improve these implementations. Here are a few obvious ones:</p>
+</div>
+<p class="indenthangingB">&#8226; The merge sort does a crazy amount of copying and creating lists, so find ways to reduce this.</p>
+<p class="indenthangingB">&#8226; The bubble sort description in Wikipedia mentions a few optimizations. Try to implement them.</p>
+<p class="indenthangingB">&#8226; Can you use the <code>List_split</code> and <code>List_join</code> (if you implemented them) to improve merge sort?</p>
+<p class="indenthangingB">&#8226; Go through all of the defensive programming checks and improve the robustness of this implementation, protecting against bad <code>NULL</code> pointers, and then create an optional debug level invariant that works like <code>is_sorted</code> does after a sort.</p>
+<div class="heading">
+<h3 id="ch33lev1sec6"><a id="page_197"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; Create a unit test that compares the performance of the two algorithms. You&#8217;ll want to look at <code>man 3 time</code> for a basic timer function, and run enough iterations to at least have a few seconds of samples.</p>
+</div>
+<p class="indenthangingB">&#8226; Play with the amount of data in the lists that need to be sorted and see if that changes your timing.</p>
+<p class="indenthangingB">&#8226; Find a way to simulate filling different sized random lists, measuring how long they take. Then, graph the result to see how it compares to the description of the algorithm.</p>
+<p class="indenthangingB">&#8226; Try to explain why sorting linked lists is a really bad idea.</p>
+<p class="indenthangingB">&#8226; Implement a <code>List_insert_sorted</code> that will take a given value, and using the <code>List_compare</code>, insert the element at the right position so that the list is always sorted. How does using this method compare to sorting a list after you&#8217;ve built it?</p>
+<p class="indenthangingB">&#8226; Try implementing the bottom-up merge sort described on the Wikipedia page. The code there is already C, so it should be easy to recreate, but try to understand how it&#8217;s working compared to the slower one I have here.</p>
+</body>
+</html>

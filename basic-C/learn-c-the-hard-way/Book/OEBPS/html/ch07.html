@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 7. Variables and Types</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch07"><a id="page_32"/>Exercise 7. Variables and Types</h2>
+<p class="noindent">You should be getting a grasp of how a simple C program is structured, so let&#8217;s do the next simplest thing and make some variables of different types:</p>
+<p class="ex-caption"><code>ex7.c</code></p>
+<hr/>
+<p class="codelink"><a id="p032pro01" href="ch07_images.html#p032pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span>argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> distance <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span>;</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">float</span></span> power <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2.345f</span></span>;<br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> super_power <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">56789.4532</span></span>;<br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> initial <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'A'</span><span class="EmpStrong">;</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> first_name<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Zed"</span><span class="EmpStrong">;</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> last_name<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Shaw"</span><span class="EmpStrong">;</span><br/>
+11<br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You are %d miles away.\n"</span><span class="EmpStrong">,</span> distance<span class="EmpStrong">);</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You have %f levels of power.\n"</span><span class="EmpStrong">,</span> power<span class="EmpStrong">);</span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You have %f awesome super powers.\n"</span><span class="EmpStrong">,</span> super_power<span class="EmpStrong">);</span><br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"I have an initial %c.\n"</span><span class="EmpStrong">,</span> initial<span class="EmpStrong">);</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"I have a first name %s.\n"</span><span class="EmpStrong">,</span> first_name<span class="EmpStrong">);</span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"I have a last name %s.\n"</span><span class="EmpStrong">,</span> last_name<span class="EmpStrong">);</span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"My whole name is %s %c. %s.\n"</span><span class="EmpStrong">,</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;first_name<span class="EmpStrong">,</span> initial<span class="EmpStrong">,</span> last_name<span class="EmpStrong">);</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> bugs <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span>;<br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> bug_rate <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1.2</span></span>;<br/>
+23<br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You have %d bugs at the imaginary rate of %f.\n"</span><span class="EmpStrong">,</span><br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bugs<span class="EmpStrong">,</span> bug_rate<span class="EmpStrong">);</span><br/>
+26<br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">long</span></span> universe_of_defects <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1L</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">1024L</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">1024L</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">1024L</span></span>;<br/>
+28&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"The entire universe has %ld bugs.\n"</span><span class="EmpStrong">,</span> universe_of_defects<span class="EmpStrong">);</span><br/>
+29<br/>
+30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> expected_bugs <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bugs <span class="pd_brown-1"><span class="EmpStrong">*</span></span> bug_rate<span class="EmpStrong">;</span><br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You are expected to have %f bugs.\n"</span><span class="EmpStrong">,</span> expected_bugs<span class="EmpStrong">);</span><br/>
+32<br/>
+33&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> part_of_universe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> expected_bugs <span class="pd_brown-1"><span class="EmpStrong">/</span></span> universe_of_defects<span class="EmpStrong">;</span><br/>
+34&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"That is only a %e portion of the universe.\n"</span><span class="EmpStrong">,</span><br/>
+35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;part_of_universe<span class="EmpStrong">);</span><br/>
+36<br/>
+37&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this makes no sense, just a demo of something weird</span></span><br/>
+38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> nul_byte <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span><br/>
+<a id="page_33"/>39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> care_percentage <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bugs <span class="pd_brown-1"><span class="EmpStrong">*</span></span> nul_byte<span class="EmpStrong">;</span><br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Which means you should care %d%%.\n"</span><span class="EmpStrong">,</span> care_percentage<span class="EmpStrong">);</span><br/>
+41<br/>
+42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span>;<br/>
+43&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">In this program, we&#8217;re declaring variables of different types and then printing them using different <code>printf</code> format strings. I can break it down as follows:</p>
+<p class="indenthanging"><strong>ex7.c:1-4</strong> The usual start of a C program.</p>
+<p class="indenthanging"><strong>ex7.c:5-6</strong> Declare an <code>int</code> and <code>double</code> for some fake bug data.</p>
+<p class="indenthanging"><strong>ex7.c:8-9</strong> Print out those two, so nothing new here.</p>
+<p class="indenthanging"><strong>ex7.c:11</strong> Declare a huge number using a new type, <code>long</code>, for storing big numbers.</p>
+<p class="indenthanging"><strong>ex7.c:12-13</strong> Print out that number using <code>%ld</code> that adds a modifier to the usual <code>%d</code>. Adding <code>l</code> (the letter) tells the program to print the number as a long decimal.</p>
+<p class="indenthanging"><strong>ex7.c:15-17</strong> This is just more math and printing.</p>
+<p class="indenthanging"><strong>ex7.c:19-21</strong> Craft a depiction of your bug rate compared to the bugs in the universe, which is a completely inaccurate calculation. It&#8217;s so small that we have to use <code>%e</code> to print it in scientific notation.</p>
+<p class="indenthanging"><strong>ex7.c:24</strong> Make a character, with a special syntax <code>'\0'</code> that creates a <code>nul byte</code> character. This is effectively the number 0.</p>
+<p class="indenthanging"><strong>ex7.c:25</strong> Multiply bugs by this character, which produces 0, as in how much you should care. This demonstrates an ugly hack you might see sometimes.</p>
+<p class="indenthanging"><strong>ex7.c:26-27</strong> Print that out, and notice we&#8217;ve used <code>%%</code> (two percent signs) so that we can print a % (percent) character.</p>
+<p class="indenthanging"><strong>ex7.c:28-30</strong> The end of the <code>main</code> function.</p>
+<p class="noindent">This source file demonstrates how some math works with different types of variables. At the end of the program, it also demonstrates something you see in C but not in many other languages. To C, a <em>character</em> is just an integer. It&#8217;s a really small integer, but that&#8217;s all it is. This means you can do math on them, and a lot of software does just that&#8212;for good or bad.</p>
+<p class="noindent">This last bit is your first glance at how C gives you direct access to the machine. We&#8217;ll be exploring that more in later exercises.</p>
+<div class="heading">
+<h3 id="ch07lev1sec1"><a id="page_34"/>What You Should See</h3>
+<p class="noindent">As usual, here&#8217;s what you should see for the output:</p>
+</div>
+<p class="ex-caption"><code>Exercise 7 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p034pro01" href="ch07_images.html#p034pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex7<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex7.c&#160;&#160;&#160;-o ex7</span><br/>
+<span class="pd_brown">$</span> ./ex7<br/>
+<span class="EmpItalic">You have 100 bugs at the imaginary rate of 1.200000.</span><br/>
+<span class="EmpItalic">The entire universe has 1073741824 bugs.</span><br/>
+<span class="EmpItalic">You are expected to have 120.000000 bugs.</span><br/>
+<span class="EmpItalic">That is only a 1.117587e-07 portion of the universe.</span><br/>
+<span class="EmpItalic">Which means you should care 0%.</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch07lev1sec2">How to Break It</h3>
+<p class="noindent">Again, go through this and try to break the <code>printf</code> by passing in the wrong arguments. See what happens if you try to print out the <code>nul_byte</code> variable along with <code>%s</code> versus <code>%c</code>. When you break it, run it under the debugger to see what it says about what you did.</p>
+</div>
+<div class="heading">
+<h3 id="ch07lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Make the number you assign to <code>universe_of_defects</code> various sizes until you get a warning from the compiler.</p>
+</div>
+<p class="indenthangingB">&#8226; What do these really huge numbers actually print out?</p>
+<p class="indenthangingB">&#8226; Change <code>long</code> to <code>unsigned long</code> and try to find the number that makes it too big.</p>
+<p class="indenthangingB">&#8226; Go search online to find out what <code>unsigned</code> does.</p>
+<p class="indenthangingB">&#8226; Try to explain to yourself (before I do in the next exercise) why you can multiply a <code>char</code> and an <code>int</code>.<a id="page_35"/></p>
+</body>
+</html>

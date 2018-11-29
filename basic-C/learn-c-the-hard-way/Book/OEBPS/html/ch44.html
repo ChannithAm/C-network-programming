@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 44. Ring Buffer</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch44"><a id="page_310"/>Exercise 44. Ring Buffer</h2>
+<p class="noindent">Ring buffers are incredibly useful when processing asynchronous I/O. They allow one side to receive data in random intervals of random sizes, but feed cohesive chunks to another side in set sizes or intervals. They are a variant on the <code>Queue</code> data structure but focus on blocks of bytes instead of a list of pointers. In this exercise, I&#8217;m going to show you the <code>RingBuffer</code> code, and then have you make a full unit test for it.</p>
+<p class="ex-caption"><code>ringbuffer.h</code></p>
+<hr/>
+<p class="codelink"><a id="p310pro01" href="ch44_images.html#p310pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#ifndef _lcthw_RingBuffer_h</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define _lcthw_RingBuffer_h</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> <span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>buffer<span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> length<span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> start<span class="EmpStrong">;</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> end<span class="EmpStrong">;</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">}</span> RingBuffer<span class="EmpStrong">;</span><br/>
+&#160;12<br/>
+&#160;13&#160;&#160;&#160;RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RingBuffer_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> length<span class="EmpStrong">);</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> RingBuffer_destroy<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">);</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_read<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>target<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> amount<span class="EmpStrong">);</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_write<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> length<span class="EmpStrong">);</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_empty<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">);</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_full<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">);</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_available_data<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">);</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_available_space<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">);</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;bstring RingBuffer_gets<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> amount<span class="EmpStrong">);</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_available_data(B) (\</span></span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">((B)-&gt;end + 1) % (B)-&gt;length - (B)-&gt;start - 1)</span></span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_available_space(B) (\</span></span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B)-&gt;length - (B)-&gt;end - 1)</span></span><br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_full(B) (RingBuffer_available_data((B))\</span></span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">- (B)-&gt;length == 0)</span></span><br/>
+<a id="page_311"/>&#160;39<br/>
+&#160;40&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_empty(B) (\</span></span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">RingBuffer_available_data((B)) == 0)</span></span><br/>
+&#160;42<br/>
+&#160;43&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_puts(B, D) RingBuffer_write(\</span></span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B), bdata((D)), blength((D)))</span></span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_get_all(B) RingBuffer_gets(\</span></span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B), RingBuffer_available_data((B)))</span></span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_starts_at(B) (\</span></span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B)-&gt;buffer + (B)-&gt;start)</span></span><br/>
+&#160;51<br/>
+&#160;52&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_ends_at(B) (\</span></span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B)-&gt;buffer + (B)-&gt;end)</span></span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_commit_read(B, A) (\</span></span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B)-&gt;start = ((B)-&gt;start + (A)) % (B)-&gt;length)</span></span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RingBuffer_commit_write(B, A) (\</span></span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">(B)-&gt;end = ((B)-&gt;end + (A)) % (B)-&gt;length)</span></span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">Looking at the data structure, you see I have a <code>buffer</code>, <code>start</code>, and <code>end</code>. A <code>RingBuffer</code> does nothing more than move the <code>start</code> and <code>end</code> around the buffer so that it loops whenever it reaches the buffer&#8217;s end. Doing this gives the illusion of an infinite read device in a small space. I then have a bunch of macros that do various calculations based on this.</p>
+<p class="noindent">Here&#8217;s the implementation, which is a much better explanation of how this works.</p>
+<p class="ex-caption"><code>ringbuffer.c</code></p>
+<hr/>
+<p class="codelink"><a id="p311pro01" href="ch44_images.html#p311pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#undef NDEBUG</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/ringbuffer.h&gt;</span></span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span>RingBuffer_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> length<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span>buffer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>RingBuffer<span class="EmpStrong">));</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>length <span class="pd_brown-1"><span class="EmpStrong">=</span></span> length <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buffer <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span>buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>length<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> buffer<span class="EmpStrong">;</span><br/>
+&#160;18&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_312"/>&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> RingBuffer_destroy<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">)</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>buffer<span class="EmpStrong">) {</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buffer<span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>buffer<span class="EmpStrong">);</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;27<br/>
+&#160;28&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_write<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> length<span class="EmpStrong">)</span><br/>
+&#160;29&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>length <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> RingBuffer_available_space<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Not enough space: %d request, %d available"</span><span class="EmpStrong">,</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> length<span class="EmpStrong">);</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> memcpy<span class="EmpStrong">(</span>RingBuffer_ends_at<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> data<span class="EmpStrong">,</span> length<span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to write data into buffer."</span><span class="EmpStrong">);</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_commit_write<span class="EmpStrong">(</span>buffer<span class="EmpStrong">,</span> length<span class="EmpStrong">);</span><br/>
+&#160;42<br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> length<span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;46&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> RingBuffer_read<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>target<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> amount<span class="EmpStrong">)</span><br/>
+&#160;49&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>amount <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Not enough in the buffer: has %d, needs %d"</span><span class="EmpStrong">,</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> amount<span class="EmpStrong">);</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> memcpy<span class="EmpStrong">(</span>target<span class="EmpStrong">,</span> RingBuffer_starts_at<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> amount<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to write buffer into data."</span><span class="EmpStrong">);</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_commit_read<span class="EmpStrong">(</span>buffer<span class="EmpStrong">,</span> amount<span class="EmpStrong">);</span><br/>
+&#160;58<br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">==</span></span> buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>start<span class="EmpStrong">) {</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> buffer<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> amount<span class="EmpStrong">;</span><br/>
+&#160;64&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;66&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;bstring RingBuffer_gets<span class="EmpStrong">(</span>RingBuffer <span class="pd_brown-1"><span class="EmpStrong">*</span></span> buffer<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> amount<span class="EmpStrong">)</span><br/>
+<a id="page_313"/>&#160;69&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>amount <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Need more than 0 for gets, you gave: %d "</span><span class="EmpStrong">,</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;amount<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>amount <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Not enough in the buffer."</span><span class="EmpStrong">);</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blk2bstr<span class="EmpStrong">(</span>RingBuffer_starts_at<span class="EmpStrong">(</span>buffer<span class="EmpStrong">),</span> amount<span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create gets result."</span><span class="EmpStrong">);</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>blength<span class="EmpStrong">(</span>result<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> amount<span class="EmpStrong">,</span> <span class="pd_green">"Wrong result length."</span><span class="EmpStrong">);</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;RingBuffer_commit_read<span class="EmpStrong">(</span>buffer<span class="EmpStrong">,</span> amount<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>RingBuffer_available_data<span class="EmpStrong">(</span>buffer<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Error in read commit."</span><span class="EmpStrong">);</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> result<span class="EmpStrong">;</span><br/>
+&#160;84&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;86&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">This is all there is to a basic <code>RingBuffer</code> implementation. You can read and write blocks of data to it. You can ask how much is in it and how much space it has. There are some fancier ring buffers that use tricks on the OS to create an imaginary infinite store, but those aren&#8217;t portable.</p>
+<p class="noindent">Since my <code>RingBuffer</code> deals with reading and writing blocks of memory, I&#8217;m making sure that any time <code>end == start</code>, I reset them to 0 (zero) so that they go to the beginning of the buffer. In the Wikipedia version it isn&#8217;t writing blocks of data, so it only has to move <code>end</code> and <code>start</code> around in a circle. To better handle blocks, you have to drop to the beginning of the internal buffer whenever the data is empty.</p>
+<div class="heading">
+<h3 id="ch44lev1sec1">The Unit Test</h3>
+<p class="noindent">For your unit test, you&#8217;ll want to test as many possible conditions as you can. The easiest way to do that is to preconstruct different <code>RingBuffer</code> structs, and then manually check that the functions and math work right. For example, you could make one where <code>end</code> is right at the end of the buffer and <code>start</code> is right before the buffer, and then see how it fails.</p>
+</div>
+<div class="heading">
+<h3 id="ch44lev1sec2">What You Should See</h3>
+<p class="noindent">Here&#8217;s my <code>ringbuffer_tests</code> run:</p>
+</div>
+<p class="ex-caption"><code>Exercise 44.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p313pro01" href="ch44_images.html#p313pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> ./tests/ringbuffer_tests<br/>
+<span class="EmpItalic">DEBUG tests/ringbuffer_tests.c:60: ----- RUNNING: ./tests/ringbuffer_tests</span><br/>
+<span class="EmpItalic">----</span><br/>
+<span class="EmpItalic">RUNNING: ./tests/ringbuffer_tests</span><br/>
+<a id="page_314"/><span class="EmpItalic">DEBUG tests/ringbuffer_tests.c:53:</span><br/>
+<span class="EmpItalic">----- test_create</span><br/>
+<span class="EmpItalic">DEBUG tests/ringbuffer_tests.c:54:</span><br/>
+<span class="EmpItalic">----- test_read_write</span><br/>
+<span class="EmpItalic">DEBUG tests/ringbuffer_tests.c:55:</span><br/>
+<span class="EmpItalic">----- test_destroy</span><br/>
+<span class="EmpItalic">ALL TESTS PASSED</span><br/>
+<span class="EmpItalic">Tests run: 3</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">You should have at least three tests that confirm all of the basic operations, and then see how much more you can test beyond what I&#8217;ve done.</p>
+<div class="heading">
+<h3 id="ch44lev1sec3">How to Improve It</h3>
+<p class="noindent">As usual, you should go back and add defensive programming checks to this exercise. Hopefully you&#8217;ve been doing this, because the base code in most of <code>liblcthw</code> doesn&#8217;t have the common defensive programming checks that I&#8217;m teaching you. I leave this to you so that you can get used to improving code with these extra checks.</p>
+</div>
+<p class="noindent">For example, in this ring buffer, there&#8217;s not a lot of checking that an access will actually be inside the buffer.</p>
+<p class="noindent">If you read the &#8220;Circular buffer&#8221; page on Wikipedia, you&#8217;ll see the &#8220;Optimized POSIX implementation&#8221; that uses Portable Operating System Interface (POSIX)-specific calls to create an infinite space. Study that and I&#8217;ll have you try it in the Extra Credit section.</p>
+<div class="heading">
+<h3 id="ch44lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Create an alternative implementation of <code>RingBuffer</code> that uses the POSIX trick and then create a unit test for it.</p>
+</div>
+<p class="indenthangingB">&#8226; Add a performance comparison test to this unit test that compares the two versions by fuzzing them with random data and random read/write operations. Make sure that you set up this fuzzing so that the same operations are done to each version, and you can compare them between runs.<a id="page_315"/></p>
+</body>
+</html>

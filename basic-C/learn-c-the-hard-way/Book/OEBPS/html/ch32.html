@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 32. Double Linked Lists</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch32"><a id="page_178"/>Exercise 32. Double Linked Lists</h2>
+<p class="noindent">The purpose of this book is to teach you how your computer really works, and included in that is how various data structures and algorithms function. Computers by themselves don&#8217;t do a lot of useful processing. To make them do useful things, you need to structure the data and then organize the processing of these structures. Other programming languages either include libraries that implement all of these structures, or they have direct syntax for them. C makes you implement all of the data structures that you need yourself, which makes it the perfect language to learn how they actually work.</p>
+<p class="noindent">My goal is to help you do three things:</p>
+<p class="indenthangingB">&#8226; Understand what&#8217;s really going on in Python, Ruby, or JavaScript code like this: <code>data = {"name": "Zed"}</code></p>
+<p class="indenthangingB">&#8226; Get even better at C code by using data structures to apply what you know to a set of solved problems.</p>
+<p class="indenthangingB">&#8226; Learn a core set of data structures and algorithms so that you are better informed about what works best in certain situations.</p>
+<div class="heading">
+<h3 id="ch32lev1sec1">What Are Data Structures</h3>
+<p class="noindent">The name <em>data structure</em> is self-explanatory. It&#8217;s an organization of data that fits a certain model. Maybe the model is designed to allow processing the data in a new way. Maybe it&#8217;s just organized to store it on disk efficiently. In this book, I&#8217;ll follow a simple pattern for making data structures that work reliably:</p>
+</div>
+<p class="indenthangingB">&#8226; Define a structure for the main outer structure.</p>
+<p class="indenthangingB">&#8226; Define a structure for the contents, usually nodes with links between them.</p>
+<p class="indenthangingB">&#8226; Create functions that operate on these two structures.</p>
+<p class="noindent">There are other styles of data structures in C, but this pattern works well and is consistent for making most data structures.</p>
+<div class="heading">
+<h3 id="ch32lev1sec2">Making the Library</h3>
+<p class="noindent">For the rest of this book, you&#8217;ll be creating a library that you can use when you&#8217;re done. This library will have the following elements:</p>
+</div>
+<p class="indenthangingB">&#8226; Header (.h) files for each data structure.</p>
+<p class="indenthangingB">&#8226; Implementation (.c) files for the algorithms.</p>
+<p class="indenthangingB"><a id="page_179"/>&#8226; Unit tests that test all of them to make sure they keep working.</p>
+<p class="indenthangingB">&#8226; Documentation that we&#8217;ll auto-generate from the header files.</p>
+<p class="noindent">You already have the <code>c-skeleton</code>, so use it to create a <code>liblcthw</code> project:</p>
+<p class="ex-caption"><code>Exercise 32 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p179pro01" href="ch32_images.html#p179pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> cp -r c-skeleton liblcthw<br/>
+<span class="pd_brown">$</span> <span class="pd_blue">cd</span> liblcthw/<br/>
+<span class="pd_brown">$</span> ls<br/>
+<span class="EmpItalic">LICENSE&#160;&#160;&#160;&#160;&#160;Makefile&#160;&#160;&#160;&#160;&#160;&#160;&#160;README.md&#160;&#160;&#160;&#160;&#160;bin&#160;&#160;&#160;&#160;build&#160;&#160;&#160;src&#160;&#160;&#160;tests</span><br/>
+<span class="pd_brown">$</span> vim Makefile<br/>
+<span class="pd_brown">$</span> ls src/<br/>
+<span class="EmpItalic">dbg.h&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;libex29.c&#160;&#160;&#160;&#160;&#160;&#160;&#160;libex29.o</span><br/>
+<span class="pd_brown">$</span> mkdir src/lcthw<br/>
+<span class="pd_brown">$</span> mv src/dbg.h src/lcthw<br/>
+<span class="pd_brown">$</span> vim tests/minunit.h<br/>
+<span class="pd_brown">$</span> rm src/libex29.* tests/libex29*<br/>
+<span class="pd_brown">$</span> make clean<br/>
+<span class="EmpItalic">rm -rf build tests/libex29_tests</span><br/>
+<span class="EmpItalic">rm -f tests/tests.log</span><br/>
+<span class="EmpItalic">find . -name "*.gc*" -exec rm {} \;</span><br/>
+<span class="EmpItalic">rm -rf `find . -name "*.dSYM" -print`</span><br/>
+<span class="pd_brown">$</span> ls tests/<br/>
+<span class="EmpItalic">minunit.h runtests.sh</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">In this session I do the following:</p>
+<p class="indenthangingB">&#8226; Copy the <code>c-skeleton</code> over.</p>
+<p class="indenthangingB">&#8226; Edit the <code>Makefile</code> to change <code>libYOUR_LIBRARY.a</code> to <code>liblcthw.a</code> as the new <code>TARGET</code>.</p>
+<p class="indenthangingB">&#8226; Make the <code>src/lcthw</code> directory, where we&#8217;ll put our code.</p>
+<p class="indenthangingB">&#8226; Move the <code>src/dbg.h</code> into this new directory.</p>
+<p class="indenthangingB">&#8226; Edit <code>tests/minunit.h</code> so that it uses <code>#include &lt;lcthw/dbg.h&gt;</code> as the include.</p>
+<p class="indenthangingB">&#8226; Get rid of the source and test files that we don&#8217;t need for <code>libex29.*</code>.</p>
+<p class="indenthangingB">&#8226; Clean up everything that&#8217;s left over.</p>
+<p class="noindent">Now that you&#8217;re ready to start building the library, the first data structure that I&#8217;ll build is the doubly linked list.</p>
+<div class="heading">
+<h3 id="ch32lev1sec3">Doubly Linked Lists</h3>
+<p class="noindent">The first data structure that we&#8217;ll add to <code>liblcthw</code> is a doubly linked list. This is the simplest data structure you can make, and it has useful properties for certain operations. A linked list works by nodes having pointers to their next or previous element. A doubly linked list contains pointers to both, while a singly linked list only points at the next element.</p>
+</div>
+<p class="noindent"><a id="page_180"/>Because each node has pointers to the next and previous elements, and because you keep track of the first and last elements of the list, you can do some operations very quickly with doubly linked lists. Anything that involves inserting or deleting an element will be very fast. They&#8217;re also easy to implement by most programmers.</p>
+<p class="noindent">The main disadvantage of a linked list is that traversing it involves processing every single pointer along the way. This means that searching, most sorting, and iterating over the elements will be slow. It also means that you can&#8217;t really jump to random parts of the list. If you had an array of elements, you could just index right into the middle of the list, but a linked list uses a stream of pointers. That means if you want the tenth element, you have to go through the first nine elements.</p>
+<div class="heading">
+<h4 id="ch32lev2sec1">Definition</h4>
+<p class="noindent">As I said in the introduction to this exercise, first write a header file with the right C structure statements in it.</p>
+</div>
+<p class="ex-caption"><code>list.h</code></p>
+<hr/>
+<p class="codelink"><a id="p180pro01" href="ch32_images.html#p180pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef lcthw_List_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define lcthw_List_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">struct</span></span> ListNode<span class="EmpStrong">;</span><br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> ListNode <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>next<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>prev<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> ListNode<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> List <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>first<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>last<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> List<span class="EmpStrong">;</span><br/>
+<br/>
+List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_create<span class="EmpStrong">();</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> List_destroy<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> List_clear<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> List_clear_destroy<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define List_count(A) ((A)-&gt;count)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define List_first(A) ((A)-&gt;first != NULL ? (A)-&gt;first-&gt;value : NULL)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define List_last(A) ((A)-&gt;last != NULL ? (A)-&gt;last-&gt;value : NULL)</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> List_push<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_pop<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_181"/><span class="pd_blue"><span class="EmpStrong">void</span></span> List_unshift<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_shift<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_remove<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define LIST_FOREACH(L, S, M, V) ListNode *_node = NULL;\</span></span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">ListNode *V = NULL;\</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">for(V = _node = L-&gt;S; _node != NULL; V = _node = _node-&gt;M)</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">The first thing I do is create two structures for the <code>ListNode</code> and the <code>List</code> that will contain those nodes. This creates the data structure, which I&#8217;ll use in the functions and macros that I define after that. If you read these functions, you&#8217;ll see that they&#8217;re rather simple. I&#8217;ll be explaining them when I cover the implementation, but hopefully you can guess what they do.</p>
+<p class="noindent">Each <code>ListNode</code> has three components within the data structure:</p>
+<p class="indenthangingB">&#8226; A value, which is a pointer to anything, and stores the thing we want to put in the list.</p>
+<p class="indenthangingB">&#8226; A <code>ListNode *next</code> pointer, which points at another ListNode that holds the next element in the list.</p>
+<p class="indenthangingB">&#8226; A <code>ListNode *prev</code> that holds the previous element. Complex, right? Calling the previous thing &#8220;previous.&#8221; I could have used &#8220;anterior&#8221; and &#8220;posterior,&#8221; but only a jerk would do that.</p>
+<p class="noindent">The <code>List</code> struct is then nothing more than a container for these <code>ListNode</code> structs that have been linked together in a chain. It keeps track of the <code>count</code>, <code>first</code>, and <code>last</code> elements of the list.</p>
+<p class="noindent">Finally, take a look at <code>src/lcthw/list.h:37</code> where I define the <code>LIST_FOREACH</code> macro. This is a common programming idiom where you make a macro that generates iteration code so people can&#8217;t mess it up. Getting this kind of processing right can be difficult with data structures, so writing macros helps people out. You&#8217;ll see how I use this when I talk about the implementation.</p>
+<div class="heading">
+<h4 id="ch32lev2sec2">Implementation</h4>
+<p class="noindent">You should mostly understand how a doubly linked list works. It&#8217;s nothing more than nodes with two pointers to the next and previous elements of the list. You can then write the <code>src/lcthw /list.c</code> code to see how each operation is implemented.</p>
+</div>
+<p class="ex-caption"><code>list.c</code></p>
+<hr/>
+<p class="codelink"><a id="p181pro01" href="ch32_images.html#p181pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/list.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_create<span class="EmpStrong">()</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+<a id="page_182"/>&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>List<span class="EmpStrong">));</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> List_destroy<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;LIST_FOREACH<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> first<span class="EmpStrong">,</span> next<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev<span class="EmpStrong">) {</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev<span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">);</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> List_clear<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">)</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;LIST_FOREACH<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> first<span class="EmpStrong">,</span> next<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;27<br/>
+&#160;28&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> List_clear_destroy<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">)</span><br/>
+&#160;29&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_clear<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_destroy<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> List_push<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">)</span><br/>
+&#160;35&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>ListNode<span class="EmpStrong">));</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> value<span class="EmpStrong">;</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev <span class="pd_brown-1"><span class="EmpStrong">=</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;51<br/>
+&#160;52&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span><span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+<a id="page_183"/>&#160;56&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_pop<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">)</span><br/>
+&#160;57&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> List_remove<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> node<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">:</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> List_unshift<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">)</span><br/>
+&#160;63&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>ListNode<span class="EmpStrong">));</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;66<br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> value<span class="EmpStrong">;</span><br/>
+&#160;68<br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next <span class="pd_brown-1"><span class="EmpStrong">=</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="EmpStrong">;</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span><span class="EmpStrong">;</span><br/>
+&#160;82&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;83<br/>
+&#160;84&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_shift<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">)</span><br/>
+&#160;85&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="EmpStrong">;</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> List_remove<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> node<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">:</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;88&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;89<br/>
+&#160;90&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>List_remove<span class="EmpStrong">(</span>List <span class="pd_brown-1"><span class="EmpStrong">*</span></span> list<span class="EmpStrong">,</span> ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;91&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">,</span> <span class="pd_green">"List is empty."</span><span class="EmpStrong">);</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> <span class="pd_green">"node can't be NULL"</span><span class="EmpStrong">);</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">) {</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="EmpStrong">) {</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="EmpStrong">;</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Invalid list, somehow got a first that is NULL."</span><span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+<a id="page_184"/>105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="EmpStrong">) {</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev<span class="EmpStrong">;</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Invalid list, somehow got a next that is NULL."</span><span class="EmpStrong">);</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>last<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>after <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="EmpStrong">;</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;ListNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>before <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev<span class="EmpStrong">;</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;after<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>prev <span class="pd_brown-1"><span class="EmpStrong">=</span></span> before<span class="EmpStrong">;</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;before<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next <span class="pd_brown-1"><span class="EmpStrong">=</span></span> after<span class="EmpStrong">;</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>count<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">;</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">;</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+120<br/>
+121&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> result<span class="EmpStrong">;</span><br/>
+123&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">I then implement all of the operations on a doubly linked list that can&#8217;t be done with simple macros. Rather than cover every tiny, little line of this file, I&#8217;m going to give a high-level overview of every operation in both the <code>list.h</code> and <code>list.c</code> files, and then leave you to read the code.</p>
+<p class="indenthanging"><strong>list.h:List_count</strong> Returns the number of elements in the list, which is maintained as elements are added and removed.</p>
+<p class="indenthanging"><strong>list.h:List_first</strong> Returns the first element of the list, but doesn&#8217;t remove it.</p>
+<p class="indenthanging"><strong>list.h:List_last</strong> Returns the last element of the list, but doesn&#8217;t remove it.</p>
+<p class="indenthanging"><strong>list.h:LIST_FOREACH</strong> Iterates over the elements in the list.</p>
+<p class="indenthanging"><strong>list.c:List_create</strong> Simply creates the main <code>List</code> struct.</p>
+<p class="indenthanging"><strong>list.c:List_destroy</strong> Destroys a <code>List</code> and any elements it might have.</p>
+<p class="indenthanging"><strong>list.c:List_clear</strong> A convenient function for freeing the <em>values</em> in each node, not the nodes.</p>
+<p class="indenthanging"><strong>list.c:List_clear_destroy</strong> Clears and destroys a list. It&#8217;s not very efficient since it loops through them twice.</p>
+<p class="indenthanging"><strong>list.c:List_push</strong> The first operation that demonstrates the advantage of a linked list. It adds a new element to the end of the list, and because that&#8217;s just a couple of pointer assignments, it does it very fast.</p>
+<p class="indenthanging"><strong>list.c:List_pop</strong> The inverse of <code>List_push</code>, this takes the last element off and returns it.</p>
+<p class="indenthanging"><strong>list.c:List_unshift</strong> The other thing you can easily do to a linked list is add elements to the <em>front</em> of the list very quickly. In this case, I call that <code>List_unshift</code> for lack of a better term.</p>
+<p class="indenthanging"><a id="page_185"/><strong>list.c:List_shift</strong> Just like <code>List_pop</code>, this removes the first element and returns it.</p>
+<p class="indenthanging"><strong>list.c:List_remove</strong> This is actually doing all of the removal when you do <code>List_pop</code> or <code>List_ shift</code>. Something that seems to always be difficult in data structures is removing things, and this function is no different. It has to handle quite a few conditions depending on if the element being removed is at the front, the end, both the front and the end, or the middle.</p>
+<p class="noindent">Most of these functions are nothing special, and you should be able to easily digest this and understand it from just the code. You should definitely focus on how the <code>LIST_FOREACH</code> macro is used in <code>List_destroy</code> so that you can understand how much it simplifies this common operation.</p>
+<div class="heading">
+<h3 id="ch32lev1sec4">Tests</h3>
+<p class="noindent">After you have those compiling, it&#8217;s time to create the test that makes sure they operate correctly.</p>
+</div>
+<p class="ex-caption"><code>list_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p185pro01" href="ch32_images.html#p185pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/list.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static</span></span> List <span class="pd_brown-1"><span class="EmpStrong">*</span></span>list <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"test1 data"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"test2 data"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"test3 data"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;list <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_create<span class="EmpStrong">();</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>list <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create list."</span><span class="EmpStrong">);</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_clear_destroy<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_push_pop<span class="EmpStrong">()</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test1<span class="EmpStrong">);</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_last<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong last value."</span><span class="EmpStrong">);</span><br/>
+&#160;30<br/>
+<a id="page_186"/>&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test2<span class="EmpStrong">);</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_last<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong last value"</span><span class="EmpStrong">);</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_push<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test3<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_last<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong last value."</span><span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count on push."</span><span class="EmpStrong">);</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_pop<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value on pop."</span><span class="EmpStrong">);</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_pop<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value on pop."</span><span class="EmpStrong">);</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_pop<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value on pop."</span><span class="EmpStrong">);</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count after pop."</span><span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_unshift<span class="EmpStrong">()</span><br/>
+&#160;52&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_unshift<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test1<span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_first<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong first value."</span><span class="EmpStrong">);</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_unshift<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test2<span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_first<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong first value"</span><span class="EmpStrong">);</span><br/>
+&#160;58<br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;List_unshift<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> test3<span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_first<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong last value."</span><span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count on unshift."</span><span class="EmpStrong">);</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;64&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_remove<span class="EmpStrong">()</span><br/>
+&#160;67&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// we only need to test the middle remove case since push/shift</span></span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// already tests the other cases</span></span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_remove<span class="EmpStrong">(</span>list<span class="EmpStrong">,</span> list<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>first<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>next<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong removed element."</span><span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count after remove."</span><span class="EmpStrong">);</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_first<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong first after remove."</span><span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_last<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong last after remove."</span><span class="EmpStrong">);</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;78&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_shift<span class="EmpStrong">()</span><br/>
+<a id="page_187"/>&#160;81&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count before shift."</span><span class="EmpStrong">);</span><br/>
+&#160;83<br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value on shift."</span><span class="EmpStrong">);</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> List_shift<span class="EmpStrong">(</span>list<span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> test1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value on shift."</span><span class="EmpStrong">);</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>List_count<span class="EmpStrong">(</span>list<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count after shift."</span><span class="EmpStrong">);</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;92&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;95&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;97<br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_push_pop<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_unshift<span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_remove<span class="EmpStrong">);</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_shift<span class="EmpStrong">);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+106&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+107<br/>
+108&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">This test simply goes through every operation and makes sure it works. I use a simplification in the test where I create just one <code>List *list</code> for the whole program, and then have the tests work on it. This saves the trouble of building a <code>List</code> for every test, but it could mean that some tests only pass because of how the previous test ran. In this case, I try to make each test keep the list clear or actually use the results from the previous test.</p>
+<div class="heading">
+<h3 id="ch32lev1sec5">What You Should See</h3>
+<p class="noindent">If you did everything right, then when you do a build and run the unit tests, it should look like this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 32.build Session</code></p>
+<hr/>
+<p class="codelink"><a id="p187pro01" href="ch32_images.html#p187pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make<br/>
+<span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG -fPIC&#160;&#160;&#160;-c -o\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">src/lcthw/list.o src/lcthw/list.c</span><br/>
+<span class="EmpItalic">ar rcs build/liblcthw.a src/lcthw/list.o</span><br/>
+<span class="EmpItalic">ranlib build/liblcthw.a</span><br/>
+<span class="EmpItalic">cc -shared -o build/liblcthw.so src/lcthw/list.o</span><br/>
+<span class="EmpItalic">cc -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG&#160;&#160;build/liblcthw.a</span><br/>
+<a id="page_188"/>&#160;&#160;&#160;&#160;<span class="EmpItalic">tests/list_tests.c&#160;&#160;&#160;-o tests/list_tests</span><br/>
+<span class="EmpItalic">sh ./tests/runtests.sh</span><br/>
+<span class="EmpItalic">Running unit tests:</span><br/>
+<span class="EmpItalic">----</span><br/>
+<span class="EmpItalic">RUNNING: ./tests/list_tests</span><br/>
+<span class="EmpItalic">ALL TESTS PASSED</span><br/>
+<span class="EmpItalic">Tests run: 6</span><br/>
+<span class="EmpItalic">tests/list_tests PASS</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">Make sure six tests ran, it builds without warnings or errors, and it&#8217;s making the <code>build /liblcthw.a</code> and <code>build/liblcthw.so</code> files.</p>
+<div class="heading">
+<h3 id="ch32lev1sec6">How to Improve It</h3>
+<p class="noindent">Instead of breaking this, I&#8217;m going to tell you how to improve the code:</p>
+</div>
+<p class="indenthangingB">&#8226; You can make <code>List_clear_destroy</code> more efficient by using <code>LIST_FOREACH</code> and doing both <code>free</code> calls inside one loop.</p>
+<p class="indenthangingB">&#8226; You can add asserts for preconditions so that the program isn&#8217;t given a <code>NULL</code> value for the <code>List *list</code> parameters.</p>
+<p class="indenthangingB">&#8226; You can add invariants that check that the list&#8217;s contents are always correct, such as <code>count</code> is never <code>&lt; 0</code>, and if <code>count &gt; 0</code>, then <code>first</code> isn&#8217;t NULL.</p>
+<p class="indenthangingB">&#8226; You can add documentation to the header file in the form of comments before each struct, function, and macro that describes what it does.</p>
+<p class="noindent">These improvements speak to the defensive programming practices I talked about earlier, hardening this code against flaws and improving usability. Go ahead and do these things, and then find as many other ways to improve the code as you can.</p>
+<div class="heading">
+<h3 id="ch32lev1sec7">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Research doubly versus singly linked lists and when one is preferred over the other.</p>
+</div>
+<p class="indenthangingB">&#8226; Research the limitations of a doubly linked list. For example, while they are efficient for inserting and deleting elements, they are very slow for iterating over them all.</p>
+<p class="indenthangingB">&#8226; What operations are missing that you can imagine needing? Some examples are copying, joining, and splitting. Implement these operations and write the unit tests for them.<a id="page_189"/></p>
+</body>
+</html>

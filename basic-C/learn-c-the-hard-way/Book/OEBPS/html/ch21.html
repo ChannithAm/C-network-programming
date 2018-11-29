@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 21. Advanced Data Types and Flow Control</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch21"><a id="page_104"/>Exercise 21. Advanced Data Types and Flow Control</h2>
+<p class="noindent">This exercise will be a complete compendium of the available C data types and flow control structures you can use. It will work as a reference to complete your knowledge, and won&#8217;t have any code for you to enter. I&#8217;ll have you memorize some of the information by creating flash cards so you can get the important concepts solid in your mind.</p>
+<p class="noindent">For this exercise to be useful, you should spend at least a week hammering in the content and filling out all of the elements that are missing here. You&#8217;ll be writing out what each one means, and then writing a program to confirm what you&#8217;ve researched.</p>
+<div class="heading">
+<h3 id="ch21lev1sec1">Available Data Types</h3>
+<div class="image"><img src="graphics/104tab01.jpg" alt="Image"/></div>
+</div>
+<div class="heading">
+<h4 id="ch21lev2sec1">Type Modifiers</h4>
+<div class="image"><img src="graphics/104tab02.jpg" alt="Image"/></div>
+</div>
+<div class="heading">
+<h4 id="ch21lev2sec2"><a id="page_105"/>Type Qualifiers</h4>
+<div class="image"><img src="graphics/105tab01.jpg" alt="Image"/></div>
+</div>
+<div class="heading">
+<h4 id="ch21lev2sec3">Type Conversion</h4>
+<p class="noindent">C uses a sort of stepped type promotion mechanism, where it looks at two operands on either side of an expression, and promotes the smaller side to match the larger side before doing the operation. If one side of an expression is on this list, then the other side is converted to that type before the operation is done. It goes in this order:</p>
+</div>
+<p class="indenthangingN"><strong>1.</strong> <code>long double</code></p>
+<p class="indenthangingN"><strong>2.</strong> <code>double</code></p>
+<p class="indenthangingN"><strong>3.</strong> <code>float</code></p>
+<p class="indenthangingN"><strong>4.</strong> <code>int</code> (but only <code>char</code> and <code>short int</code>);</p>
+<p class="indenthangingN"><strong>5.</strong> <code>long</code></p>
+<p class="noindent">If you find yourself trying to figure out how your conversions are working in an expression, then don&#8217;t leave it to the compiler. Use explicit casting operations to make it exactly what you want. For example, if you have</p>
+<p class="codelink"><a id="p105pro01" href="ch21_images.html#p105pro01a">Click here to view code image</a></p>
+<p class="pre">long + char - int * double</p>
+<p class="noindent">Rather than trying to figure out if it will be converted to double correctly, just use casts:</p>
+<p class="codelink"><a id="p105pro02" href="ch21_images.html#p105pro02a">Click here to view code image</a></p>
+<p class="pre">(double)long - (double)char - (double)int * double</p>
+<p class="noindent">Putting the type you want in parentheses before the variable name is how you force it into the type you really need. The important thing, though, is <em>always promote up, not down</em>. Don&#8217;t cast <code>long</code> into <code>char</code> unless you know what you&#8217;re doing.</p>
+<div class="heading">
+<h4 id="ch21lev2sec4"><a id="page_106"/>Type Sizes</h4>
+<p class="noindent">The <code>stdint.h</code> defines both a set of <code>typdefs</code> for exact-sized integer types, as well as a set of macros for the sizes of all the types. This is easier to work with than the older <code>limits.h</code> since it is consistent. Here are the types defined:</p>
+</div>
+<div class="image"><img src="graphics/106tab01.jpg" alt="Image"/></div>
+<p class="noindent">The pattern here is in the form (u)int(<em>BITS</em>)_t where a <em>u</em> is put in front to indicate &#8220;unsigned,&#8221; and <em>BITS</em> is a number for the number of bits. This pattern is then repeated for macros that return the maximum values of these types:</p>
+<p class="indenthanging"><code>INT(N)_MAX</code> Maximum positive number of the signed integer of bits <em>(N)</em>, such as <code>INT16_MAX</code>.</p>
+<p class="indenthanging"><code>INT(N)_MIN</code> Minimum negative number of signed integer of bits <em>(N)</em>.</p>
+<p class="indenthanging"><code>UINT(N)_MAX</code> Maximum positive number of unsigned integer of bits <em>(N)</em>. Since it&#8217;s unsigned, the minimum is 0 and it can&#8217;t have a negative value.</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">Pay attention! Don&#8217;t go looking for a literal <code>INT(N)_MAX</code> definition in any header file. I&#8217;m using the <code>(N)</code> as a placeholder for any number of bits your platform currently supports. This <code>(N)</code> could be any number&#8212;8, 16, 32, 64, maybe even 128. I use this notation in this exercise so that I don&#8217;t have to literally write out every possible combination.</p>
+<hr/></div>
+<p class="noindent"><a id="page_107"/>There are also macros in <code>stdint.h</code> for sizes of the <code>size_t</code> type, integers large enough to hold pointers, and other handy size defining macros. Compilers have to at least have these, and then they can allow other, larger types.</p>
+<p class="noindent">Here is a full list that should be in <code>stdint.h</code>:</p>
+<div class="image"><img src="graphics/107tab01.jpg" alt="Image"/></div>
+<div class="heading">
+<h3 id="ch21lev1sec2"><a id="page_108"/>Available Operators</h3>
+<p class="noindent">This is a comprehensive list of all the operators in the C language. In this list, I&#8217;m indicating the following:</p>
+</div>
+<div class="image"><img src="graphics/108tab01.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec5">Math Operators</h4>
+<p class="noindent">These perform your basic math operations, plus I include <code>()</code> since it calls a function and is close to a math operation.</p>
+</div>
+<div class="image"><img src="graphics/108tab02.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec6"><a id="page_109"/>Data Operators</h4>
+<p class="noindent">These are used to access data in different ways and forms.</p>
+</div>
+<div class="image"><img src="graphics/109tab01.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec7">Logic Operators</h4>
+<p class="noindent">These handle testing equality and inequality of variables.</p>
+</div>
+<div class="image"><img src="graphics/109tab02.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec8">Bit Operators</h4>
+<p class="noindent">These are more advanced and are for shifting and modifying the raw bits in integers.</p>
+</div>
+<div class="image"><img src="graphics/109tab03.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec9"><a id="page_110"/>Boolean Operators</h4>
+<p class="noindent">These are used in truth testing. Study the ternary operator carefully. It&#8217;s very handy.</p>
+</div>
+<div class="image"><img src="graphics/110tab01.jpg" alt="Image"/></div>
+<div class="heading">
+<h4 id="ch21lev2sec10">Assignment Operators</h4>
+<p class="noindent">Here are compound assignment operators that assign a value, and/or perform an operation at the same time. Most of the above operations can also be combined into a compound assignment operator.</p>
+</div>
+<div class="image"><img src="graphics/110tab02.jpg" alt="Image"/></div>
+<div class="heading">
+<h3 id="ch21lev1sec3">Available Control Structures</h3>
+<p class="noindent">There are a few control structures that you haven&#8217;t encountered yet.</p>
+</div>
+<p class="indenthanging"><strong>do-while</strong> <code>do { ... } while(X);</code> First does the code in the block, then tests the <code>X</code> expression before exiting.</p>
+<p class="indenthanging"><strong>break</strong> Puts a break in a loop, ending it early.</p>
+<p class="indenthanging"><a id="page_111"/><strong>continue</strong> Stops the body of a loop and jumps to the test so it can continue.</p>
+<p class="indenthanging"><strong>goto</strong> Jumps to a spot in the code where you&#8217;ve placed a <code>label:</code>, and you&#8217;ve been using this in the <code>dbg.h</code> macros to go to the <code>error:</code> label.</p>
+<div class="heading">
+<h3 id="ch21lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Read <code>stdint.h</code> or a description of it, and write out all the available size identifiers.</p>
+</div>
+<p class="indenthangingB">&#8226; Go through each item here and write out what it does in code. Research it online so you know you got it right.</p>
+<p class="indenthangingB">&#8226; Get this information memorized by making flash cards and spending 15 minutes a day practicing it.</p>
+<p class="indenthangingB">&#8226; Create a program that prints out examples of each type, and confirm that your research is right.</p>
+</body>
+</html>

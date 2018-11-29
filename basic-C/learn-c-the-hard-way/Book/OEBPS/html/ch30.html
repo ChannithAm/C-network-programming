@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 30. Automated Testing</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch30"><a id="page_166"/>Exercise 30. Automated Testing</h2>
+<p class="noindent">Automated testing is used frequently in other languages like Python and Ruby, but rarely used in C. Part of the reason comes from the difficulty of automatically loading and testing pieces of C code. In this chapter, we&#8217;ll create a very small testing framework and get your skeleton directory to build an example test case.</p>
+<p class="noindent">The framework I&#8217;m going to use, and you&#8217;ll include in your <code>c-skeleton</code> skeleton, is called <em>minunit</em> which started with a tiny snippet of code by Jera Design. I evolved it further, to be this:</p>
+<p class="ex-caption"><code>minunit.h</code></p>
+<hr/>
+<p class="codelink"><a id="p166pro01" href="ch30_images.html#p166pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#undef NDEBUG</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#ifndef _minunit_h</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define _minunit_h</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;dbg.h&gt;</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define mu_suite_start() char *message = NULL</span></span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define mu_assert(test, message) if (!(test)) {\</span></span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">log_err(message); return message; }</span></span><br/>
+&#160;13&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define mu_run_test(test) debug("\n-----%s", " " #test); \</span></span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">message = test(); tests_run++; if (message) return message;</span></span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define RUN_TESTS(name) int main(int argc, char *argv[]) {\</span></span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">argc = 1; \</span></span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">debug("----- RUNNING: %s", argv[0]);\</span></span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">printf("----\nRUNNING: %s\n", argv[0]);\</span></span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">char *result = name();\</span></span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">if (result != 0) {\</span></span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">printf("FAILED: %s\n", result);\</span></span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">}\</span></span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">else {\</span></span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">printf("ALL TESTS PASSED\n");\</span></span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">}\</span></span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">printf("Tests run: %d\n", tests_run);\</span></span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">exit(result != 0);\</span></span><br/>
+&#160;29&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">}</span></span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> tests_run<span class="EmpStrong">;</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent"><a id="page_167"/>There&#8217;s practically nothing left of the original, since now I&#8217;m using the <code>dbg.h</code> macros and a large macro that I created at the end for the boilerplate test runner. Even with this tiny amount of code, we&#8217;ll create a fully functioning unit test system that you can use in your C code once it&#8217;s combined with a shell script to run the tests.</p>
+<div class="heading">
+<h3 id="ch30lev1sec1">Wiring Up the Test Framework</h3>
+<p class="noindent">To continue this exercise, you should have your <code>src/libex29.c</code> working. You should have also completed the <a href="ch29.html#ch29">Exercise 29</a> Extra Credit to get the <code>ex29.c</code> loader program to properly run. In <a href="ch29.html#ch29">Exercise 29</a>, I ask you to make it work like a unit test, but I&#8217;m going to start over and show you how to do that with <code>minunit.h</code>.</p>
+</div>
+<p class="noindent">The first thing to do is create a simple empty unit test name, <code>tests/libex29_tests.c</code> with this in it:</p>
+<p class="ex-caption"><code>ex30.c</code></p>
+<hr/>
+<p class="codelink"><a id="p167pro01" href="ch30_images.html#p167pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2<br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_dlopen<span class="EmpStrong">()</span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_functions<span class="EmpStrong">()</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11<br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_failures<span class="EmpStrong">()</span><br/>
+&#160;16&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_dlclose<span class="EmpStrong">()</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;28&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_dlopen<span class="EmpStrong">);</span><br/>
+<a id="page_168"/>&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_functions<span class="EmpStrong">);</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_failures<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_dlclose<span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">This code is demonstrating the <code>RUN_TESTS</code> macro in <code>tests/minunit.h</code> and how to use the other test runner macros. I have the actual test functions stubbed out so that you can see how to structure a unit test. I&#8217;ll break this file down first:</p>
+<p class="indenthanging"><strong>libex29_tests.c:1</strong> This includes the <code>minunit.h</code> framework.</p>
+<p class="indenthanging"><strong>libex29_tests.c:3-7</strong> A first test. Tests are structured so that they take no arguments and return a <code>char *</code> that&#8217;s <code>NULL</code> on <em>success</em>. This is important because the other macros will be used to return an error message to the test runner.</p>
+<p class="indenthanging"><strong>libex29_tests.c:9-25</strong> These are more tests that are the same as the first.</p>
+<p class="indenthanging"><strong>libex29_tests.c:27</strong> The runner function that will control all of the other tests. It has the same form as any other test case, but it gets configured with some additional gear.</p>
+<p class="indenthanging"><strong>libex29_tests.c:28</strong> This sets up some common stuff for a test with <code>mu_suite_start</code>.</p>
+<p class="indenthanging"><strong>libex29_tests.c:30</strong> This is how you say what tests to run, using the <code>mu_run_test</code> macro.</p>
+<p class="indenthanging"><strong>libex29_tests.c:35</strong> After you say what tests to run, you then return <code>NULL</code> just like a normal test function.</p>
+<p class="indenthanging"><strong>libex29_tests.c:38</strong> Finally, you just use the big <code>RUN_TESTS</code> macro to wire up the <code>main</code> method with all of the goodies, and tell it to run the <code>all_tests</code> starter.</p>
+<p class="noindent">That&#8217;s all there is to running a test, and now you should try getting just this to run within the project skeleton. Here&#8217;s what it looks like when I do it:</p>
+<p class="ex-caption"><code>Exercise 30 Session</code></p>
+<hr/>
+<p class="pre"><span class="EmpItalic">not printable</span></p>
+<p class="noindent">I first did a <code>make clean</code> and then I ran the build, which remade the template <code>libYOUR_LIBRARY. a</code> and <code>libYOUR_LIBRARY.so</code> files. Remember that you did this in the Extra Credit for <a href="ch29.html#ch29">Exercise 29</a>, but just in case you didn&#8217;t get it, here&#8217;s the <code>diff</code> for the <code>Makefile</code> I&#8217;m using now:</p>
+<p class="ex-caption"><code>ex30.Makefile.diff</code></p>
+<hr/>
+<p class="codelink"><a id="p168pro01" href="ch30_images.html#p168pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_blue"><span class="EmpStrong">diff --git a/code/c-skeleton/Makefile b/code/c-skeleton/Makefile</span></span><br/>
+<span class="pd_blue"><span class="EmpStrong">index 135d538..21b92bf 100644</span></span><br/>
+<span class="pd_a30000">--- a/code/c-skeleton/Makefile</span><br/>
+<span class="pd_green-1">+++ b/code/c-skeleton/Makefile</span><br/>
+<a id="page_169"/><span class="pd_purple"><span class="EmpStrong">@@ -9,9 +9,10 @@ TEST_SRC=$(wildcard tests/*_tests.c)</span></span><br/>
+&#160;TESTS=$(patsubst %.c,%,$(TEST_SRC))<br/>
+<br/>
+&#160;TARGET=build/libYOUR_LIBRARY.a<br/>
+<span class="pd_green-1">+SO_TARGET=$(patsubst %.a,%.so,$(TARGET))</span><br/>
+<br/>
+&#160;# The Target Build<br/>
+<span class="pd_a30000">-all: $(TARGET) tests</span><br/>
+<span class="pd_green-1">+all: $(TARGET) $(SO_TARGET) tests</span><br/>
+<br/>
+&#160;dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)<br/>
+&#160;dev: all<br/>
+<span class="pd_purple"><span class="EmpStrong">@@ -21,6 +22,9 @@ $(TARGET): build $(OBJECTS)</span></span><br/>
+&#160;&#160;&#160;&#160;ar rcs $@ $(OBJECTS)<br/>
+&#160;&#160;&#160;&#160;ranlib $@<br/>
+<br/>
+<span class="pd_green-1">+$(SO_TARGET): $(TARGET) $(OBJECTS)</span><br/>
+<span class="pd_green-1">+ $(CC) -shared -o $@ $(OBJECTS)</span><br/>
+<span class="pd_green-1">+</span><br/>
+&#160;build:<br/>
+&#160;&#160;&#160;&#160;@mkdir -p build<br/>
+&#160;&#160;&#160;&#160;@mkdir -p bin</p>
+<p class="noindent">With those changes you should now be building everything and finally be able to fill in the remaining unit test functions:</p>
+<p class="ex-caption"><code>libex29_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p169pro01" href="ch30_images.html#p169pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;dlfcn.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="pd_brown-1"><span class="EmpStrong">(*</span></span>lib_function<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>lib_file <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"build/libYOUR_LIBRARY.so"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>lib <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> check_function<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>func_to_run<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">,</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> expected<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;lib_function func <span class="pd_brown-1"><span class="EmpStrong">=</span></span> dlsym<span class="EmpStrong">(</span>lib<span class="EmpStrong">,</span> func_to_run<span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>func <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Did not find %s function in the library %s: %s"</span><span class="EmpStrong">,</span> func_to_run,<br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;lib_file, dlerror<span class="EmpStrong">());</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> func<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> expected<span class="EmpStrong">,</span> <span class="pd_green">"Function %s return %d for data: %s"</span><span class="EmpStrong">,</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;func_to_run<span class="EmpStrong">,</span> rc, data<span class="EmpStrong">);</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;23&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_dlopen<span class="EmpStrong">()</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+<a id="page_170"/>&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;lib <span class="pd_brown-1"><span class="EmpStrong">=</span></span> dlopen<span class="EmpStrong">(</span>lib_file<span class="EmpStrong">,</span> RTLD_NOW<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>lib <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to open the library to test."</span><span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_functions<span class="EmpStrong">()</span><br/>
+&#160;34&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_function<span class="EmpStrong">(</span><span class="pd_green">"print_a_message"</span><span class="EmpStrong">,</span> <span class="pd_green">"Hello"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">),</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"print_a_message failed."</span><span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_function<span class="EmpStrong">(</span><span class="pd_green">"uppercase"</span><span class="EmpStrong">,</span> <span class="pd_green">"Hello"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">),</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"uppercase failed."</span><span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_function<span class="EmpStrong">(</span><span class="pd_green">"lowercase"</span><span class="EmpStrong">,</span> <span class="pd_green">"Hello"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">),</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"lowercase failed."</span><span class="EmpStrong">);</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_failures<span class="EmpStrong">()</span><br/>
+&#160;46&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>check_function<span class="EmpStrong">(</span><span class="pd_green">"fail_on_purpose"</span><span class="EmpStrong">,</span> <span class="pd_green">"Hello"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">),</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"fail_on_purpose should fail."</span><span class="EmpStrong">);</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_dlclose<span class="EmpStrong">()</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> dlclose<span class="EmpStrong">(</span>lib<span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to close lib."</span><span class="EmpStrong">);</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;62&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;64<br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_dlopen<span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_functions<span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_failures<span class="EmpStrong">);</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_dlclose<span class="EmpStrong">);</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;71&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;72<br/>
+&#160;73&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">Hopefully by now you can figure out what&#8217;s going on, since there&#8217;s nothing new in this except for the <code>check_function</code> function. This is a common pattern where I use a chunk of code repeatedly, <a id="page_171"/>and then simply automate it by either creating a function or a macro for it. In this case, I&#8217;m going to run functions in the <code>.so</code> that I load, so I just made a little function to do it.</p>
+<div class="heading">
+<h3 id="ch30lev1sec2">Extra Credit</h3>
+<p class="indenthangingB">&#8226; This works but it&#8217;s probably a bit messy. Clean the <code>c-skeleton</code> directory up so that it has all of these files, but remove any of the code related to <a href="ch29.html#ch29">Exercise 29</a>. You should be able to copy this directory over and kick-start new projects without much editing.</p>
+</div>
+<p class="indenthangingB">&#8226; Study the <code>runtests.sh</code>, and then go read about <code>bash</code> syntax so you know what it does. Do you think you could write a C version of this script?</p>
+</body>
+</html>

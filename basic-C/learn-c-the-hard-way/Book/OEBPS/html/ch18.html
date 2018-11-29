@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 18. Pointers to Functions</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch18"><a id="page_84"/>Exercise 18. Pointers to Functions</h2>
+<p class="noindent">Functions in C are actually just pointers to a spot in the program where some code exists. Just like you&#8217;ve been creating pointers to structs, strings, and arrays, you can point a pointer at a function, too. The main use for this is to pass callbacks to other functions, or to simulate classes and objects. In this exercise, we&#8217;ll do some callbacks, and in the next exercise, we&#8217;ll make a simple object system.</p>
+<p class="noindent">The format of a function pointer looks like this:</p>
+<p class="codelink"><a id="p084pro01" href="ch18_images.html#p084pro01a">Click here to view code image</a></p>
+<p class="pre">int (*POINTER_NAME)(int a, int b)</p>
+<p class="noindent">A way to remember how to write one is to do this:</p>
+<p class="indenthangingB">&#8226; Write a normal function declaration: <code>int callme(int a, int b)</code></p>
+<p class="indenthangingB">&#8226; Wrap the function name with the pointer syntax: <code>int (*callme)(int a, int b)</code></p>
+<p class="indenthangingB">&#8226; Change the name to the pointer name: <code>int (*compare_cb)(int a, int b)</code></p>
+<p class="noindent">The key thing to remember is that when you&#8217;re done with this, the <em>variable</em> name for the pointer is called <em>compare_cb</em> and you use it just like it&#8217;s a function. This is similar to how pointers to arrays can be used just like the arrays they point to. Pointers to functions can be used like the functions they point to but with a different name.</p>
+<p class="codelink"><a id="p084pro02" href="ch18_images.html#p084pro02a">Click here to view code image</a></p>
+<p class="pre">int (*tester)(int a, int b) = sorted_order;<br/>
+printf("TEST: %d is same as %d\n", tester(2, 3), sorted_order(2, 3));</p>
+<p class="noindent">This will work even if the function pointer returns a pointer to something:</p>
+<p class="indenthangingB">&#8226; Write it: <code>char *make_coolness(int awesome_levels)</code></p>
+<p class="indenthangingB">&#8226; Wrap it: <code>char *(*make_coolness)(int awesome_levels)</code></p>
+<p class="indenthangingB">&#8226; Rename it: <code>char *(*coolness_cb)(int awesome_levels)</code></p>
+<p class="noindent">The next problem to solve with using function pointers is that it&#8217;s hard to give them as parameters to a function, such as when you want to pass the function callback to another function. The solution is to use <code>typedef</code>, which is a C keyword for making new names for other, more complex types.</p>
+<p class="noindent"><a id="page_85"/>The only thing you need to do is put <code>typedef</code> before the same function pointer syntax, and then after that you can use the name like it&#8217;s a type. I demonstrate this in the following exercise code:</p>
+<p class="ex-caption"><code>ex18.c</code></p>
+<hr/>
+<p class="codelink"><a id="p085pro01" href="ch18_images.html#p085pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;errno.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/** Our old friend die from ex17. */</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> die<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>message<span class="EmpStrong">)</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>errno<span class="EmpStrong">) {</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;perror<span class="EmpStrong">(</span>message<span class="EmpStrong">);</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"ERROR: %s\n"</span><span class="EmpStrong">,</span> message<span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;exit<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// a typedef creates a fake type, in this</span></span><br/>
+&#160;19&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// case for a function pointer</span></span><br/>
+&#160;20&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="pd_brown-1"><span class="EmpStrong">(*</span></span>compare_cb<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">int</span></span> a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> b<span class="EmpStrong">);</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/**</span></span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* A classic bubble sort function that uses the</span></span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* compare_cb to do the sorting.</span></span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;26&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bubble_sort<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>numbers<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> count<span class="EmpStrong">,</span> compare_cb cmp<span class="EmpStrong">)</span><br/>
+&#160;27&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>target <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span>count <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">));</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>target<span class="EmpStrong">)</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;die<span class="EmpStrong">(</span><span class="pd_green">"Memory error."</span><span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;memcpy<span class="EmpStrong">(</span>target<span class="EmpStrong">,</span> numbers<span class="EmpStrong">,</span> count <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">));</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> j <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> j<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp<span class="EmpStrong">(</span>target<span class="EmpStrong">[</span>j<span class="EmpStrong">],</span> target<span class="EmpStrong">[</span>j <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">])</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> target<span class="EmpStrong">[</span>j <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">];</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;target<span class="EmpStrong">[</span>j <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> target<span class="EmpStrong">[</span>j<span class="EmpStrong">];</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;target<span class="EmpStrong">[</span>j<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> temp<span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_86"/>&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> target<span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> sorted_order<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> b<span class="EmpStrong">)</span><br/>
+&#160;52&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> a <span class="pd_brown-1"><span class="EmpStrong">-</span></span> b<span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> reverse_order<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> b<span class="EmpStrong">)</span><br/>
+&#160;57&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> b <span class="pd_brown-1"><span class="EmpStrong">-</span></span> a<span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> strange_order<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> b<span class="EmpStrong">)</span><br/>
+&#160;62&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>a <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> b <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> a <span class="pd_brown-1"><span class="EmpStrong">%</span></span> b<span class="EmpStrong">;</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;68&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/**</span></span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* Used to test that we are sorting things correctly</span></span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* by doing the sort and printing it out.</span></span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;74&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> test_sorting<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>numbers<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> count<span class="EmpStrong">,</span> compare_cb cmp<span class="EmpStrong">)</span><br/>
+&#160;75&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>sorted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bubble_sort<span class="EmpStrong">(</span>numbers<span class="EmpStrong">,</span> count<span class="EmpStrong">,</span> cmp<span class="EmpStrong">);</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>sorted<span class="EmpStrong">)</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;die<span class="EmpStrong">(</span><span class="pd_green">"Failed to sort as requested."</span><span class="EmpStrong">);</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d "</span><span class="EmpStrong">,</span> sorted<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\n"</span><span class="EmpStrong">);</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>sorted<span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;89<br/>
+&#160;90&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;91&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">)</span> die<span class="EmpStrong">(</span><span class="pd_green">"USAGE: ex18 4 3 1 5 6"</span><span class="EmpStrong">);</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> argc <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>inputs <span class="pd_brown-1"><span class="EmpStrong">=</span></span> argv <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+<a id="page_87"/>&#160;97<br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>numbers <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span>count <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">));</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>numbers<span class="EmpStrong">)</span> die<span class="EmpStrong">(</span><span class="pd_green">"Memory error."</span><span class="EmpStrong">);</span><br/>
+100<br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> atoi<span class="EmpStrong">(</span>inputs<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_sorting<span class="EmpStrong">(</span>numbers<span class="EmpStrong">,</span> count<span class="EmpStrong">,</span> sorted_order<span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_sorting<span class="EmpStrong">(</span>numbers<span class="EmpStrong">,</span> count<span class="EmpStrong">,</span> reverse_order<span class="EmpStrong">);</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;test_sorting<span class="EmpStrong">(</span>numbers<span class="EmpStrong">,</span> count<span class="EmpStrong">,</span> strange_order<span class="EmpStrong">);</span><br/>
+108<br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>numbers<span class="EmpStrong">);</span><br/>
+110<br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+112&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">In this program, you&#8217;re creating a dynamic sorting algorithm that can sort an array of integers using a comparison callback. Here&#8217;s the breakdown of this program, so you can clearly understand it:</p>
+<p class="indenthanging"><strong>ex18.c:1-6</strong> The usual includes that are needed for all of the functions that we call.</p>
+<p class="indenthanging"><strong>ex18.c:7-17</strong> This is the <code>die</code> function from the previous exercise that I&#8217;ll use to do error checking.</p>
+<p class="indenthanging"><strong>ex18.c:21</strong> This is where the <code>typedef</code> is used, and later I use <code>compare_cb</code> like it&#8217;s a type similar to <code>int</code> or <code>char</code> in <code>bubble_sort</code> and <code>test_sorting</code>.</p>
+<p class="indenthanging"><strong>ex18.c:27-49</strong> A bubble sort implementation, which is a very inefficient way to sort some integers. Here&#8217;s a breakdown:</p>
+<p class="indenthanging1"><strong>ex18.c:27</strong> I use the <code>typedef</code> for <code>compare_cb</code> as the last parameter <code>cmp</code>. This is now a function that will return a comparison between two integers for sorting.</p>
+<p class="indenthanging1"><strong>ex18.c:29-34</strong> The usual creation of variables on the stack, followed by a new array of integers on the heap using <code>malloc</code>. Make sure you understand what <code>count * sizeof(int)</code> is doing.</p>
+<p class="indenthanging1"><strong>ex18.c:38</strong> The outer loop of the bubble sort.</p>
+<p class="indenthanging1"><strong>ex18.c:39</strong> The inner loop of the bubble sort.</p>
+<p class="indenthanging1"><strong>ex18.c:40</strong> Now I call the <code>cmp</code> callback just like it&#8217;s a normal function, but instead of being the name of something that we defined, it&#8217;s just a pointer to it. This lets the caller pass in anything it wants as long as it matches the signature of the <code>compare_cb typedef</code>.</p>
+<p class="indenthanging1"><strong>ex18.c:41-43</strong> The actual swapping operation where a bubble sort needs to do what it does.</p>
+<p class="indenthanging1"><strong>ex18.c:48</strong> Finally, this returns the newly created and sorted result array <code>target</code>.</p>
+<p class="indenthanging"><a id="page_88"/><strong>ex18.c:51-68</strong> Three different versions of the <code>compare_cb</code> function type, which needs to have the same definition as the <code>typedef</code> that we created. The C compiler will complain to you if you get this wrong and say the types don&#8217;t match.</p>
+<p class="indenthanging"><strong>ex18.c:74-87</strong> This is a tester for the <code>bubble_sort</code> function. You can see now how I&#8217;m also using <code>compare_cb</code> to pass to <code>bubble_sort</code>, demonstrating how these can be passed around like any other pointers.</p>
+<p class="indenthanging"><strong>ex18.c:90-103</strong> A simple main function that sets up an array based on integers to pass on the command line, and then it calls the <code>test_sorting</code> function.</p>
+<p class="indenthanging"><strong>ex18.c:105-107</strong> Finally, you get to see how the <code>compare_cb</code> function pointer <code>typedef</code> is used. I simply call <code>test_sorting</code> but give it the name of <code>sorted_order</code>, <code>reverse_order</code>, and <code>strange_order</code> as the function to use. The C compiler then finds the address of those functions, and makes it a pointer for <code>test_sorting</code> to use. If you look at <code>test_sorting</code>, you&#8217;ll see that it then passes each of these to <code>bubble_sort</code>, but it actually has no idea what they do. The compiler only knows that they match the <code>compare_cb</code> prototype and should work.</p>
+<p class="indenthanging"><strong>ex18.c:109</strong> Last thing we do is free up the array of numbers that we made.</p>
+<div class="heading">
+<h3 id="ch18lev1sec1">What You Should See</h3>
+<p class="noindent">Running this program is simple, but you should try different combinations of numbers, or even other characters, to see what it does.</p>
+</div>
+<p class="ex-caption"><code>Exercise 18 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p088pro01" href="ch18_images.html#p088pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex18<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex18.c&#160;&#160;&#160;-o ex18</span><br/>
+<span class="pd_brown">$</span> ./ex18 <span class="pd_blue-1"><span class="EmpStrong">4 1 7 3 2 0</span></span> 8<br/>
+<span class="EmpItalic">0 1 2 3 4 7 8</span><br/>
+<span class="EmpItalic">8 7 4 3 2 1 0</span><br/>
+<span class="EmpItalic">3 4 2 7 1 0 8</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch18lev1sec2">How to Break It</h3>
+<p class="noindent">I&#8217;m going to have you do something kind of weird to break this. These function pointers are like every other pointer, so they point at blocks of memory. C has this ability to take one pointer and convert it to another so you can process the data in different ways. It&#8217;s usually not necessary, but to show you how to hack your computer, I want you to add this at the end of <code>test_sorting</code>:</p>
+</div>
+<p class="codelink"><a id="p088pro02" href="ch18_images.html#p088pro02a">Click here to view code image</a></p>
+<p class="pre">unsigned char *data = (unsigned char *)cmp;<br/>
+<br/>
+for(i = 0; i &lt; 25; i++)&#160;&#160;{<br/>
+<a id="page_89"/>&#160;&#160;&#160;&#160;&#160;printf("%02x:", data[i]);<br/>
+}<br/>
+<br/>
+printf("\n");</p>
+<p class="noindent">This loop is sort of like converting your function to a string, and then printing out its contents. This won&#8217;t break your program unless the CPU and OS you&#8217;re on has a problem with you doing this. What you&#8217;ll see after it prints the sorted array is a string of hexadecimal numbers, like this:</p>
+<p class="codelink"><a id="p089pro01" href="ch18_images.html#p089pro01a">Click here to view code image</a></p>
+<p class="pre">55:48:89:e5:89:7d:fc:89:75:f8:8b:55:fc:8b:45:</p>
+<p class="noindent">That should be the raw assembler byte code of the function itself, and you should see that they start the same but then have different endings. It&#8217;s also possible that this loop isn&#8217;t getting all of the function, or it&#8217;s getting too much and stomping on another piece of the program. Without more analysis you won&#8217;t know.</p>
+<div class="heading">
+<h3 id="ch18lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Get a hex editor and open up <code>ex18</code>, and then find the sequence of hex digits that start a function to see if you can find the function in the raw program.</p>
+</div>
+<p class="indenthangingB">&#8226; Find other random things in your hex editor and change them. Rerun your program and see what happens. Strings you find are the easiest things to change.</p>
+<p class="indenthangingB">&#8226; Pass in the wrong function for the <code>compare_cb</code> and see what the C compiler complains about.</p>
+<p class="indenthangingB">&#8226; Pass in NULL and watch your program seriously bite it. Then, run the debugger and see what that reports.</p>
+<p class="indenthangingB">&#8226; Write another sorting algorithm, then change <code>test_sorting</code> so that it takes <em>both</em> an arbitrary sort function and the sort function&#8217;s callback comparison. Use it to test both of your algorithms.</p>
+</body>
+</html>

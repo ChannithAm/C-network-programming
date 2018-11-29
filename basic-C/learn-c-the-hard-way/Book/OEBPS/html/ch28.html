@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 28. Intermediate Makefiles</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch28"><a id="page_152"/>Exercise 28. Intermediate Makefiles</h2>
+<p class="noindent">In the next three exercises you&#8217;ll create a skeleton project directory to use in building your C programs later. This skeleton directory will be used for the rest of the book. In this exercise, I&#8217;ll cover just the <code>Makefile</code> so you can understand it.</p>
+<p class="noindent">The purpose of this structure is to make it easy to build medium-sized programs without having to resort to configure tools. If done right, you can get very far with just GNU make and some small shell scripts.</p>
+<div class="heading">
+<h3 id="ch28lev1sec1">The Basic Project Structure</h3>
+<p class="noindent">The first thing to do is make a <code>c-skeleton</code> directory, and then put a set of basic files and directories in it that many projects have. Here&#8217;s my starter:</p>
+</div>
+<p class="ex-caption"><code>Exercise 28 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p152pro01" href="ch28_images.html#p152pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> mkdir c-skeleton<br/>
+<span class="pd_brown">$</span> <span class="pd_blue">cd</span> c-skeleton/<br/>
+<span class="pd_brown">$</span> touch LICENSE README.md Makefile<br/>
+<span class="pd_brown">$</span> mkdir bin src tests<br/>
+<span class="pd_brown">$</span> cp dbg.h src/&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># this is from Ex19</span></span><br/>
+<span class="pd_brown">$</span> ls -l<br/>
+<span class="EmpItalic">total 8</span><br/>
+<span class="EmpItalic">-rw-r--r--&#160;&#160;1 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;&#160;&#160;0&#160;&#160;Mar 31 16:38 LICENSE</span><br/>
+<span class="EmpItalic">-rw-r--r--&#160;&#160;1 zedshaw&#160;&#160;&#160;staff&#160;&#160;1168&#160;&#160;Apr&#160;&#160;1 17:00 Makefile</span><br/>
+<span class="EmpItalic">-rw-r--r--&#160;&#160;1 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;&#160;&#160;0&#160;&#160;Mar 31 16:38 README.md</span><br/>
+<span class="EmpItalic">drwxr-xr-x&#160;&#160;2 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;&#160;68&#160;&#160;Mar 31 16:38 bin</span><br/>
+<span class="EmpItalic">drwxr-xr-x&#160;&#160;2 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;&#160;68&#160;&#160;Apr&#160;&#160;1 10:07 build</span><br/>
+<span class="EmpItalic">drwxr-xr-x&#160;&#160;3 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;102&#160;&#160;Apr&#160;&#160;3 16:28 src</span><br/>
+<span class="EmpItalic">drwxr-xr-x&#160;&#160;2 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;&#160;68&#160;&#160;Mar 31 16:38 tests</span><br/>
+<span class="pd_brown">$</span> ls -l src<br/>
+<span class="EmpItalic">total 8</span><br/>
+<span class="EmpItalic">-rw-r--r--&#160;&#160;1 zedshaw&#160;&#160;&#160;staff&#160;&#160;&#160;982&#160;&#160;Apr&#160;&#160;3 16:28 dbg.h</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">At the end you see me do a <code>ls -l</code> so that you can see the final results.</p>
+<p class="noindent">Here&#8217;s a breakdown:</p>
+<p class="indenthanging"><strong>LICENSE</strong> If you release the source of your projects, you&#8217;ll want to include a license. If you don&#8217;t, though, the code is copyright by you and nobody else has rights to it by default.</p>
+<p class="indenthanging"><strong>README.md</strong> Basic instructions for using your project go here. It ends in <code>.md</code> so that it will be interpreted as markdown.</p>
+<p class="indenthanging"><a id="page_153"/><strong>Makefile</strong> The main build file for the project.</p>
+<p class="indenthanging"><strong>bin/</strong> Where programs that users can run go. This is usually empty, and the <code>Makefile</code> will create it if it&#8217;s not there.</p>
+<p class="indenthanging"><strong>build/</strong> Where libraries and other build artifacts go. Also empty, and the <code>Makefile</code> will create it if it&#8217;s not there.</p>
+<p class="indenthanging"><strong>src/</strong> Where the source code goes, usually <code>.c</code> and <code>.h</code> files.</p>
+<p class="indenthanging"><strong>tests/</strong> Where automated tests go.</p>
+<p class="indenthanging"><strong>src/dbg.h</strong> I copied the <code>dbg.h</code> from <a href="ch19.html#ch19">Exercise 19</a> into <code>src/</code> for later.</p>
+<p class="noindent">I&#8217;ll now break down each of the components of this skeleton project so that you can understand how it works.</p>
+<div class="heading">
+<h3 id="ch28lev1sec2"><span class="EmpStrong">Makefile</span></h3>
+<p class="noindent">The first thing I&#8217;ll cover is the <code>Makefile</code>, because from that you can understand how everything else works. The <code>Makefile</code> in this exercise is much more detailed than ones you&#8217;ve used so far, so I&#8217;ll break it down after you type it in:</p>
+</div>
+<p class="ex-caption"><code>Makefile</code></p>
+<hr/>
+<p class="codelink"><a id="p153pro01" href="ch28_images.html#p153pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;CFLAGS<span class="pd_brown-1"><span class="EmpStrong">=</span></span>-g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG <span class="pd_blue"><span class="EmpStrong">$(</span></span>OPTFLAGS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;LIBS<span class="pd_brown-1"><span class="EmpStrong">=</span></span>-ldl <span class="pd_blue"><span class="EmpStrong">$(</span></span>OPTLIBS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;PREFIX<span class="pd_brown-1"><span class="EmpStrong">?=</span></span>/usr/local<br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;SOURCES<span class="pd_brown-1"><span class="EmpStrong">=</span></span><span class="pd_blue"><span class="EmpStrong">$(</span></span>wildcard src/**/*.c src/*.c<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;OBJECTS<span class="pd_brown-1"><span class="EmpStrong">=</span></span><span class="pd_blue"><span class="EmpStrong">$(</span></span>patsubst %.c,%.o,<span class="pd_blue"><span class="EmpStrong">$(</span></span>SOURCES<span class="pd_blue"><span class="EmpStrong">))</span></span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;TEST_SRC<span class="pd_brown-1"><span class="EmpStrong">=</span></span><span class="pd_blue"><span class="EmpStrong">$(</span></span>wildcard tests/*_tests.c<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;TESTS<span class="pd_brown-1"><span class="EmpStrong">=</span></span><span class="pd_blue"><span class="EmpStrong">$(</span></span>patsubst %.c,%,<span class="pd_blue"><span class="EmpStrong">$(</span></span>TEST_SRC<span class="pd_blue"><span class="EmpStrong">))</span></span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;TARGET<span class="pd_brown-1"><span class="EmpStrong">=</span></span>build/libYOUR_LIBRARY.a<br/>
+&#160;12&#160;&#160;&#160;SO_TARGET<span class="pd_brown-1"><span class="EmpStrong">=</span></span><span class="pd_blue"><span class="EmpStrong">$(</span></span>patsubst %.a,%.so,<span class="pd_blue"><span class="EmpStrong">$(</span></span>TARGET<span class="pd_blue"><span class="EmpStrong">))</span></span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># The Target Build</span></span><br/>
+&#160;15&#160;&#160;&#160;all<span class="pd_brown-1"><span class="EmpStrong">:</span></span> <span class="pd_blue"><span class="EmpStrong">$(</span></span>TARGET<span class="pd_blue"><span class="EmpStrong">) $(</span></span>SO_TARGET<span class="pd_blue"><span class="EmpStrong">)</span></span> tests<br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;dev<span class="pd_brown-1"><span class="EmpStrong">:</span></span> CFLAGS=-g -Wall -Isrc -Wall -Wextra <span class="pd_blue"><span class="EmpStrong">$(</span></span>OPTFLAGS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;18&#160;&#160;&#160;dev<span class="pd_brown-1"><span class="EmpStrong">:</span></span> all<br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;$(TARGET)<span class="pd_brown-1"><span class="EmpStrong">:</span></span> CFLAGS += -fPIC<br/>
+&#160;21&#160;&#160;&#160;$(TARGET)<span class="pd_brown-1"><span class="EmpStrong">:</span></span> build <span class="pd_blue"><span class="EmpStrong">$(</span></span>OBJECTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;ar rcs $@ <span class="pd_blue"><span class="EmpStrong">$(</span></span>OBJECTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;ranlib $@<br/>
+<a id="page_154"/>&#160;24&#160;&#160;&#160;$(SO_TARGET)<span class="pd_brown-1"><span class="EmpStrong">:</span></span> <span class="pd_blue"><span class="EmpStrong">$(</span></span>TARGET<span class="pd_blue"><span class="EmpStrong">) $(</span></span>OBJECTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">$(</span></span>CC<span class="pd_blue"><span class="EmpStrong">)</span></span> -shared -o $@ <span class="pd_blue"><span class="EmpStrong">$(</span></span>OBJECTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;build<span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;@mkdir -p build<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;@mkdir -p bin<br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># The Unit Tests</span></span><br/>
+&#160;32&#160;&#160;&#160;.PHONY<span class="pd_brown-1"><span class="EmpStrong">:</span></span> tests<br/>
+&#160;33&#160;&#160;&#160;tests<span class="pd_brown-1"><span class="EmpStrong">:</span></span> CFLAGS += <span class="pd_blue"><span class="EmpStrong">$(</span></span>TARGET<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;34&#160;&#160;&#160;tests<span class="pd_brown-1"><span class="EmpStrong">:</span></span> <span class="pd_blue"><span class="EmpStrong">$(</span></span>TESTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;sh ./tests/runtests.sh<br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># The Cleaner</span></span><br/>
+&#160;38&#160;&#160;&#160;clean<span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;rm -rf build <span class="pd_blue"><span class="EmpStrong">$(</span></span>OBJECTS<span class="pd_blue"><span class="EmpStrong">) $(</span></span>TESTS<span class="pd_blue"><span class="EmpStrong">)</span></span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;rm -f tests/tests.log<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;find . -name <span class="pd_green">"*.gc*"</span> -exec rm <span class="pd_brown-1"><span class="EmpStrong">{}</span></span> <span class="pd_green">\;</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;rm -rf `find . -name <span class="pd_green">"*.dSYM"</span> -print<span class="pd_green">`</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># The Install</span></span><br/>
+&#160;45&#160;&#160;&#160;install<span class="pd_brown-1"><span class="EmpStrong">:</span></span> all<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;install -d <span class="pd_blue"><span class="EmpStrong">$(</span></span>DESTDIR<span class="pd_blue"><span class="EmpStrong">)</span></span>/<span class="pd_blue"><span class="EmpStrong">$(</span></span>PREFIX<span class="pd_blue"><span class="EmpStrong">)</span></span>/lib/<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;install <span class="pd_blue"><span class="EmpStrong">$(</span></span>TARGET<span class="pd_blue"><span class="EmpStrong">) $(</span></span>DESTDIR<span class="pd_blue"><span class="EmpStrong">)</span></span>/<span class="pd_blue"><span class="EmpStrong">$(</span></span>PREFIX<span class="pd_blue"><span class="EmpStrong">)</span></span>/lib/<br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic"># The Checker</span></span><br/>
+&#160;50&#160;&#160;&#160;check<span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;@echo Files with potentially dangerous functions.<br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;@egrep <span class="pd_green">'[^_.>a-zA-Z0-9](str(n?cpy|n?cat|xfrm|n?dup|str|pbrk|tok|_)\</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">|stpn?cpy|a?sn?printf|byte_)'</span> <span class="pd_blue"><span class="EmpStrong">$(</span></span>SOURCES<span class="pd_blue"><span class="EmpStrong">)</span></span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> <span class="pd_blue">true</span></p>
+<p class="noindent">Remember that you need to consistently indent the <code>Makefile</code> with tab characters. Your text editor should know that and do the right thing. If it doesn&#8217;t, get a different text editor. No programmer should use an editor that fails at something so simple.</p>
+<div class="heading">
+<h4 id="ch28lev2sec1">The Header</h4>
+<p class="noindent">This <code>Makefile</code> is designed to build a library reliably on almost any platform using special features of <code>GNU make</code>. We&#8217;ll be working on this library later, so I&#8217;ll break down each part in sections, starting with the header.</p>
+</div>
+<p class="indenthanging"><strong>Makefile:1</strong> These are the usual <code>CFLAGS</code> that you set in all of your projects, along with a few others that may be needed to build libraries. <em>You may need to adjust these for different platforms</em>. Notice the <code>OPTFLAGS</code> variable at the end that lets people augment the build options as needed.</p>
+<p class="indenthanging"><strong>Makefile:2</strong> These options are used when linking a library. Someone else can then augment the linking options using the <code>OPTLIBS</code> variable.</p>
+<p class="indenthanging"><a id="page_155"/><strong>Makefile:3</strong> This code sets an <em>optional</em> variable called <code>PREFIX</code> that will only have this value if the person running the Makefile didn&#8217;t already give a <code>PREFIX</code> setting. That&#8217;s what the <code>?=</code> does.</p>
+<p class="indenthanging"><strong>Makefile:5</strong> This fancy line of awesomeness <em>dynamically</em> creates the <code>SOURCES</code> variable by doing a <code>wildcard</code> search for all <code>*.c</code> files in the <code>src/</code> directory. You have to give both <code>src/**/*.c</code> and <code>src/*.c</code> so that GNU <code>make</code> will include the files in <code>src</code> and the files below it.</p>
+<p class="indenthanging"><strong>Makefile:6</strong> Once you have the list of source files, you can then use the <code>patsubst</code> to take the <code>SOURCES</code> list of <code>*.c</code> files and make a <em>new</em> list of all the object files. You do this by telling <code>patsubst</code> to change all <code>%.c</code> extensions to <code>%.o,</code> and then those extensions are assigned to <code>OBJECTS</code>.</p>
+<p class="indenthanging"><strong>Makefile:8</strong> We&#8217;re using the <code>wildcard</code> again to find all of the test source files for the unit tests. These are separate from the library&#8217;s source files.</p>
+<p class="indenthanging"><strong>Makefile:9</strong> Then, we&#8217;re using the same <code>patsubst</code> trick to dynamically get all the <code>TEST</code> targets. In this case, I&#8217;m stripping away the <code>.c</code> extension so that a full program will be made with the same name. Previously, I had replaced the <code>.c</code> with {.o} so an object file is created.</p>
+<p class="indenthanging"><strong>Makefile:11</strong> Finally, we say the ultimate target is <code>build/libYOUR_LIBRARY.a</code>, which you will change to be whatever library you&#8217;re actually trying to build.</p>
+<p class="noindent">This completes the top of the <code>Makefile,</code> but I should explain what I mean by &#8220;lets people augment the build.&#8221; When you run <code>Make,</code> you can do this:</p>
+<p class="codelink"><a id="p155pro01" href="ch28_images.html#p155pro01a">Click here to view code image</a></p>
+<p class="pre"># WARNING! Just a demonstration, won't really work right now.<br/>
+# this installs the library into /tmp<br/>
+$ make PREFIX=/tmp install<br/>
+# this tells it to add pthreads<br/>
+$ make OPTFLAGS=-pthread</p>
+<p class="noindent">If you pass in options that match the same kind of variables you have in your <code>Makefile</code>, then those will show up in your build. You can then use this to change how the <code>Makefile</code> runs. The first variable alters the <code>PREFIX</code> so that it installs into <code>/tmp</code> instead. The second one sets <code>OPTFLAGS</code> so that the <code>-pthread</code> option is present.</p>
+<div class="heading">
+<h4 id="ch28lev2sec2">The Target Build</h4>
+<p class="noindent">Continuing with the breakdown of the <code>Makefile,</code> I&#8217;m actually building the object files and targets:</p>
+</div>
+<p class="indenthanging"><strong>Makefile:14</strong> Remember that the first target is what <code>make</code> runs by default when no target is given. In this, it&#8217;s called <code>all:</code> and it gives <code>$(TARGET) tests</code> as the targets to build. <a id="page_156"/>Look up at the <code>TARGET</code> variable and you see that&#8217;s the library, so <code>all:</code> will first build the library. The <code>tests</code> target is further down in the <code>Makefile</code> and builds the unit tests.</p>
+<p class="indenthanging"><strong>Makefile:16</strong> Here&#8217;s another target for making &#8220;developer builds&#8221; that introduces a technique for changing options for just one target. If I do a &#8220;dev build,&#8221; I want the <code>CFLAGS</code> to include options like <code>-Wextra</code> that are useful for finding bugs. If you place them on the target line as options like this, then give another line that says the original target (in this case <code>all</code>), then it will change the options you set. I use this for setting different flags on different platforms that need it.</p>
+<p class="indenthanging"><strong>Makefile:19</strong> This builds the <code>TARGET</code> library, whatever that is. It also uses the same trick from line 15, giving a target with just options and ways to alter them for this run. In this case, I&#8217;m adding <code>-fPIC</code> just for the library build, using the <code>+=</code> syntax to add it on.</p>
+<p class="indenthanging"><strong>Makefile:20</strong> Now we see the real target, where I say first make the <code>build</code> directory, and then compile all of the <code>OBJECTS</code>.</p>
+<p class="indenthanging"><strong>Makefile:21</strong> This runs the <code>ar</code> command that actually makes the <code>TARGET</code>. The syntax <code>$@ $(OBJECTS)</code> is a way of saying, &#8220;put the target for this <code>Makefile</code> source here and all the OBJECTS after that.&#8221; In this case, the <code>$@</code> maps back to the <code>$(TARGET)</code> on line 19, which maps to <code>build/libYOUR_LIBRARY.a</code>. It seems like a lot to keep track of in this indirection, and it can be, but once you get it working, you just change <code>TARGET</code> at the top and build a whole new library.</p>
+<p class="indenthanging"><strong>Makefile:22</strong> Finally, to make the library, you run <code>ranlib</code> on the <code>TARGET</code> and it&#8217;s built.</p>
+<p class="indenthanging"><strong>Makefile:23-24</strong> This just makes the <code>build/</code> or <code>bin/</code> directories if they don&#8217;t exist. This is then referenced from line 19 when it gives the <code>build</code> target to make sure the <code>build/</code> directory is made.</p>
+<p class="noindent">You now have all of the stuff you need to build the software, so we&#8217;ll create a way to build and run unit tests to do automated testing.</p>
+<div class="heading">
+<h4 id="ch28lev2sec3">The Unit Tests</h4>
+<p class="noindent">C is different from other languages because it&#8217;s easier to create one tiny little program for each thing you&#8217;re testing. Some testing frameworks try to emulate the module concept other languages have and do dynamic loading, but this doesn&#8217;t work well in C. It&#8217;s also unnecessary, because you can just make a single program that&#8217;s run for each test instead.</p>
+</div>
+<p class="noindent">I&#8217;ll cover this part of the <code>Makefile,</code> and then later you&#8217;ll see the contents of the <code>tests/</code> directory that make it actually work.</p>
+<p class="indenthanging"><a id="page_157"/><strong>Makefile:29</strong> If you have a target that&#8217;s not real, but there is a directory or file with that name, then you need to tag the target with <code>.PHONY:</code> so <code>make</code> will ignore the file and always run.</p>
+<p class="indenthanging"><strong>Makefile:30</strong> I use the same trick for modifying the <code>CFLAGS</code> variable to add the <code>TARGET</code> to the build so that each of the test programs will be linked with the <code>TARGET</code> library. In this case, it will add <code>build/libYOUR_LIBRARY.a</code> to the linking.</p>
+<p class="indenthanging"><strong>Makefile:31</strong> Then I have the actual <code>tests:</code> target, which depends on all of the programs listed in the <code>TESTS</code> variable that we created in the header. This one line actually says, &#8220;Make, use what you know about building programs and the current CFLAGS settings to build each program in <code>TESTS</code>.&#8221;</p>
+<p class="indenthanging"><strong>Makefile:32</strong> Finally, when all of the <code>TESTS</code> are built, there&#8217;s a simple shell script I&#8217;ll create later that knows how to run them all and report their output. This line actually runs it so you can see the test results.</p>
+<p class="noindent">For the unit testing to work, you&#8217;ll need to create a little shell script that knows how to run the programs. Go ahead and create this <code>tests/runtests.sh</code> script:</p>
+<p class="ex-caption"><code>runtests.sh</code></p>
+<hr/>
+<p class="codelink"><a id="p157pro01" href="ch28_images.html#p157pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_blue">echo</span> <span class="pd_green">"Running unit tests:"</span><br/>
+&#160;&#160;2<br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> i in tests/*_tests<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="pd_blue">test</span> -f $i<br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">then</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> $VALGRIND ./$i 2&gt;&gt; tests/tests.log<br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">then</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">echo</span> $i PASS<br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">else</span></span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">echo</span> <span class="pd_green">"ERROR in test</span> $i<span class="pd_green">: here's tests/tests.log"</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">echo</span> <span class="pd_green">"------"</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;tail tests/tests.log<br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">exit</span> 1<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">fi</span></span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">fi</span></span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">done</span></span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;<span class="pd_blue">echo</span> <span class="pd_green">""</span></p>
+<p class="noindent">I&#8217;ll be using this later when I cover how unit tests work.</p>
+<div class="heading">
+<h4 id="ch28lev2sec4">The Cleaner</h4>
+<p class="noindent">I now have fully working unit tests, so next up is making things clean when I need to reset everything.</p>
+</div>
+<p class="indenthanging"><a id="page_158"/><strong>Makefile:38</strong> The <code>clean:</code> target starts things off when we need to clean up the project.</p>
+<p class="indenthanging"><strong>Makefile:39-42</strong> This cleans out most of the junk that various compilers and tools leave behind. It also gets rid of the <code>build/</code> directory and uses a trick at the end to cleanly erase the weird <code>*.dSYM</code> directories that Apple&#8217;s XCode leaves behind for debugging purposes.</p>
+<p class="noindent">If you run into junk that you need to clean out, simply augment the list of things being deleted in this target.</p>
+<div class="heading">
+<h4 id="ch28lev2sec5">The Install</h4>
+<p class="noindent">After that, I&#8217;ll need a way to install the project, and for a <code>Makefile</code> that&#8217;s building a library, I just need to put something in the common <code>PREFIX</code> directory, usually <code>/usr/local/lib</code>.</p>
+</div>
+<p class="indenthanging"><strong>Makefile:45</strong> This makes <code>install:</code> depend on the <code>all:</code> target, so that when you run <code>make install,</code> it will be sure to build everything.</p>
+<p class="indenthanging"><strong>Makefile:46</strong> I then use the program <code>install</code> to create the target <code>lib</code> directory if it doesn&#8217;t exist. In this case, I&#8217;m trying to make the install as flexible as possible by using two variables that are conventions for installers. <code>DESTDIR</code> is handed to make by installers, which do their builds in secure or odd locations, to build packages. <code>PREFIX</code> is used when people want the project to be installed in someplace other than <code>/usr/local</code>.</p>
+<p class="indenthanging"><strong>Makefile:47</strong> After that, I&#8217;m just using <code>install</code> to actually install the library where it needs to go.</p>
+<p class="noindent">The purpose of the <code>install</code> program is to make sure things have the right permissions set. When you run <code>make install,</code> you usually have to do it as the root user, so the typical build process is <code>make &#38;&#38; sudo make install</code>.</p>
+<div class="heading">
+<h4 id="ch28lev2sec6">The Checker</h4>
+<p class="noindent">The very last part of this <code>Makefile</code> is a bonus that I include in my C projects to help me dig out any attempts to use the bad functions in C. These are namely the string functions and other unprotected buffer functions.</p>
+</div>
+<p class="indenthanging"><strong>Makefile:50</strong> This sets a variable that&#8217;s a big regex looking for bad functions like <code>strcpy</code>.</p>
+<p class="indenthanging"><strong>Makefile:51</strong> The <code>check:</code> target allows you to run a check whenever you need to.</p>
+<p class="indenthanging"><strong>Makefile:52</strong> This is just a way to print a message, but doing <code>@echo</code> tells <code>make</code> to not print the command, just its output.</p>
+<p class="indenthanging"><a id="page_159"/><strong>Makefile:53</strong> Run the <code>egrep</code> command on the source files to look for any bad patterns. The <code>|| true</code> at the end is a way to prevent <code>make</code> from thinking that <code>egrep</code> failed if it doesn&#8217;t find errors.</p>
+<p class="noindent">When you run this, it will have the odd effect of returning an error when there&#8217;s nothing bad going on.</p>
+<div class="heading">
+<h3 id="ch28lev1sec3">What You Should See</h3>
+<p class="noindent">I have two more exercises to go before I&#8217;m done building the project skeleton directory, but here&#8217;s me testing out the features of the <code>Makefile</code>.</p>
+</div>
+<p class="ex-caption"><code>Exercise 28 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p159pro01" href="ch28_images.html#p159pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make clean<br/>
+<span class="EmpItalic">rm -rf build</span><br/>
+<span class="EmpItalic">rm -f tests/tests.log</span><br/>
+<span class="EmpItalic">find . -name "*.gc*" -exec rm {} \;</span><br/>
+<span class="EmpItalic">rm -rf `find . -name "*.dSYM" -print`</span><br/>
+<span class="pd_brown">$</span> make check<br/>
+<span class="pd_brown">$</span> make</p>
+<p class="noindent">When I run the <code>clean:</code> target, it works, but because I don&#8217;t have any source files in the <code>src/</code> directory, none of the other commands really work. I&#8217;ll finish that up in the next exercises.</p>
+<div class="heading">
+<h3 id="ch28lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Try to get the <code>Makefile</code> to actually work by putting a source and header file in <code>src/</code> and making the library. You shouldn&#8217;t need a <code>main</code> function in the source file.</p>
+</div>
+<p class="indenthangingB">&#8226; Research what functions the <code>check:</code> target is looking for in the <code>BADFUNCS</code> regular expression that it&#8217;s using.</p>
+<p class="indenthangingB">&#8226; If you don&#8217;t do automated unit testing, then go read about it so you&#8217;re prepared later.</p>
+</body>
+</html>

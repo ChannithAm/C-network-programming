@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 11. Arrays and Strings</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch11"><a id="page_46"/>Exercise 11. Arrays and Strings</h2>
+<p class="noindent">This exercise shows you that C stores its strings simply as an array of bytes, terminated with the <code>'\0'</code> (nul) byte. You probably clued in to this in the last exercise since we did it manually. Here&#8217;s how we do it in another way to make it even clearer by comparing it to an array of numbers:</p>
+<p class="ex-caption"><code>ex11.c</code></p>
+<hr/>
+<p class="codelink"><a id="p046pro01" href="ch11_images.html#p046pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{ <span class="pd_blue-1">0</span> };</span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_green">'a'</span> <span class="EmpStrong">};</span><br/>
+&#160;7<br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// first, print them out raw</span></span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"numbers: %d %d %d %d\n"</span><span class="EmpStrong">,</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]);</span><br/>
+11<br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"name each: %c %c %c %c\n"</span><span class="EmpStrong">,</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]);</span><br/>
+14<br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"name: %s\n"</span><span class="EmpStrong">,</span> name<span class="EmpStrong">);</span><br/>
+16<br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// set up the numbers</span></span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">;</span><br/>
+20&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">;</span><br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">;</span><br/>
+22<br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// set up the name</span></span><br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'Z'</span><span class="EmpStrong">;</span><br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'e'</span><span class="EmpStrong">;</span><br/>
+26&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'d'</span><span class="EmpStrong">;</span><br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span><br/>
+28<br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// then print them out initialized</span></span><br/>
+30&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"numbers: %d %d %d %d\n"</span><span class="EmpStrong">,</span><br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">],</span> numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]);</span><br/>
+32<br/>
+33&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"name each: %c %c %c %c\n"</span><span class="EmpStrong">,</span><br/>
+34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">],</span> name<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]);</span><br/>
+35<br/>
+36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// print the name like a string</span></span><br/>
+37&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"name: %s\n"</span><span class="EmpStrong">,</span> name<span class="EmpStrong">);</span><br/>
+38<br/>
+<a id="page_47"/>39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// another way to use name</span></span><br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>another <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Zed"</span><span class="EmpStrong">;</span><br/>
+41<br/>
+42&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"another: %s\n"</span><span class="EmpStrong">,</span> another<span class="EmpStrong">);</span><br/>
+43<br/>
+44&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"another each: %c %c %c %c\n"</span><span class="EmpStrong">,</span><br/>
+45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;another<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> another<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">],</span> another<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">],</span> another<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">]);</span><br/>
+46<br/>
+47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+48&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">In this code, we set up some arrays the tedious way, by assigning a value to each element. In <code>numbers</code>, we are setting up numbers; but in <code>name</code>, we&#8217;re actually building a string manually.</p>
+<div class="heading">
+<h3 id="ch11lev1sec1">What You Should See</h3>
+<p class="noindent">When you run this code, you should first see the arrays printed with their contents initialized to 0 (zero), then in its initialized form.</p>
+</div>
+<p class="ex-caption"><code>Exercise 11 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p047pro01" href="ch11_images.html#p047pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex11<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex11.c&#160;&#160;-o ex11</span><br/>
+<span class="pd_brown">$</span> ./ex11<br/>
+<span class="EmpItalic">numbers: 0 0 0 0</span><br/>
+<span class="EmpItalic">name each: a</span><br/>
+<span class="EmpItalic">name: a</span><br/>
+<span class="EmpItalic">numbers: 1 2 3 4</span><br/>
+<span class="EmpItalic">name each: Z e d</span><br/>
+<span class="EmpItalic">name: Zed</span><br/>
+<span class="EmpItalic">another: Zed</span><br/>
+<span class="EmpItalic">another each: Z e d</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">You&#8217;ll notice some interesting things about this program:</p>
+<p class="indenthangingB">&#8226; I didn&#8217;t have to give all four elements of the arrays to initialize them. This is a shortcut in C. If you set just one element, it&#8217;ll fill in the rest with 0.</p>
+<p class="indenthangingB">&#8226; When each element of <code>numbers</code> is printed, they all come out as 0.</p>
+<p class="indenthangingB">&#8226; When each element of <code>name</code> is printed, only the first element <code>'a'</code> shows up because the <code>'\0'</code> character is special and won&#8217;t display.</p>
+<p class="indenthangingB">&#8226; Then the first time we print <code>name</code>, it only prints the letter a. This is because the array will be filled with 0 after the first <code>'a'</code> in the initializer, so the string is correctly terminated by a <code>'\0'</code> character.</p>
+<p class="indenthangingB"><a id="page_48"/>&#8226; We then set up the arrays with a tedious, manual assignment to each thing and print them out again. Look at how they changed. Now the numbers are set, but do you see how the <code>name</code> string prints my name correctly?</p>
+<p class="indenthangingB">&#8226; There are also two syntaxes for doing a string: <code>char name[4] = {'a'}</code> on line 6 versus <code>char *another = "name"</code> on line 44. The first one is less common and the second is what you should use for string literals like this.</p>
+<p class="noindent">Notice that I&#8217;m using the same syntax and style of code to interact with both an array of integers and an array of characters, but <code>printf</code> thinks that the <code>name</code> is just a string. Again, this is because the C language doesn&#8217;t differentiate between a string and an array of characters.</p>
+<p class="noindent">Finally, when you make string literals you should typically use the <code>char *another = "Literal"</code> syntax. This works out to be the same thing, but it&#8217;s more idiomatic and easier to write.</p>
+<div class="heading">
+<h3 id="ch11lev1sec2">How to Break It</h3>
+<p class="noindent">The source of almost all bugs in C come from forgetting to have enough space, or forgetting to put a <code>'\0'</code> at the end of a string. In fact, it&#8217;s so common and hard to get right that the majority of good C code just doesn&#8217;t use C-style strings. In later exercises, we&#8217;ll actually learn how to avoid C strings completely.</p>
+</div>
+<p class="noindent">In this program, the key to breaking it is to forget to put the <code>'\0'</code> character at the end of the strings. There are a few ways to do this:</p>
+<p class="indenthangingB">&#8226; Get rid of the initializers that set up <code>name</code>.</p>
+<p class="indenthangingB">&#8226; Accidentally set <code>name[3] = 'A';</code> so that there&#8217;s no terminator.</p>
+<p class="indenthangingB">&#8226; Set the initializer to <code>{'a','a','a','a'}</code> so that there are too many <code>'a'</code> characters and no space for the <code>'\0'</code> terminator.</p>
+<p class="noindent">Try to come up with some other ways to break this, and run all of these under the debugger so you can see exactly what&#8217;s going on and what the errors are called. Sometimes you&#8217;ll make these mistakes and even a debugger can&#8217;t find them. Try moving where you declare the variables to see if you get an error. This is part of the voodoo of C: Sometimes just where the variable is located changes the bug.</p>
+<div class="heading">
+<h3 id="ch11lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Assign the characters into <code>numbers</code>, and then use <code>printf</code> to print them one character at a time. What kind of compiler warnings do you get?</p>
+</div>
+<p class="indenthangingB">&#8226; Do the inverse for <code>name</code>, trying to treat it like an array of <code>int</code> and print it out one <code>int</code> at a time. What does the debugger think of that?</p>
+<p class="indenthangingB"><a id="page_49"/>&#8226; In how many other ways can you print this out?</p>
+<p class="indenthangingB">&#8226; If an array of characters is 4 bytes long, and an integer is 4 bytes long, then can you treat the whole <code>name</code> array like it&#8217;s just an integer? How might you accomplish this crazy hack?</p>
+<p class="indenthangingB">&#8226; Take out a piece of paper and draw each of these arrays as a row of boxes. Then do the operations you just did on paper to see if you get them right.</p>
+<p class="indenthangingB">&#8226; Convert <code>name</code> to be in the style of <code>another</code> and see if the code keeps working.</p>
+</body>
+</html>

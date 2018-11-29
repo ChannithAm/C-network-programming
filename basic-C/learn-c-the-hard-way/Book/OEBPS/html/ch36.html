@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 36. Safer Strings</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch36"><a id="page_224"/>Exercise 36. Safer Strings</h2>
+<p class="noindent">This exercise is designed to get you using <code>bstring</code> from now on, explain why C&#8217;s strings are an incredibly bad idea, and then have you change the <code>liblcthw</code> code to use <code>bstring</code>.</p>
+<div class="heading">
+<h3 id="ch36lev1sec1">Why C Strings Were a Horrible Idea</h3>
+<p class="noindent">When people talk about problems with C, they say its concept of a string is one of the top flaws. You&#8217;ve been using these extensively, and I&#8217;ve talked about the kinds of flaws they have, but there isn&#8217;t much that explains exactly why C strings are flawed and always will be. I&#8217;ll try to explain that right now, and after decades of using C&#8217;s strings, there&#8217;s enough evidence for me to say that they are just a bad idea.</p>
+</div>
+<p class="noindent">It&#8217;s impossible to confirm that any given C string is valid:</p>
+<p class="indenthangingB">&#8226; A C string is invalid if it doesn&#8217;t end in <code>'\0'</code>.</p>
+<p class="indenthangingB">&#8226; Any loop that processes an invalid C string will loop infinitely (or just create a buffer overflow).</p>
+<p class="indenthangingB">&#8226; C strings don&#8217;t have a known length, so the only way to check if they&#8217;re terminated correctly is to loop through them.</p>
+<p class="indenthangingB">&#8226; Therefore, it isn&#8217;t possible to validate a C string without possibly looping infinitely.</p>
+<p class="noindent">This is simple logic. You can&#8217;t write a loop that checks if a C string is valid because invalid C strings cause loops to never terminate. That&#8217;s it, and the only solution is to <em>include the size</em>. Once you know the size, you can avoid the infinite loop problem. If you look at the two functions I showed you from <a href="ch27.html#ch27">Exercise 27</a>, you see this:</p>
+<p class="ex-caption"><code>ex36.c</code></p>
+<hr/>
+<p class="codelink"><a id="p224pro01" href="ch36_images.html#p224pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> copy<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> to<span class="EmpStrong">[],</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> from<span class="EmpStrong">[])</span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;3&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong"><span class="pd_blue2">0</span>;</span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// while loop will not end if from isn't '\0' terminated</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">((</span>to<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from<span class="EmpStrong">[</span>i<span class="EmpStrong">])</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">) {</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">++</span></span>i<span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_225"/>&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> safercopy<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> from_len<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>from<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> to_len<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>to<span class="EmpStrong">)</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong"><span class="pd_blue2">0</span>;</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from_len <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> to_len <span class="pd_blue2"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">:</span></span> from_len<span class="EmpStrong">;</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// to_len must have at least 1 byte</span></span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>from_len <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong"><span class="pd_blue2">0</span>;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> max<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;to<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;to<span class="EmpStrong">[</span>to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="EmpStrong"><span class="pd_blue2">1</span>]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> i<span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">Imagine that you want to add a check to the <code>copy</code> function to confirm that the <code>from</code> string is valid. How would you do that? You&#8217;d write a loop that checked that the string ended in <code>'\0'</code>. Oh wait. If the string doesn&#8217;t end in <code>'\0'</code>, then how does the checking loop end? It doesn&#8217;t. Checkmate.</p>
+<p class="noindent">No matter what you do, you can&#8217;t check that a C string is valid without knowing the length of the underlying storage, and in this case, the <code>safercopy</code> includes those lengths. This function doesn&#8217;t have the same problem since its loops will always terminate, and even if you lie to it about the size, you still have to give it a finite size.</p>
+<p class="noindent">What the Better String Library does is create a structure that always includes the length of the string&#8217;s storage. Because the length is always available to a <code>bstring</code>, then all of its operations can be safer. The loops will terminate, the contents can be validated, and it won&#8217;t have this major flaw. The library also comes with a ton of operations you need with strings, like splitting, formatting, and searching, and they&#8217;re most likely done right and are safer.</p>
+<p class="noindent">There could be flaws in bstring, but it&#8217;s been around a long time, so those are probably minimal. They still find flaws in <code>glibc</code>, so what&#8217;s a programmer to do, right?</p>
+<div class="heading">
+<h3 id="ch36lev1sec2">Using <span class="EmpStrong">bstrlib</span></h3>
+<p class="noindent">There are quite a few improved string libraries, but I like <code>bstrlib</code> because it fits in one file for the basics, and has most of the stuff you need to deal with strings. In this exercise you&#8217;ll need to get two files, <code>bstrlib.c</code> and <code>bstrlib.h</code>, from the Better String Library.</p>
+</div>
+<p class="noindent"><a id="page_226"/>Here&#8217;s me doing this in the <code>liblcthw</code> project directory:</p>
+<p class="ex-caption"><code>Exercise 36 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p226pro01" href="ch36_images.html#p226pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> mkdir bstrlib<br/>
+<span class="pd_brown">$</span> <span class="pd_blue">cd</span> bstrlib/<br/>
+<span class="pd_brown">$</span> unzip ~/Downloads/bstrlib-05122010.zip<br/>
+<span class="EmpItalic">Archive:&#160;&#160;&#160;/Users/zedshaw/Downloads/bstrlib-05122010.zip</span><br/>
+<span class="EmpItalic">...</span><br/>
+<span class="pd_brown">$</span> ls<br/>
+<span class="EmpItalic">bsafe.c&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstraux.c&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstrlib.h</span><br/>
+<span class="EmpItalic">bstrwrap.h&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;license.txt&#160;&#160;&#160;&#160;&#160;test.cpp</span><br/>
+<span class="EmpItalic">bsafe.h&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstraux.h&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstrlib.txt</span><br/>
+<span class="EmpItalic">cpptest.cpp&#160;&#160;&#160;&#160;&#160;&#160;&#160;porting.txt&#160;&#160;&#160;&#160;&#160;testaux.c</span><br/>
+<span class="EmpItalic">bstest.c&#160;&#160;bstrlib.c&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstrwrap.cpp</span><br/>
+<span class="EmpItalic">gpl.txt&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;security.txt</span><br/>
+<span class="pd_brown">$</span> mv bstrlib.h bstrlib.c ../src/lcthw/<br/>
+<span class="pd_brown">$</span> <span class="pd_blue">cd</span> ../<br/>
+<span class="pd_brown">$</span> rm -rf bstrlib<br/>
+<span class="pd_brown">#</span> make the edits<br/>
+<span class="pd_brown">$</span> vim src/lcthw/bstrlib.c<br/>
+<span class="pd_brown">$</span> make clean all<br/>
+<span class="EmpItalic">...</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">On line 14, you see me edit the <code>bstrlib.c</code> file to move it to a new location and fix a bug on OS X. Here&#8217;s the diff file:</p>
+<p class="ex-caption"><code>ex36.diff</code></p>
+<hr/>
+<p class="codelink"><a id="p226pro02" href="ch36_images.html#p226pro02a">Click here to view code image</a></p>
+<p class="pre">25c25<br/>
+&lt; #include "bstrlib.h"<br/>
+<span class="pd_a30000">---</span><br/>
+&gt; #include &lt;lcthw/bstrlib.h&gt;<br/>
+2759c2759<br/>
+&lt; #ifdef __GNUC__<br/>
+<span class="pd_a30000">---</span><br/>
+&gt; #if defined(__GNUC__) &#38;&#38; !defined(__APPLE__)</p>
+<p class="noindent">Here I change the <code>include</code> to be <code>&lt;lcthw/bstrlib.h&gt;</code>, and then fix one of the <code>ifdef</code> at line 2759.</p>
+<div class="heading">
+<h3 id="ch36lev1sec3">Learning the Library</h3>
+<p class="noindent">This exercise is short, and it&#8217;s meant to simply get you ready for the remaining exercises that use the Better String Library. In the next two exercises, I&#8217;ll use <code>bstrlib.c</code> to create a <code>hashmap</code> data structure.</p>
+</div>
+<p class="noindent"><a id="page_227"/>You should now get familiar with this library by reading the header file and the implementations, and then write a <code>tests/bstr_tests.c</code> that tests out the following functions:</p>
+<p class="uln-indent"><code>bfromcstr</code> Create a bstring from a C style constant.</p>
+<p class="uln-indent"><code>blk2bstr</code> Do the same thing, but give the length of the buffer.</p>
+<p class="uln-indent"><code>bstrcpy</code> Copy a bstring.</p>
+<p class="uln-indent"><code>bassign</code> Set one bstring to another.</p>
+<p class="uln-indent"><code>bassigncstr</code> Set a bstring to a C string&#8217;s contents.</p>
+<p class="uln-indent"><code>bassignblk</code> Set a bstring to a C string but give the length.</p>
+<p class="uln-indent"><code>bdestroy</code> Destroy a bstring.</p>
+<p class="uln-indent"><code>bconcat</code> Concatenate one bstring onto another.</p>
+<p class="uln-indent"><code>bstricmp</code> Compare two bstrings returning the same result as strcmp.</p>
+<p class="uln-indent"><code>biseq</code> Test if two bstrings are equal.</p>
+<p class="uln-indent"><code>binstr</code> Tell if one bstring is in another.</p>
+<p class="uln-indent"><code>bfindreplace</code> Find one bstring in another, then replace it with a third.</p>
+<p class="uln-indent"><code>bsplit</code> Split a bstring into a bstrList.</p>
+<p class="uln-indent"><code>bformat</code> Do a format string, which is super handy.</p>
+<p class="uln-indent"><code>blength</code> Get the length of a bstring.</p>
+<p class="uln-indent"><code>bdata</code> Get the data from a bstring.</p>
+<p class="uln-indent"><code>bchar</code> Get a char from a bstring.</p>
+<p class="noindent">Your test should try out all of these operations, and a few more that you find interesting from the header file.</p>
+</body>
+</html>

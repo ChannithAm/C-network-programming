@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 46. Ternary Search Tree</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch46"><a id="page_322"/>Exercise 46. Ternary Search Tree</h2>
+<p class="noindent">The final data structure that I&#8217;ll show you is called the <em>TSTree</em>, which is similar to the <code>BSTree</code>, except it has three branches: <code>low</code>, <code>equal</code>, and <code>high</code>. It&#8217;s primarily used just like <code>BSTree</code> and <code>Hashmap</code> to store key/value data, but it works off of the individual characters in the keys. This gives the <code>TSTree</code> some abilities that neither <code>BSTree</code> nor <code>Hashmap</code> has.</p>
+<p class="noindent">In a <code>TSTree</code>, every key is a string, and it&#8217;s inserted by walking through and building a tree based on the equality of the characters in the string. It starts at the root, looks at the character for that node, and if it&#8217;s lower, equal to, or higher than that, then it goes in that direction. You can see this in the header file:</p>
+<p class="ex-caption"><code>tstree.h</code></p>
+<hr/>
+<p class="codelink"><a id="p322pro01" href="ch46_images.html#p322pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _lcthw_TSTree_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _lcthw_TSTree_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> TSTree <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> splitchar<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>low<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>equal<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>high<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> TSTree<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_search<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_search_prefix<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> void <span class="pd_brown-1"><span class="EmpStrong">(*</span></span>TSTree_traverse_cb<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<br/>
+TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_insert<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> TSTree_traverse<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span> TSTree_traverse_cb cb<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> TSTree_destroy<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">The <code>TSTree</code> has the following elements:</p>
+<p class="indenthanging"><strong>splitchar</strong> The character at this point in the tree.</p>
+<p class="indenthanging"><strong>low</strong> The branch that&#8217;s lower than <code>splitchar</code>.</p>
+<p class="indenthanging"><a id="page_323"/><strong>equal</strong> The branch that&#8217;s equal to <code>splitchar</code>.</p>
+<p class="indenthanging"><strong>high</strong> The branch that&#8217;s higher than <code>splitchar</code>.</p>
+<p class="indenthanging"><strong>value</strong> The value set for a string at that point with <code>splitchar</code>.</p>
+<p class="noindent">You can see that this implementation has the following operations:</p>
+<p class="indenthanging"><strong>search</strong> A typical operation to find a value for this <code>key</code>.</p>
+<p class="indenthanging"><strong>search_prefix</strong> This operation finds the first value that has this as a prefix of its key. This is the an operation that you can&#8217;t easily do in a <code>BSTree</code> or <code>Hashmap</code>.</p>
+<p class="indenthanging"><strong>insert</strong> This breaks the <code>key</code> down by each character and inserts them into the tree.</p>
+<p class="indenthanging"><strong>traverse</strong> This walks through the tree, allowing you to collect or analyze all the keys and values it contains.</p>
+<p class="noindent">The only thing missing is a <code>TSTree_delete</code>, and that&#8217;s because it&#8217;s a horribly expensive operation, even more expensive than <code>BSTree_delete</code>. When I use <code>TSTree</code> structures, I treat them as constant data that I plan on traversing many times, and not removing anything from them. They are very fast for this, but aren&#8217;t good if you need to insert and delete things quickly. For that, I use <code>Hashmap</code>, since it beats both <code>BSTree</code> and <code>TSTree</code>.</p>
+<p class="noindent">The implementation for the <code>TSTree</code> is actually simple, but it might be hard to follow at first. I&#8217;ll break it down after you enter it in:</p>
+<p class="ex-caption"><code>tstree.c</code></p>
+<hr/>
+<p class="codelink"><a id="p323pro01" href="ch46_images.html#p323pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/tstree.h&gt;</span></span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_insert_base<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">,</span> TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">,</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>TSTree<span class="EmpStrong">));</span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>root <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;root <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar <span class="pd_brown-1"><span class="EmpStrong">= *</span></span>key<span class="EmpStrong">;</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>key <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert_base<span class="EmpStrong">(</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;root<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> len<span class="EmpStrong">,</span> value<span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="pd_brown-1"><span class="EmpStrong">(*</span></span>key <span class="pd_brown-1"><span class="EmpStrong">==</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>len <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert_base<span class="EmpStrong">(</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;root<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">,</span> key <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> value<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Duplicate insert into tst."</span><span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> value<span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert_base<span class="EmpStrong">(</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;root<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> len<span class="EmpStrong">,</span> value<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;38&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_insert<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">,</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">)</span><br/>
+&#160;42&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> TSTree_insert_base<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> node<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> len<span class="EmpStrong">,</span> value<span class="EmpStrong">);</span><br/>
+&#160;44&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_search<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">)</span><br/>
+&#160;47&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> root<span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> len <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> node<span class="EmpStrong">) {</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>key<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>key<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> len<span class="EmpStrong">)</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">;</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="EmpStrong">) {</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">;</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;68&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>TSTree_search_prefix<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> root<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> len<span class="EmpStrong">)</span><br/>
+<a id="page_325"/>&#160;71&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>len <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> root<span class="EmpStrong">;</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> len <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> node<span class="EmpStrong">) {</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>key<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">;</span><br/>
+<a id="page_324"/>&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>key<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>splitchar<span class="EmpStrong">) {</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> len<span class="EmpStrong">) {</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">)</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">;</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">;</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_orange">node</span> <span class="EmpStrong">:</span> last<span class="EmpStrong">;</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// traverse until we find the first value in the equal chain</span></span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this is then the first node with this prefix</span></span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38; !</span></span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">) {</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">;</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node <span class="pd_brown-1"><span class="EmpStrong">?</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span><span class="pd_orange">value</span> <span class="EmpStrong">:</span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+103&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104<br/>
+105&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> TSTree_traverse<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span> TSTree_traverse_cb cb<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+106&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>node<span class="EmpStrong">)</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span><span class="EmpStrong">;</span><br/>
+109<br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">)</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_traverse<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">,</span> cb<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+112<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">) {</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_traverse<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">,</span> cb<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">)</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_traverse<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">,</span> cb<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+119<br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">)</span><br/>
+<a id="page_326"/>121&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;cb<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+122&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+123<br/>
+124&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> TSTree_destroy<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+125&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">)</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span><span class="EmpStrong">;</span><br/>
+128<br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">)</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_destroy<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>low<span class="EmpStrong">);</span><br/>
+131<br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">) {</span><br/>
+133&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_destroy<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>equal<span class="EmpStrong">);</span><br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+135<br/>
+136&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">)</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_destroy<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>high<span class="EmpStrong">);</span><br/>
+138<br/>
+139&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+140&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">For <code>TSTree_insert</code>, I&#8217;m using the same pattern for recursive structures where I have a small function that calls the real recursive function. I&#8217;m not doing any additional checks here, but you should add the usual defensive programming checks to it. One thing to keep in mind is that it&#8217;s using a slightly different design that doesn&#8217;t have a separate <code>TSTree_create</code> function. However, if you pass it a <code>NULL</code> for the <code>node</code>, then it will create it and return the final value.</p>
+<p class="noindent">That means I need to break down <code>TSTree_insert_base</code> so that you understand the insert operation:</p>
+<p class="indenthanging"><strong>tstree.c:10-18</strong> As I mentioned, if given a <code>NULL</code>, then I need to make this node and assign the <code>*key</code> (current character) to it. This is used to build the tree as we insert keys.</p>
+<p class="indenthanging"><strong>tstree.c:20-21</strong> If the <code>*key</code> is less than this, then recurse, but go to the <code>low</code> branch.</p>
+<p class="indenthanging"><strong>tstree.c:22</strong> This <code>splitchar</code> is equal, so I want to go and deal with equality. This will happen if we just create this node, so we&#8217;ll be building the tree at this point.</p>
+<p class="indenthanging"><strong>tstree.c:23-24</strong> There are still characters to handle, so recurse down the <code>equal</code> branch, but go to the next <code>*key</code> character.</p>
+<p class="indenthanging"><strong>tstree.c:26-27</strong> This is the last character, so I set the value and that&#8217;s it. I have an <code>assert</code> here in case of a duplicate.</p>
+<p class="indenthanging"><strong>tstree.c:29-30</strong> The last condition is that this <code>*key</code> is greater than <code>splitchar</code>, so I need to recurse down the <code>high</code> branch.</p>
+<p class="noindent"><a id="page_327"/>The key to this data structure is the fact that I&#8217;m only incrementing the character when a <code>splitchar</code> is equal. For the other two conditions, I just walk through the tree until I hit an equal character to recurse into next. What this does is make it very fast <em>not</em> to find a key. I can get a bad key, and simply walk through a few <code>high</code> and <code>low</code> nodes until I hit a dead end before I know that this key doesn&#8217;t exist. I don&#8217;t need to process every character of the key or every node of the tree.</p>
+<p class="noindent">Once you understand that, then move on to analyzing how <code>TSTree_search</code> works.</p>
+<p class="indenthanging"><strong>tstree.c:46</strong> I don&#8217;t need to process the tree recursively in the <code>TSTree</code>. I can just use a <code>while-loop</code> and a <code>node</code> for where I currently am.</p>
+<p class="indenthanging"><strong>tstree.c:47-48</strong> If the current character is less than the node <code>splitchar</code>, then go low.</p>
+<p class="indenthanging"><strong>tstree.c:49-51</strong> If it&#8217;s equal, then increment <code>i</code> and go equal as long as it&#8217;s not the last character. That&#8217;s why the <code>if(i &lt; len)</code> is there, so that I don&#8217;t go too far past the final <code>value</code>.</p>
+<p class="indenthanging"><strong>tstree.c:52-53</strong> Otherwise, I go <code>high</code>, since the character is greater.</p>
+<p class="indenthanging"><strong>tstree.c:57-61</strong> If I have a node after the loop, then return its <code>value</code>, otherwise return <code>NULL</code>.</p>
+<p class="noindent">This isn&#8217;t too difficult to understand, and you can see that it&#8217;s almost exactly the same algorithm for the <code>TSTree_search_prefix</code> function. The only difference is that I&#8217;m not trying to find an exact match, but find the longest prefix I can. To do that, I keep track of the <code>last</code> node that was equal, and then after the search loop, walk through that node until I find a <code>value</code>.</p>
+<p class="noindent">Looking at <code>TSTree_search_prefix</code>, you can start to see the second advantage a <code>TSTree</code> has over the <code>BSTree</code> and <code>Hashmap</code> for finding strings. Given any key of <em>X</em> length, you can find any key in <em>X</em> moves. You can also find the first prefix in <em>X</em> moves, plus <em>N</em> more depending on how big the matching key is. If the biggest key in the tree is ten characters long, then you can find any prefix in that key in ten moves. More importantly, you can do all of this by comparing each character of the key <em>once</em>.</p>
+<p class="noindent">In comparison, to do the same with a <code>BSTree</code>, you would have to check the prefixes of each character in every possible matching node in the <code>BSTree</code> against the characters in the prefix. It&#8217;s the same for finding keys or seeing if a key doesn&#8217;t exist. You have to compare each character against most of the characters in the <code>BSTree</code> to find or not find a match.</p>
+<p class="noindent">A <code>Hashmap</code> is even worse for finding prefixes, because you can&#8217;t hash just the prefix. Basically, you can&#8217;t do this efficiently in a <code>Hashmap</code> unless the data is something you can parse, like a URL. Even then, that usually requires whole trees of <code>Hashmaps</code>.</p>
+<p class="noindent">The last two functions should be easy for you to analyze since they&#8217;re the typical traversing and destroying operations that you&#8217;ve already seen in other data structures.</p>
+<p class="noindent"><a id="page_328"/>Finally, I have a simple unit test for the whole thing to make sure it works right:</p>
+<p class="ex-caption"><code>tstree_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p328pro01" href="ch46_images.html#p328pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/tstree.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>valueA <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"VALUEA"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>valueB <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"VALUEB"</span><span class="EmpStrong">;</span><br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"VALUE2"</span><span class="EmpStrong">;</span><br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value4 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"VALUE4"</span><span class="EmpStrong">;</span><br/>
+&#160;12&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>reverse <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"VALUER"</span><span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> traverse_count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"TEST"</span><span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"TEST2"</span><span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"TSET"</span><span class="EmpStrong">);</span><br/>
+&#160;18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test4 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"T"</span><span class="EmpStrong">);</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_insert<span class="EmpStrong">()</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">),</span> valueA<span class="EmpStrong">);</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to insert into tst."</span><span class="EmpStrong">);</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">),</span> value2<span class="EmpStrong">);</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to insert into tst with second name."</span><span class="EmpStrong">);</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">),</span> reverse<span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to insert into tst with reverse name."</span><span class="EmpStrong">);</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test4<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test4<span class="EmpStrong">),</span> value4<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to insert into tst with second name."</span><span class="EmpStrong">);</span><br/>
+&#160;36<br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;38&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_search_exact<span class="EmpStrong">()</span><br/>
+&#160;41&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// tst returns the last one inserted</span></span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">));</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">==</span></span> valueA<span class="EmpStrong">,</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Got the wrong value back, should get A not B."</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// tst does not find if not exact</span></span><br/>
+<a id="page_329"/>&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> <span class="pd_green">"TESTNO"</span><span class="EmpStrong">,</span> strlen<span class="EmpStrong">(</span><span class="pd_green">"TESTNO"</span><span class="EmpStrong">));</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should not find anything."</span><span class="EmpStrong">);</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_search_prefix<span class="EmpStrong">()</span><br/>
+&#160;55&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search_prefix<span class="EmpStrong">(</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">));</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"result: %p, expected: %p"</span><span class="EmpStrong">,</span> res<span class="EmpStrong">,</span> valueA<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">==</span></span> valueA<span class="EmpStrong">,</span> <span class="pd_green">"Got wrong valueA by prefix."</span><span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search_prefix<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"result: %p, expected: %p"</span><span class="EmpStrong">,</span> res<span class="EmpStrong">,</span> valueA<span class="EmpStrong">);</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">==</span></span> value4<span class="EmpStrong">,</span> <span class="pd_green">"Got wrong value4 for prefix of 1."</span><span class="EmpStrong">);</span><br/>
+&#160;64<br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search_prefix<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> <span class="pd_green">"TE"</span><span class="EmpStrong">,</span> strlen<span class="EmpStrong">(</span><span class="pd_green">"TE"</span><span class="EmpStrong">));</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should find for short prefix."</span><span class="EmpStrong">);</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;res <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search_prefix<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> <span class="pd_green">"TE--"</span><span class="EmpStrong">,</span> strlen<span class="EmpStrong">(</span><span class="pd_green">"TE--"</span><span class="EmpStrong">));</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>res <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should find for partial prefix."</span><span class="EmpStrong">);</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;72&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;73<br/>
+&#160;74&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> TSTree_traverse_test_cb<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;75&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>value <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Should not get NULL value."</span><span class="EmpStrong">);</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>data <span class="pd_brown-1"><span class="EmpStrong">==</span></span> valueA <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Expecting valueA as the data."</span><span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;79&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;80<br/>
+&#160;81&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_traverse<span class="EmpStrong">()</span><br/>
+&#160;82&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_traverse<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> TSTree_traverse_test_cb<span class="EmpStrong">,</span> valueA<span class="EmpStrong">);</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"traverse count is: %d"</span><span class="EmpStrong">,</span> traverse_count<span class="EmpStrong">);</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>traverse_count <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Didn't find 4 keys."</span><span class="EmpStrong">);</span><br/>
+&#160;87<br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;89&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;92&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_destroy<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;94<br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;96&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;97<br/>
+<a id="page_330"/>&#160;98&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;99&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_insert<span class="EmpStrong">);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_search_exact<span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_search_prefix<span class="EmpStrong">);</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_traverse<span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+109&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+110<br/>
+111&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<div class="heading">
+<h3 id="ch46lev1sec1">Advantages and Disadvantages</h3>
+<p class="noindent">There are other interesting, practical things you can do with a <code>TSTree</code>:</p>
+</div>
+<p class="indenthangingB">&#8226; In addition to finding prefixes, you can reverse all of the keys you insert, and then find things by <em>suffix</em>. I use this to look up host names, since I want to find <code>*.learncodethe hardway.com</code>. If I go backward, I can match them quickly.</p>
+<p class="indenthangingB">&#8226; You can do approximate matching, by gathering all of the nodes that have most of the same characters as the key, or using other algorithms to find a close match.</p>
+<p class="indenthangingB">&#8226; You can find all of the keys that have a part in the middle.</p>
+<p class="noindent">I&#8217;ve already talked about some of the things <code>TSTree</code>s can do, but they aren&#8217;t the best data structure all the time. Here are the disadvantages of the <code>TSTree</code>:</p>
+<p class="indenthangingB">&#8226; As I mentioned, deleting from them is murder. They are better used for data that needs to be looked up fast and rarely removed. If you need to delete, then simply disable the <code>value</code> and then periodically rebuild the tree when it gets too big.</p>
+<p class="indenthangingB">&#8226; It uses a ton of memory compared to <code>BSTree</code> and <code>Hashmaps</code> for the same key space. Think about it. It&#8217;s using a full node for each character in every key. It might work better for smaller keys, but if you put a lot in a <code>TSTree</code>, it will get huge.</p>
+<p class="indenthangingB">&#8226; They also don&#8217;t work well with large keys, but large is subjective. As usual, test it first. If you&#8217;re trying to store 10,000-character keys, then use a <code>Hashmap</code>.</p>
+<div class="heading">
+<h3 id="ch46lev1sec2"><a id="page_331"/>How to Improve It</h3>
+<p class="noindent">As usual, go through and improve this by adding the defensive programming preconditions, asserts, and checks to each function. There are some other possible improvements, but you don&#8217;t necessarily have to implement all of these:</p>
+</div>
+<p class="indenthangingB">&#8226; You could allow duplicates by using a <code>DArray</code> instead of the <code>value</code>.</p>
+<p class="indenthangingB">&#8226; As I mentioned earlier, deleting is hard, but you could simulate it by setting the values to <code>NULL</code> so that they are effectively gone.</p>
+<p class="indenthangingB">&#8226; There are no ways to collect all of the possible matching values. I&#8217;ll have you implement that in an Extra Credit exercise.</p>
+<p class="indenthangingB">&#8226; There are other algorithms that are more complex but have slightly better properties. Take a look at suffix array, suffix tree, and radix tree structures.</p>
+<div class="heading">
+<h3 id="ch46lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Implement a <code>TSTree_collect</code> that returns a <code>DArray</code> containing all of the keys that match the given prefix.</p>
+</div>
+<p class="indenthangingB">&#8226; Implement <code>TSTree_search_suffix</code> and a <code>TSTree_insert_suffix</code> so you can do suffix searches and inserts.</p>
+<p class="indenthangingB">&#8226; Use the debugger to see how this structure stores data compared to the <code>BSTree</code> and <code>Hashmap</code>.</p>
+</body>
+</html>

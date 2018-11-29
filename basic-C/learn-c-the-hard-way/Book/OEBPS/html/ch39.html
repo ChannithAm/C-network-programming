@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 39. String Algorithms</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch39"><a id="page_248"/>Exercise 39. String Algorithms</h2>
+<p class="noindent">In this exercise, I&#8217;m going to show you a supposedly faster string search algorithm, called <code>binstr</code>, and compare it to the one that exists in <code>bstrlib.c</code>. The documentation for <code>binstr</code> says that it uses a simple &#8220;brute force&#8221; string search to find the first instance. The one that I&#8217;ll implement will use the Boyer-Moore-Horspool (BMH) algorithm, which is supposed to be faster if you analyze the theoretical time. Assuming my implementation isn&#8217;t flawed, you&#8217;ll see that the practical time for BMH is much worse than the simple brute force of <code>binstr</code>.</p>
+<p class="noindent">The point of this exercise isn&#8217;t really to explain the algorithm, because it&#8217;s simple enough for you to read the &#8220;Boyer-Moore-Horspool algorithm&#8221; page on Wikipedia. The gist of this algorithm is that it calculates a <em>skip characters</em> list as a first operation, then it uses this list to quickly scan through the string. It&#8217;s supposed to be faster than brute force, so let&#8217;s get the code into the right files and see.</p>
+<p class="noindent">First, I have the header:</p>
+<p class="ex-caption"><code>string_algos.h</code></p>
+<hr/>
+<p class="codelink"><a id="p248pro01" href="ch39_images.html#p248pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef string_algos_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define string_algos_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> StringScanner <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;bstring <span class="pd_blue"><span class="EmpStrong">in</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>haystack<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> hlen<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>needle<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> nlen<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> skip_chars<span class="EmpStrong">[</span>UCHAR_MAX <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">];</span><br/>
+<span class="EmpStrong">}</span> StringScanner<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> String_find<span class="EmpStrong">(</span>bstring <span class="pd_blue"><span class="EmpStrong">in</span></span><span class="EmpStrong">,</span> bstring what<span class="EmpStrong">);</span><br/>
+<br/>
+StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span>StringScanner_create<span class="EmpStrong">(</span>bstring <span class="pd_blue"><span class="EmpStrong">in</span></span><span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> StringScanner_scan<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">,</span> bstring tofind<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> StringScanner_destroy<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent"><a id="page_249"/>In order to see the effects of this skip characters list, I&#8217;m going to make two versions of the BMH algorithm:</p>
+<p class="indenthanging"><strong>String_find</strong> This simply finds the first instance of one string in another, doing the entire algorithm in one shot.</p>
+<p class="indenthanging"><strong>StringScanner_scan</strong> This uses a <code>StringScanner</code> state structure to separate the skip list build from the actual find. This will let me see what impact that has on performance. This model also gives me the advantage of incrementally scanning for one string in another and quickly finding all instances.</p>
+<p class="noindent">Once you have that, here&#8217;s the implementation:</p>
+<p class="ex-caption"><code>string_algos.c</code></p>
+<hr/>
+<p class="codelink"><a id="p249pro01" href="ch39_images.html#p249pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/string_algos.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;limits.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> String_setup_skip_chars<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">size_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> skip_chars<span class="EmpStrong">,</span><br/>
+&#160;&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>needle<span class="EmpStrong">,</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> nlen<span class="EmpStrong">)</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> nlen <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> UCHAR_MAX <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;skip_chars<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> nlen<span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> last<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;skip_chars<span class="EmpStrong">[</span>needle<span class="EmpStrong">[</span>i<span class="EmpStrong">]]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> last <span class="pd_brown-1"><span class="EmpStrong">-</span></span> i<span class="EmpStrong">;</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>String_base_search<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const unsigned</span></span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>haystack<span class="EmpStrong">,</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> hlen<span class="EmpStrong">,</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned</span></span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>needle<span class="EmpStrong">,</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> nlen<span class="EmpStrong">,</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;skip_chars<span class="EmpStrong">)</span><br/>
+&#160;28&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> last <span class="pd_brown-1"><span class="EmpStrong">=</span></span> nlen <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>haystack <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Given bad haystack to search."</span><span class="EmpStrong">);</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>needle <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"Given bad needle to search for."</span><span class="EmpStrong">);</span><br/>
+&#160;34<br/>
+<a id="page_250"/>&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>nlen <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"nlen can't be &lt;= 0"</span><span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>hlen <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"hlen can't be &lt;= 0"</span><span class="EmpStrong">);</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>hlen <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> nlen<span class="EmpStrong">)</span> <span class="EmpStrong">{</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> last<span class="EmpStrong">;</span> haystack<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> needle<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span> i<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">) {</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> haystack<span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hlen <span class="pd_brown-1"><span class="EmpStrong">-=</span></span> skip_chars<span class="EmpStrong">[</span>haystack<span class="EmpStrong">[</span>last<span class="EmpStrong">]];</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;haystack <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> skip_chars<span class="EmpStrong">[</span>haystack<span class="EmpStrong">[</span>last<span class="EmpStrong">]];</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// fallthrough</span></span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> String_find<span class="EmpStrong">(</span>bstring in<span class="EmpStrong">,</span> bstring what<span class="EmpStrong">)</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>haystack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> hlen <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>needle <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>what<span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> nlen <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">(</span>what<span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> skip_chars<span class="EmpStrong">[</span>UCHAR_MAX <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{ <span class="pd_blue-1">0</span> };</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;String_setup_skip_chars<span class="EmpStrong">(</span>skip_chars<span class="EmpStrong">,</span> needle<span class="EmpStrong">,</span> nlen<span class="EmpStrong">);</span><br/>
+&#160;64<br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> String_base_search<span class="EmpStrong">(</span>haystack<span class="EmpStrong">,</span> hlen<span class="EmpStrong">,</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;needle<span class="EmpStrong">,</span> nlen<span class="EmpStrong">,</span> skip_chars<span class="EmpStrong">);</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> found <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> found <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_orange">haystack</span> <span class="EmpStrong">:</span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;69&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span>StringScanner_create<span class="EmpStrong">(</span>bstring in<span class="EmpStrong">)</span><br/>
+&#160;72&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span>scan <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>StringScanner<span class="EmpStrong">));</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> in<span class="EmpStrong">;</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>haystack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hlen <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">(</span>in<span class="EmpStrong">);</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>scan <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"fuck"</span><span class="EmpStrong">);</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> scan<span class="EmpStrong">;</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+<a id="page_251"/>&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;86&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;87<br/>
+&#160;88&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> StringScanner_set_needle<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">,</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring tofind<span class="EmpStrong">)</span><br/>
+&#160;90&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>needle <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>tofind<span class="EmpStrong">);</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>nlen <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">(</span>tofind<span class="EmpStrong">);</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;String_setup_skip_chars<span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>skip_chars<span class="EmpStrong">,</span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>needle<span class="EmpStrong">,</span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>nlen<span class="EmpStrong">);</span><br/>
+&#160;95&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> StringScanner_reset<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">)</span><br/>
+&#160;98&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>haystack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>in<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hlen <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>in<span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+102<br/>
+103&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> StringScanner_scan<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">,</span> bstring tofind<span class="EmpStrong">)</span><br/>
+104&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">ssize_t</span></span> found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hlen <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner_reset<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+112<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">((</span><span class="pd_blue"><span class="EmpStrong">const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>tofind<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>needle<span class="EmpStrong">) {</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner_set_needle<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> tofind<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;found <span class="pd_brown-1"><span class="EmpStrong">=</span></span> String_base_search<span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>haystack<span class="EmpStrong">,</span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hlen<span class="EmpStrong">,</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>needle<span class="EmpStrong">,</span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>nlen<span class="EmpStrong">,</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>skip_chars<span class="EmpStrong">);</span><br/>
+120<br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>found<span class="EmpStrong">) {</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> found <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue"><span class="EmpStrong">(const unsigned char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>bdata<span class="EmpStrong">(</span>scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>in<span class="EmpStrong">);</span><br/>
+123&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>haystack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> found <span class="pd_brown-1"><span class="EmpStrong">+</span></span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>nlen<span class="EmpStrong">;</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hlen <span class="pd_brown-1"><span class="EmpStrong">-=</span></span> found_at <span class="pd_brown-1"><span class="EmpStrong">-</span></span> scan<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>nlen<span class="EmpStrong">;</span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// done, reset the setup</span></span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner_reset<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">= -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+130<br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> found_at<span class="EmpStrong">;</span><br/>
+132&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+133<br/>
+134&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> StringScanner_destroy<span class="EmpStrong">(</span>StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span> scan<span class="EmpStrong">)</span><br/>
+135&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+<a id="page_252"/>136&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>scan<span class="EmpStrong">) {</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+138&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+139&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">The entire algorithm is in two <code>static inline</code> functions called <code>String_setup_skip_chars</code> and <code>String_base_search</code>. These are then used in the other functions to actually implement the searching styles I want. Study these first two functions and compare them to the Wikipedia description so that you know what&#8217;s going on.</p>
+<p class="noindent">The <code>String_find</code> then just uses these two functions to do a find and return the position found. It&#8217;s very simple, and I&#8217;ll use it to see how this build <code>skip_chars</code> phase impacts real, practical performance. Keep in mind that you could maybe make this faster, but I&#8217;m teaching you how to confirm theoretical speed after you implement an algorithm.</p>
+<p class="noindent">The <code>StringScanner_scan</code> function then follows the common pattern I use of create, scan, and destroy, and is used to incrementally scan a string for another string. You&#8217;ll see how this is used when I show you the unit test that will test this out.</p>
+<p class="noindent">Finally, I have the unit test that first confirms that this is all working, then it runs simple performance tests for all three, finding algorithms in a <em>commented out section</em>.</p>
+<p class="ex-caption"><code>string_algos_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p252pro01" href="ch39_images.html#p252pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/string_algos.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;time.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring IN_STR <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"I have ALPHA beta ALPHA and oranges ALPHA"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring ALPHA <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"ALPHA"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const int</span></span> TEST_TIME <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_find_and_scan<span class="EmpStrong">()</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span>scan <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>IN_STR<span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>scan <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make the scanner."</span><span class="EmpStrong">);</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> find_i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> String_find<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>IN_STR<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>find_i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to find 'ALPHA' in test string."</span><span class="EmpStrong">);</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> scan_i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_scan<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>scan_i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to find 'ALPHA' with scan."</span><span class="EmpStrong">);</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>scan_i <span class="pd_brown-1"><span class="EmpStrong">==</span></span> find_i<span class="EmpStrong">,</span> <span class="pd_green">"find and scan don't match"</span><span class="EmpStrong">);</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan_i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_scan<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>scan_i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> find_i<span class="EmpStrong">,</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"should find another ALPHA after the first"</span><span class="EmpStrong">);</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;scan_i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_scan<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>scan_i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> find_i<span class="EmpStrong">,</span><br/>
+<a id="page_253"/>&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"should find another ALPHA after the first"</span><span class="EmpStrong">);</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>StringScanner_scan<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1,</span></span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"shouldn't find it"</span><span class="EmpStrong">);</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner_destroy<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_binstr_performance<span class="EmpStrong">()</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> find_count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="EmpStrong">{</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1000</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> binstr<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>IN_STR<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>found_at <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> BSTR_ERR<span class="EmpStrong">,</span> <span class="pd_green">"Failed to find!"</span><span class="EmpStrong">);</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span> start<span class="EmpStrong">;</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>elapsed <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> TEST_TIME<span class="EmpStrong">);</span><br/>
+&#160;56<br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"BINSTR COUNT: %lu, END TIME: %d, OPS: %f"</span><span class="EmpStrong">,</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="EmpStrong">, (<span class="pd_blue">int</span>)</span>elapsed<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">(double</span></span><span class="EmpStrong">)</span>find_count <span class="pd_brown-1"><span class="EmpStrong">/</span></span> elapsed<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;60&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;61<br/>
+&#160;62&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_find_performance<span class="EmpStrong">()</span><br/>
+&#160;63&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> find_count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="EmpStrong">{</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1000</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> String_find<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>IN_STR<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_254"/>&#160;75<br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span> start<span class="EmpStrong">;</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>elapsed <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> TEST_TIME<span class="EmpStrong">);</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"FIND COUNT: %lu, END TIME: %d, OPS: %f"</span><span class="EmpStrong">,</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="EmpStrong">, (<span class="pd_blue">int</span>)</span>elapsed<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">(double</span></span><span class="EmpStrong">)</span>find_count <span class="pd_brown-1"><span class="EmpStrong">/</span></span> elapsed<span class="EmpStrong">);</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;83&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;84<br/>
+&#160;85&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_scan_performance<span class="EmpStrong">()</span><br/>
+&#160;86&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">unsigned long</span></span> find_count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner <span class="pd_brown-1"><span class="EmpStrong">*</span></span>scan <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_create<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>IN_STR<span class="EmpStrong">);</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">time_t</span></span> start <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;94<br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="EmpStrong">{</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1000</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;98<br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="EmpStrong">{</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;found_at <span class="pd_brown-1"><span class="EmpStrong">=</span></span> StringScanner_scan<span class="EmpStrong">(</span>scan<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>ALPHA<span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>found_at <span class="pd_brown-1"><span class="EmpStrong">!= -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;elapsed <span class="pd_brown-1"><span class="EmpStrong">=</span></span> time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span> start<span class="EmpStrong">;</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>elapsed <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> TEST_TIME<span class="EmpStrong">);</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"SCAN COUNT: %lu, END TIME: %d, OPS: %f"</span><span class="EmpStrong">,</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;find_count<span class="EmpStrong">, (<span class="pd_blue">int</span>)</span>elapsed<span class="EmpStrong">, (<span class="pd_blue">double</span>)</span>find_count <span class="pd_brown-1"><span class="EmpStrong">/</span></span> elapsed<span class="EmpStrong">);</span><br/>
+110<br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;StringScanner_destroy<span class="EmpStrong">(</span>scan<span class="EmpStrong">);</span><br/>
+112<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+114&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+115<br/>
+116&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+117&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+119<br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_find_and_scan<span class="EmpStrong">);</span><br/>
+121<br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this is an idiom for commenting out sections of code</span></span><br/>
+123&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#if 0</span></span><br/>
+<a id="page_255"/>124&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">mu_run_test(test_scan_performance);</span></span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">mu_run_test(test_find_performance);</span></span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">mu_run_test(test_binstr_performance);</span></span><br/>
+127&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#endif</span></span><br/>
+128<br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+130&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+131<br/>
+132&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">I have it written here with <code>#if 0</code>, which is a way to use the CPP to comment out a section of code. Type it in like this, and then remove it and the <code>#endif</code> so that you can see these performance tests run. As you continue with the book, simply comment these out so that the test doesn&#8217;t waste development time.</p>
+<p class="noindent">There&#8217;s nothing amazing in this unit test; it just runs each of the different functions in loops that last long enough to get a few seconds of sampling. The first test (<code>test_find_and_scan</code>) just confirms that what I&#8217;ve written works, because there&#8217;s no point in testing the speed of something that doesn&#8217;t work. Then, the next three functions run a large number of searches, using each of the three functions.</p>
+<p class="noindent">The trick to notice is that I grab the starting time in <code>start</code>, and then I loop until at least <code>TEST_TIME</code> seconds have passed. This makes sure that I get enough samples to work with while comparing the three. I&#8217;ll then run this test with different <code>TEST_TIME</code> settings and analyze the results.</p>
+<div class="heading">
+<h3 id="ch39lev1sec1">What You Should See</h3>
+<p class="noindent">When I run this test on my laptop, I get numbers that look like this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 39.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p255pro01" href="ch39_images.html#p255pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> ./tests/string_algos_tests<br/>
+<span class="EmpItalic">DEBUG tests/string_algos_tests.c:124: ----- RUNNING:<br/>
+&#160;&#160;&#160;&#160;./tests/string_algos_tests<br/>
+----<br/>
+RUNNING: ./tests/string_algos_tests<br/>
+DEBUG tests/string_algos_tests.c:116:<br/>
+----- test_find_and_scan<br/>
+DEBUG tests/string_algos_tests.c:117:<br/>
+----- test_scan_performance<br/>
+DEBUG tests/string_algos_tests.c:105: SCAN COUNT:\<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;110272000, END TIME: 2, OPS: 55136000.000000<br/>
+DEBUG tests/string_algos_tests.c:118:<br/>
+----- test_find_performance<br/>
+DEBUG tests/string_algos_tests.c:76: FIND COUNT:\<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;12710000, END TIME: 2, OPS: 6355000.000000<br/>
+DEBUG tests/string_algos_tests.c:119:<br/>
+----- test_binstr_performance<br/>
+<a id="page_256"/>DEBUG tests/string_algos_tests.c:54: BINSTR COUNT:\<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;72736000, END TIME: 2, OPS: 36368000.000000<br/>
+ALL TESTS PASSED<br/>
+Tests run: 4</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">I look at this and I want to do more than 2 seconds for each run. I want to run this many times, and then use R to check it out like I did before. Here&#8217;s what I get for ten samples for about 10 seconds each:</p>
+<p class="pre">scan find binstr<br/>
+71195200 6353700 37110200<br/>
+75098000 6358400 37420800<br/>
+74910000 6351300 37263600<br/>
+74859600 6586100 37133200<br/>
+73345600 6365200 37549700<br/>
+74754400 6358000 37162400<br/>
+75343600 6630400 37075000<br/>
+73804800 6439900 36858700<br/>
+74995200 6384300 36811700<br/>
+74781200 6449500 37383000</p>
+<p class="noindent">The way I got this is using a little bit of shell help, and then editing the output:</p>
+<p class="ex-caption"><code>Exercise 39.2 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p256pro01" href="ch39_images.html#p256pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> <span class="pd_blue"><span class="EmpStrong">for</span></span> i in <span class="pd_blue-1"><span class="EmpStrong">1 2 3 4 5 6 7 8 9</span></span> 10<br/>
+<span class="pd_brown">&gt;</span> <span class="pd_blue"><span class="EmpStrong">do</span></span> <span class="pd_blue">echo</span> <span class="pd_green">"RUN ---</span> $i<span class="pd_green">"</span> &gt;&gt; times.log<br/>
+<span class="pd_brown">&gt;</span> ./tests/string_algos_tests 2&gt;<span class="EmpStrong">&#38;</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span> | grep COUNT &gt;&gt; times.log<br/>
+<span class="pd_brown">&gt;</span> <span class="pd_blue"><span class="EmpStrong">done</span></span><br/>
+<span class="pd_brown">$</span> less times.log<br/>
+<span class="pd_brown">$</span> vim times.log</p>
+<p class="noindent">Right away, you can see that the scanning system beats the pants off both of the others, but I&#8217;ll open this in R and confirm the results:</p>
+<p class="ex-caption"><code>Exercise 39.3 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p256pro02" href="ch39_images.html#p256pro02a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">&gt;</span> <span class="pd_blue">times</span> &lt;- read.table<span class="pd_brown-1"><span class="EmpStrong">(</span></span><span class="pd_green">"times.log"</span>, header<span class="pd_brown-1"><span class="EmpStrong">=</span></span>T<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="pd_brown">&gt;</span> summary<span class="pd_brown-1"><span class="EmpStrong">(</span></span><span class="pd_blue">times</span><span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">scan</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">find</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">binstr</span><br/>
+&#160;<span class="EmpItalic">Min.&#160;&#160;&#160;:71195200&#160;&#160;&#160;Min.&#160;&#160;&#160;:6351300&#160;&#160;&#160;Min.&#160;&#160;&#160;:36811700</span><br/>
+&#160;<span class="EmpItalic">1st Qu.:74042200&#160;&#160;&#160;1st Qu.:6358100&#160;&#160;&#160;1st Qu.:37083800</span><br/>
+&#160;<span class="EmpItalic">Median :74820400&#160;&#160;&#160;Median :6374750&#160;&#160;&#160;Median :37147800</span><br/>
+&#160;<span class="EmpItalic">Mean&#160;&#160;&#160;:74308760&#160;&#160;&#160;Mean&#160;&#160;&#160;:6427680&#160;&#160;&#160;Mean&#160;&#160;&#160;:37176830</span><br/>
+&#160;<span class="EmpItalic">3rd Qu.:74973900&#160;&#160;&#160;3rd Qu.:6447100&#160;&#160;&#160;3rd Qu.:37353150</span><br/>
+&#160;<span class="EmpItalic">Max.&#160;&#160;&#160;:75343600&#160;&#160;&#160;Max.&#160;&#160;&#160;:6630400&#160;&#160;&#160;Max.&#160;&#160;&#160;:37549700</span><br/>
+<span class="pd_brown">&gt;</span></p>
+<p class="noindent">To understand why I&#8217;m getting the summary statistics, I have to explain some statistics for you. What I&#8217;m looking for in these numbers is simply this: &#8220;Are these three functions (<code>scan</code>, <code>find</code>, <code>bsinter</code>) <a id="page_257"/>actually different?&#8221; I know that each time I run my tester function, I get slightly different numbers, and those numbers can cover a certain range. You see here that the first and third quarters do that for each sample.</p>
+<p class="noindent">What I look at first is the mean, and I want to see if each sample&#8217;s mean is different from the others. I can see that, and clearly the <code>scan</code> beats <code>binstr</code>, which also beats <code>find</code>. However, I have a problem. If I use just the mean, there&#8217;s a <em>chance</em> that the <code>ranges</code> of each sample might overlap.</p>
+<p class="noindent">What if I have means that are different, but the first and third quarters overlap? In that case, I could say that if I ran the samples again there&#8217;s a chance that the means might not be different. The more overlap I have in the ranges, the higher probability that my two samples (and my two functions) are <em>not</em> actually different. Any difference that I&#8217;m seeing in the two (in this case three) is just random chance.</p>
+<p class="noindent">There are many tools that you can use to solve this problem, but in our case, I can just look at the first and third quarters and the mean for all three samples. If the means are different, and the quarters are way off with no possibility of overlapping, then it&#8217;s alright to say that they are different.</p>
+<p class="noindent">In my three samples, I can say that <code>scan</code>, <code>find</code>, and <code>binstr</code> are different, don&#8217;t overlap in range, and I can trust the sample (for the most part).</p>
+<div class="heading">
+<h3 id="ch39lev1sec2">Analyzing the Results</h3>
+<p class="noindent">Looking at the results, I can see that <code>String_find</code> is much slower than the other two. In fact, it&#8217;s so slow that I&#8217;d think there&#8217;s something wrong with how I implemented it. However, when I compare it to <code>StringScanner_scan</code>, I can see that it&#8217;s most likely the part that builds the skip list that&#8217;s costing the time. Not only is <code>find</code> slower, it&#8217;s also doing <em>less</em> than <code>scan</code> because it&#8217;s just finding the first string while <code>scan</code> finds all of them.</p>
+</div>
+<p class="noindent">I can also see that <code>scan</code> beats <code>binstr</code>, as well, and by quite a large margin. Again, not only does <code>scan</code> do more than both of these, but it&#8217;s also much faster.</p>
+<p class="noindent">There are a few caveats with this analysis:</p>
+<p class="indenthangingB">&#8226; I may have messed up this implementation or the test. At this point I would go research all of the possible ways to do a BMH algorithm and try to improve it. I would also confirm that I&#8217;m doing the test right.</p>
+<p class="indenthangingB">&#8226; If you alter the time the test runs, you&#8217;ll get different results. There is a warm-up period that I&#8217;m not investigating.</p>
+<p class="indenthangingB">&#8226; The <code>test_scan_performance</code> unit test isn&#8217;t quite the same as the others, but it&#8217;s doing more than the other tests, so it&#8217;s probably alright.</p>
+<p class="indenthangingB"><a id="page_258"/>&#8226; I&#8217;m only doing the test by searching for one string in another. I could randomize the strings to find their position and length as a confounding factor.</p>
+<p class="indenthangingB">&#8226; Maybe <code>binstr</code> is implemented better than simple brute force.</p>
+<p class="indenthangingB">&#8226; I could be running these in an unfortunate order. Maybe randomizing which test runs first will give better results.</p>
+<p class="noindent">One thing to gather from this is that you need to confirm real performance even if you implement an algorithm correctly. In this case, the claim is that the BMH algorithm should have beaten the <code>binstr</code> algorithm, but a simple test proved it didn&#8217;t. Had I not done this, I would have been using an inferior algorithm implementation without knowing it. With these metrics, I can start to tune my implementation, or simply scrap it and find another one.</p>
+<div class="heading">
+<h3 id="ch39lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; See if you can make the <code>Scan_find</code> faster. Why is my implementation here slow?</p>
+</div>
+<p class="indenthangingB">&#8226; Try some different scan times and see if you get different numbers. What impact does the length of time that you run the test have on the <code>scan</code> times? What can you say about that result?</p>
+<p class="indenthangingB">&#8226; Alter the unit test so that it runs each function for a short burst in the beginning to clear out any warm-up period, and then start the timing portion. Does that change the dependence on the length of time the test runs? Does it change how many operations per second are possible?</p>
+<p class="indenthangingB">&#8226; Make the unit test randomize the strings to find and then measure the performance you get. One way to do this is to use the <code>bsplit</code> function from <code>bstrlib.h</code> to split the <code>IN_STR</code> on spaces. Then, you can use the <code>bstrList</code> struct that you get to access each string it returns. This will also teach you how to use <code>bstrList</code> operations for string processing.</p>
+<p class="indenthangingB">&#8226; Try some runs with the tests in different orders to see if you get different results.<a id="page_259"/></p>
+</body>
+</html>

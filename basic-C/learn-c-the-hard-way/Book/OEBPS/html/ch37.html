@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 37. Hashmaps</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch37"><a id="page_228"/>Exercise 37. Hashmaps</h2>
+<p class="noindent">Hash maps (hashmaps, hashes, or sometimes dictionaries) are used frequently in dynamic programming for storing key/value data. A hashmap works by performing a hashing calculation on the keys to produce an integer, then uses that integer to find a bucket to get or set the value. It&#8217;s a very fast, practical data structure because it works on nearly any data and is easy to implement.</p>
+<p class="noindent">Here&#8217;s an example of using a hashmap (aka, dictionary) in Python:</p>
+<p class="ex-caption"><code>ex37.py</code></p>
+<hr/>
+<p class="codelink"><a id="p228pro01" href="ch37_images.html#p228pro01a">Click here to view code image</a></p>
+<p class="pre">fruit_weights <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><span class="pd_green">'Apples'</span><span class="EmpStrong">:</span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">,</span> <span class="pd_green">'Oranges'</span><span class="EmpStrong">:</span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">,</span> <span class="pd_green">'Grapes'</span><span class="EmpStrong">:</span> <span class="pd_blue-1"><span class="EmpStrong">1.0</span></span><span class="EmpStrong">}</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">for</span></span> key<span class="EmpStrong">,</span> value <span class="pd_blue"><span class="EmpStrong">in</span></span> fruit_weights<span class="pd_brown-1"><span class="EmpStrong">.</span></span>items<span class="EmpStrong">():</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">print</span></span> key<span class="EmpStrong">,</span> <span class="pd_green">"="</span><span class="EmpStrong">,</span> value</p>
+<p class="noindent">Almost every modern language has something like this, so many people end up writing code and never understand how this actually works. By creating the <code>Hashmap</code> data structure in C, I&#8217;ll show you how this works. I&#8217;ll start with the header file so I can talk about the data structure.</p>
+<p class="ex-caption"><code>hashmap.h</code></p>
+<hr/>
+<p class="codelink"><a id="p228pro02" href="ch37_images.html#p228pro02a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _lcthw_Hashmap_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _lcthw_Hashmap_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdint.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define DEFAULT_NUMBER_OF_BUCKETS 100</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(<span class="pd_brown-1">*</span></span>Hashmap_compare<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> uint32_t<span class="EmpStrong">(<span class="pd_brown-1">*</span></span>Hashmap_hash<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> Hashmap <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>buckets<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;Hashmap_compare compare<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;Hashmap_hash hash<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> Hashmap<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> HashmapNode <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> HashmapNode<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(<span class="pd_brown-1">*</span></span>Hashmap_traverse_cb<span class="EmpStrong">) (</span>HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_229"/>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_create<span class="EmpStrong">(</span>Hashmap_compare compare<span class="EmpStrong">,</span> Hashmap_hash<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> Hashmap_destroy<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Hashmap_set<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_get<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> Hashmap_traverse<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> Hashmap_traverse_cb traverse_cb<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_delete<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">The structure consists of a <code>Hashmap</code> that contains any number of <code>HashmapNode</code> structs. Looking at <code>Hashmap</code>, you can see that it&#8217;s structured like this:</p>
+<p class="indenthanging"><strong>DArray *buckets</strong> A dynamic array that will be set to a fixed size of 100 buckets. Each bucket will in turn contain a <code>DArray</code> that will hold <code>HashmapNode</code> pairs.</p>
+<p class="indenthanging"><strong>Hashmap_compare compare</strong> This is a comparison function that the <code>Hashmap</code> uses to find elements by their key. It should work like all of the other compare functions, and it defaults to using <code>bstrcmp</code> so that keys are just bstrings.</p>
+<p class="indenthanging"><strong>Hashmap_hash hash</strong> This is the hashing function, and it&#8217;s responsible for taking a key, processing its contents, and producing a single <code>uint32_t</code> index number. You&#8217;ll see the default one soon.</p>
+<p class="noindent">This almost tells you how the data is stored, but the <code>buckets DArray</code> hasn&#8217;t been created yet. Just remember that it&#8217;s kind of a two-level mapping:</p>
+<p class="indenthangingB">&#8226; There are 100 buckets that make up the first level, and things are in these buckets based on their hash.</p>
+<p class="indenthangingB">&#8226; Each bucket is a <code>DArray</code> that contains <code>HashmapNode</code> structs that are simply appended to the end as they&#8217;re added.</p>
+<p class="noindent">The <code>HashmapNode</code> is then composed of these three elements:</p>
+<p class="indenthanging"><strong>void *key</strong> The key for this key=value pair.</p>
+<p class="indenthanging"><strong>void *value</strong> The value.</p>
+<p class="indenthanging"><strong>uint32_t hash</strong> The calculated hash, which makes finding this node quicker. We can just check the hash and skip any that don&#8217;t match, only checking the key if it&#8217;s equal.</p>
+<p class="noindent"><a id="page_230"/>The rest of the header file is nothing new, so now I can show you the implementation <code>hashmap.c</code> file:</p>
+<p class="ex-caption"><code>hashmap.c</code></p>
+<hr/>
+<p class="codelink"><a id="p230pro01" href="ch37_images.html#p230pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#undef NDEBUG</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdint.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/hashmap.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> default_compare<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">)</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> bstrcmp<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> a<span class="EmpStrong">, (</span>bstring<span class="EmpStrong">)</span> b<span class="EmpStrong">);</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;11<br/>
+&#160;12&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/**</span></span><br/>
+&#160;13&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* Simple Bob Jenkins's hash algorithm taken from the</span></span><br/>
+&#160;14&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* wikipedia description.</span></span><br/>
+&#160;15&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;16&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static uint32_t</span></span> default_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">)</span><br/>
+&#160;17&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> len <span class="pd_brown-1"><span class="EmpStrong">=</span></span> blength<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> a<span class="EmpStrong">);</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bdata<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> a<span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> len<span class="EmpStrong">;</span> <span class="pd_brown-1"><span class="EmpStrong">++</span></span>i<span class="EmpStrong">)</span> <span class="EmpStrong">{</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> key<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">);</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">^=</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">&gt;&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">6</span></span><span class="EmpStrong">);</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">^=</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">&gt;&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">11</span></span><span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">15</span></span><span class="EmpStrong">);</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> hash<span class="EmpStrong">;</span><br/>
+&#160;34&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_create<span class="EmpStrong">(</span>Hashmap_compare compare<span class="EmpStrong">,</span> Hashmap_hash hash<span class="EmpStrong">)</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>Hashmap<span class="EmpStrong">));</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare <span class="pd_brown-1"><span class="EmpStrong">=</span></span> compare <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_orange">default_compare</span> <span class="EmpStrong">:</span> compare<span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_orange">default_hash</span> <span class="EmpStrong">:</span> hash<span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_create<span class="EmpStrong">(</span><br/>
+<a id="page_231"/>&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">),</span> DEFAULT_NUMBER_OF_BUCKETS<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">;</span> <span class="pd_brown"><span class="EmpItalic">// fake out expanding it</span></span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> map<span class="EmpStrong">;</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="EmpStrong">) {</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Hashmap_destroy<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;56&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Hashmap_destroy<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;59&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="EmpStrong">) {</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">) {</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>bucket<span class="EmpStrong">) {</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> j <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span> j<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> j<span class="EmpStrong">));</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;79&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;80<br/>
+&#160;81&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_node_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> hash<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;83&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeo</span></span><span class="EmpStrong">f(</span>HashmapNode<span class="EmpStrong">));</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> key<span class="EmpStrong">;</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> data<span class="EmpStrong">;</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> hash<span class="EmpStrong">;</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+<a id="page_232"/>&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;95&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_find_bucket<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> create<span class="EmpStrong">,</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span> hash_out<span class="EmpStrong">)</span><br/>
+100&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hash<span class="EmpStrong">(</span>key<span class="EmpStrong">);</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> bucket_n <span class="pd_brown-1"><span class="EmpStrong">=</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">%</span></span> DEFAULT_NUMBER_OF_BUCKETS<span class="EmpStrong">;</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>bucket_n <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Invalid bucket found: %d"</span><span class="EmpStrong">,</span> bucket_n<span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// store it for the return so the caller can use it</span></span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>hash_out <span class="pd_brown-1"><span class="EmpStrong">=</span></span> hash<span class="EmpStrong">;</span><br/>
+106<br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">,</span> bucket_n<span class="EmpStrong">);</span><br/>
+108<br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> create<span class="EmpStrong">) {</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// new bucket, set it up</span></span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_create<span class="EmpStrong">(</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">),</span> DEFAULT_NUMBER_OF_BUCKETS<span class="EmpStrong">);</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_set<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">,</span> bucket_n<span class="EmpStrong">,</span> bucket<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> bucket<span class="EmpStrong">;</span><br/>
+118<br/>
+119&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+121&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+122<br/>
+123&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Hashmap_set<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+124&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_find_bucket<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>hash<span class="EmpStrong">);</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> <span class="pd_green">"Error can't create bucket."</span><span class="EmpStrong">);</span><br/>
+128<br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_node_create<span class="EmpStrong">(</span>hash<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+131<br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_push<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> node<span class="EmpStrong">);</span><br/>
+133<br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+135<br/>
+136&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+138&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+139<br/>
+140&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline int</span></span> Hashmap_get_node<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash<span class="EmpStrong">,</span><br/>
+141&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> bucket<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+142&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+143&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+144<br/>
+<a id="page_233"/>145&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_end<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+146&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"TRY: %d"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+147&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+148&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>hash <span class="pd_brown-1"><span class="EmpStrong">==</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">,</span> key<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+149&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> i<span class="EmpStrong">;</span><br/>
+150&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+151&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+152<br/>
+153&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+154&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+155<br/>
+156&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_get<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+157&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+158&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+159&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_find_bucket<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>hash<span class="EmpStrong">);</span><br/>
+160&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>bucket<span class="EmpStrong">)</span> <span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+161<br/>
+162&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get_node<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> hash<span class="EmpStrong">,</span> bucket<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+163&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">)</span> <span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+164<br/>
+165&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+166&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+167&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to get node from bucket when it should exist."</span><span class="EmpStrong">);</span><br/>
+168<br/>
+169&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+170<br/>
+171&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// fallthrough</span></span><br/>
+172&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+173&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+174<br/>
+175&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> Hashmap_traverse<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> Hashmap_traverse_cb traverse_cb<span class="EmpStrong">)</span><br/>
+176&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+177&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+178&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+179&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+180<br/>
+181&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+182&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>buckets<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+183&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>bucket<span class="EmpStrong">) {</span><br/>
+184&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> j <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span> j<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+185&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> j<span class="EmpStrong">);</span><br/>
+186&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> traverse_cb<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+187&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+188&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+189&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+190&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+191&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+192<br/>
+193&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+194&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+195<br/>
+<a id="page_234"/>196&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Hashmap_delete<span class="EmpStrong">(</span>Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+197&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+198&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+199&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>bucket <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_find_bucket<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>hash<span class="EmpStrong">);</span><br/>
+200&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">!</span></span>bucket<span class="EmpStrong">)</span><br/>
+201&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+202<br/>
+203&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get_node<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> hash<span class="EmpStrong">,</span> bucket<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+204&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">)</span><br/>
+205&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+206<br/>
+207&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_get<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> i<span class="EmpStrong">);</span><br/>
+208&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+209&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+210<br/>
+211&#160;&#160;&#160;&#160;&#160;&#160;&#160;HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>ending <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_pop<span class="EmpStrong">(</span>bucket<span class="EmpStrong">);</span><br/>
+212<br/>
+213&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>ending <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> node<span class="EmpStrong">) {</span><br/>
+214&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// alright looks like it's not the last one, swap it</span></span><br/>
+215&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_set<span class="EmpStrong">(</span>bucket<span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> ending<span class="EmpStrong">);</span><br/>
+216&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+217<br/>
+218&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> data<span class="EmpStrong">;</span><br/>
+219&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">There&#8217;s nothing very complicated in the implementation, but the <code>default_hash</code> and <code>Hashmap_find_bucket</code> functions will need some explanation. When you use <code>Hashmap_create</code>, you can pass in any compare and hash functions you want, but if you don&#8217;t, it uses the <code>default_compare</code> and <code>default_hash</code> functions.</p>
+<p class="noindent">The first thing to look at is how <code>default_hash</code> does its thing. This is a simple hash function called a Jenkins hash after Bob Jenkins. I got the algorithm from the &#8220;Jenkins hash&#8221; page on Wikipedia. It simply goes through each byte of the key to hash (a bstring), and then it works the bits so that the end result is a single <code>uint32_t</code>. It does this with some adding and exclusive or (XOR) operations.</p>
+<p class="noindent">There are many different hash functions, all with different properties, but once you have one, you need a way to use it to find the right buckets. The <code>Hashmap_find_bucket</code> does it like this:</p>
+<p class="indenthangingB">&#8226; First, it calls <code>map-&gt;hash(key)</code> to get the hash for the key.</p>
+<p class="indenthangingB">&#8226; It then finds the bucket using <code>hash % DEFAULT_NUMBER_OF_BUCKETS</code>, so every hash will always find some bucket no matter how big it is.</p>
+<p class="indenthangingB">&#8226; It then gets the bucket, which is also a <code>DArray</code>, and if it&#8217;s not there, it will create the bucket. However, that depends on if the <code>create</code> variable says to do so.</p>
+<p class="indenthangingB"><a id="page_235"/>&#8226; Once it has found the <code>DArray</code> bucket for the right hash, it returns it, and the <code>hash_out</code> variable is used to give the caller the hash that was found.</p>
+<p class="noindent">All of the other functions then use <code>Hashmap_find_bucket</code> to do their work:</p>
+<p class="indenthangingB">&#8226; Setting a key/value involves finding the bucket, making a <code>HashmapNode</code>, and then adding it to the bucket.</p>
+<p class="indenthangingB">&#8226; Getting a key involves finding the bucket, and then finding the HashmapNode that matches the <code>hash</code> and <code>key</code> that you want.</p>
+<p class="indenthangingB">&#8226; Deleting an item finds the bucket, finds where the requested node is, and then removes it by swapping the last node into its place.</p>
+<p class="noindent">The only other function that you should study is the <code>Hashmap_traverse</code>. This simply walks through every bucket, and for any bucket that has possible values, it calls the <code>traverse_cb</code> on each value. This is how you scan a whole <code>Hashmap</code> for its values.</p>
+<div class="heading">
+<h3 id="ch37lev1sec1">The Unit Test</h3>
+<p class="noindent">Finally, you have the unit test to test all of these operations:</p>
+</div>
+<p class="ex-caption"><code>hashmap_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p235pro01" href="ch37_images.html#p235pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/hashmap.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;Hashmap <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_called <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 1"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 2"</span><span class="EmpStrong">);</span><br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"xest data 3"</span><span class="EmpStrong">);</span><br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 1"</span><span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 2"</span><span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 3"</span><span class="EmpStrong">);</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_good_cb<span class="EmpStrong">(</span>HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;16&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"KEY: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">));</span><br/>
+<a id="page_236"/>&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;20&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_fail_cb<span class="EmpStrong">(</span>HashmapNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;23&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"KEY: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">));</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">) {</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+&#160;35&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_create<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>map <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create map."</span><span class="EmpStrong">);</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;Hashmap_destroy<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_get_set<span class="EmpStrong">()</span><br/>
+&#160;50&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect1<span class="EmpStrong">);</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set &#38;test1"</span><span class="EmpStrong">);</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test1."</span><span class="EmpStrong">);</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect2<span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set test2"</span><span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test2."</span><span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect3<span class="EmpStrong">);</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set test3"</span><span class="EmpStrong">);</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test3."</span><span class="EmpStrong">);</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;67&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;68<br/>
+&#160;69&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_traverse<span class="EmpStrong">()</span><br/>
+&#160;70&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_traverse<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> traverse_good_cb<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;74<br/>
+<a id="page_237"/>&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_traverse<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> traverse_fail_cb<span class="EmpStrong">);</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count traverse for fail."</span><span class="EmpStrong">);</span><br/>
+&#160;79<br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;81&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_delete<span class="EmpStrong">()</span><br/>
+&#160;84&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> Hashmap_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect1<span class="EmpStrong">,</span> <span class="pd_green">"Should get test1"</span><span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> Hashmap_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect2<span class="EmpStrong">,</span> <span class="pd_green">"Should get test2"</span><span class="EmpStrong">);</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+&#160;96<br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> Hashmap_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect3<span class="EmpStrong">,</span> <span class="pd_green">"Should get test3"</span><span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+102<br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+104&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+105<br/>
+106&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+107&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+109<br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_get_set<span class="EmpStrong">);</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_traverse<span class="EmpStrong">);</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_delete<span class="EmpStrong">);</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+115<br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+117&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+118<br/>
+119&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">The only thing to learn about this unit test is that at the top I use a feature of <code>bstring</code> to create static strings to work within the tests. I use the <code>tagbstring</code> and <code>bsStatic</code> to create them on lines 7&#8211;13.</p>
+<div class="heading">
+<h3 id="ch37lev1sec2"><a id="page_238"/>How to Improve It</h3>
+<p class="noindent">This is a very simple implementation of <code>Hashmap</code>, as are most of the other data structures in this book. My goal isn&#8217;t to give you insanely great, hyper-speed, well-tuned data structures. Usually those are much too complicated to discuss and only distract you from the real, basic data structure at work. My goal is to give you an understandable starting point to then improve upon or better understand the implementation.</p>
+</div>
+<p class="noindent">In this case, there are some things you can do with this implementation:</p>
+<p class="indenthangingB">&#8226; You can use a <code>sort</code> on each bucket so that they&#8217;re always sorted. This increases your insert time but decreases your find time, because you can then use a binary search to find each node. Right now, it&#8217;s looping through all of the nodes in a bucket just to find one.</p>
+<p class="indenthangingB">&#8226; You can dynamically size the number of buckets, or let the caller specify the number for each <code>Hashmap</code> created.</p>
+<p class="indenthangingB">&#8226; You can use a better <code>default_hash</code>. There are tons of them.</p>
+<p class="indenthangingB">&#8226; This (and nearly every <code>Hashmap</code>) is vulnerable to someone picking keys that will fill only one bucket, and then tricking your program into processing them. This then makes your program run slower because it changes from processing a <code>Hashmap</code> to effectively processing a single <code>DArray</code>. If you sort the nodes in the bucket, this helps, but you can also use better hashing functions, and for the really paranoid programmer, add a random salt so that keys can&#8217;t be predicted.</p>
+<p class="indenthangingB">&#8226; You could have it delete buckets that are empty of nodes to save space, or put empty buckets into a cache so you can save on time lost creating and destroying them.</p>
+<p class="indenthangingB">&#8226; Right now, it just adds elements even if they already exist. Write an alternative set method that only adds an element if it isn&#8217;t set already.</p>
+<p class="noindent">As usual, you should go through each function and make it bulletproof. The <code>Hashmap</code> could also use a debug setting for doing an invariant check.</p>
+<div class="heading">
+<h3 id="ch37lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Research the <code>Hashmap</code> implementation in your favorite programming language to see what features it has.</p>
+</div>
+<p class="indenthangingB">&#8226; Find out what the major disadvantages of a <code>Hashmap</code> are and how to avoid them. For example, it doesn&#8217;t preserve order without special changes, nor does it work when you need to find things based on parts of keys.</p>
+<p class="indenthangingB">&#8226; Write a unit test that demonstrates the defect of filling a <code>Hashmap</code> with keys that land in the same bucket, then test how this impacts performance. A good way to do this is to just reduce the number of buckets to something stupid, like five.<a id="page_239"/></p>
+</body>
+</html>

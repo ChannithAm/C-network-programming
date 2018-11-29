@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 38. Hashmap Algorithms</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch38"><a id="page_240"/>Exercise 38. Hashmap Algorithms</h2>
+<p class="noindent">There are three hash functions that you&#8217;ll implement in this exercise:</p>
+<p class="indenthanging"><strong>FNV-1a</strong> Named after the creators Glenn Fowler, Phong Vo, and Landon Curt Noll, this hash produces good numbers and is reasonably fast.</p>
+<p class="indenthanging"><strong>Adler-32</strong> Named after Mark Adler, this is a horrible hash algorithm, but it&#8217;s been around a long time and it&#8217;s good for studying.</p>
+<p class="indenthanging"><strong>DJB Hash</strong> This hash algorithm is attributed to Dan J. Bernstein (DJB), but it&#8217;s difficult to find his discussion of the algorithm. It&#8217;s shown to be fast, but possibly not great numbers.</p>
+<p class="noindent">You&#8217;ve already seen the Jenkins hash as the default hash for the Hashmap data structure, so this exercise will be looking at these three new hash functions. The code for them is usually small, and it&#8217;s not optimized at all. As usual, I&#8217;m going for understanding and not blinding speed.</p>
+<p class="noindent">The header file is very simple, so I&#8217;ll start with that:</p>
+<p class="ex-caption"><code>hashmap_algos.h</code></p>
+<hr/>
+<p class="codelink"><a id="p240pro01" href="ch38_images.html#p240pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef hashmap_algos_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define hashmap_algos_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdint.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_fnv1a_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_adler32_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_djb_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">I&#8217;m just declaring the three functions I&#8217;ll implement in the <code>hashmap_algos.c</code> file:</p>
+<p class="ex-caption"><code>hashmap_algos.c</code></p>
+<hr/>
+<p class="codelink"><a id="p240pro02" href="ch38_images.html#p240pro02a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/hashmap_algos.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// settings taken from</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// http://www.isthe.com/chongo/tech/comp/fnv/index.html#FNV-param</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const uint32_t</span></span> FNV_PRIME <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">16777619</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const uint32_t</span></span> FNV_OFFSET_BASIS <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2166136261</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8<br/>
+<a id="page_241"/>&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_fnv1a_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring s <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> data<span class="EmpStrong">;</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> FNV_OFFSET_BASIS<span class="EmpStrong">;</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> blength<span class="EmpStrong">(</span>s<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">^=</span></span> bchare<span class="EmpStrong">(</span>s<span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">*=</span></span> FNV_PRIME<span class="EmpStrong">;</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> hash<span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const int</span></span> MOD_ADLER <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">65521</span></span><span class="EmpStrong">;</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_adler32_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring s <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> data<span class="EmpStrong">;</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> a <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> b <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;30<br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> blength<span class="EmpStrong">(</span>s<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">)</span> <span class="EmpStrong">{</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;a <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>a <span class="pd_brown-1"><span class="EmpStrong">+</span></span> bchare<span class="EmpStrong">(</span>s<span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">))</span> <span class="pd_brown-1"><span class="EmpStrong">%</span></span> MOD_ADLER<span class="EmpStrong">;</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;b <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>b <span class="pd_brown-1"><span class="EmpStrong">+</span></span> a<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">%</span></span> MOD_ADLER<span class="EmpStrong">;</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="EmpStrong">(</span>b <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">16</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">|</span></span> a<span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> Hashmap_djb_hash<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring s <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> data<span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">5381</span></span><span class="EmpStrong">;</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> blength<span class="EmpStrong">(</span>s<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">((</span>hash <span class="pd_brown-1"><span class="EmpStrong">&lt;&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">5</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">+</span></span> hash<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">+</span></span> bchare<span class="EmpStrong">(</span>s<span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span> <span class="pd_brown"><span class="EmpItalic">/* hash * 33 + c */</span></span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> hash<span class="EmpStrong">;</span><br/>
+&#160;50&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">This file, then, has the three hash algorithms. You should notice that I&#8217;m just using a <code>bstring</code> for the key, but I&#8217;m using the <code>bchare</code> function to get a character from the bstring, but returning 0 if that character is outside the string&#8217;s length.</p>
+<p class="noindent">Each of these algorithms are found online, so go search for them and read about them. Again, I primarily used Wikipedia and then followed it to other sources.</p>
+<p class="noindent"><a id="page_242"/>I then have a unit test that tests out each algorithm, but it also tests whether it will distribute well across a number of buckets:</p>
+<p class="ex-caption"><code>hashmap_algos_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p242pro01" href="ch38_images.html#p242pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/hashmap.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/hashmap_algos.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 1"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 2"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"xest data 3"</span><span class="EmpStrong">);</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_fnv1a<span class="EmpStrong">()</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_fnv1a_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_fnv1a_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_fnv1a_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;21<br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;23&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_adler32<span class="EmpStrong">()</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_adler32_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_adler32_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_adler32_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_djb<span class="EmpStrong">()</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_djb_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_djb_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Hashmap_djb_hash<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+<a id="page_243"/>&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>hash <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Bad hash."</span><span class="EmpStrong">);</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define BUCKETS 100</span></span><br/>
+&#160;54&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define BUFFER_LEN 20</span></span><br/>
+&#160;55&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define NUM_KEYS BUCKETS * 1000</span></span><br/>
+&#160;56&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">enum</span></span> <span class="EmpStrong">{</span> ALGO_FNV1A<span class="EmpStrong">,</span> ALGO_ADLER32<span class="EmpStrong">,</span> ALGO_DJB <span class="EmpStrong">};</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> gen_keys<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> keys<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> num_keys<span class="EmpStrong">)</span><br/>
+&#160;59&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>urand <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fopen<span class="EmpStrong">(</span><span class="pd_green">"/dev/urandom"</span><span class="EmpStrong">,</span> <span class="pd_green">"r"</span><span class="EmpStrong">);</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>urand <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to open /dev/urandom"</span><span class="EmpStrong">);</span><br/>
+&#160;63<br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> bStream <span class="pd_brown-1"><span class="EmpStrong">*</span></span>stream <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsopen<span class="EmpStrong">((</span>bNread<span class="EmpStrong">)</span> fread<span class="EmpStrong">,</span> urand<span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>stream <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to open /dev/urandom"</span><span class="EmpStrong">);</span><br/>
+&#160;66<br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bfromcstr<span class="EmpStrong">(</span><span class="pd_green">""</span><span class="EmpStrong">);</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// FNV1a histogram</span></span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> num_keys<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsread<span class="EmpStrong">(</span>key<span class="EmpStrong">,</span> stream<span class="EmpStrong">,</span> BUFFER_LEN<span class="EmpStrong">);</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read from /dev/urandom."</span><span class="EmpStrong">);</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_push<span class="EmpStrong">(</span>keys<span class="EmpStrong">,</span> bstrcpy<span class="EmpStrong">(</span>key<span class="EmpStrong">));</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;bsclose<span class="EmpStrong">(</span>stream<span class="EmpStrong">);</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;fclose<span class="EmpStrong">(</span>urand<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;84&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;85<br/>
+&#160;86&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> destroy_keys<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> keys<span class="EmpStrong">)</span><br/>
+&#160;87&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_KEYS<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>keys<span class="EmpStrong">,</span> i<span class="EmpStrong">));</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>keys<span class="EmpStrong">);</span><br/>
+&#160;94&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> fill_distribution<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>stats<span class="EmpStrong">,</span> DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> keys<span class="EmpStrong">,</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Hashmap_hash hash_func<span class="EmpStrong">)</span><br/>
+<a id="page_244"/>&#160;98&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">uint32_t</span></span> hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> DArray_count<span class="EmpStrong">(</span>keys<span class="EmpStrong">);</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;hash <span class="pd_brown-1"><span class="EmpStrong">=</span></span> hash_func<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>keys<span class="EmpStrong">,</span> i<span class="EmpStrong">));</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;stats<span class="EmpStrong">[</span>hash <span class="pd_brown-1"><span class="EmpStrong">%</span></span> BUCKETS<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+106<br/>
+107&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+108<br/>
+109&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_distribution<span class="EmpStrong">()</span><br/>
+110&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> stats<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">][</span>BUCKETS<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{ {</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">} };</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>keys <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_create<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> NUM_KEYS<span class="EmpStrong">);</span><br/>
+114<br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>gen_keys<span class="EmpStrong">(</span>keys<span class="EmpStrong">,</span> NUM_KEYS<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span><br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to generate random keys."</span><span class="EmpStrong">);</span><br/>
+117<br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;fill_distribution<span class="EmpStrong">(</span>stats<span class="EmpStrong">[</span>ALGO_FNV1A<span class="EmpStrong">],</span> keys<span class="EmpStrong">,</span> Hashmap_fnv1a_hash<span class="EmpStrong">);</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;fill_distribution<span class="EmpStrong">(</span>stats<span class="EmpStrong">[</span>ALGO_ADLER32<span class="EmpStrong">],</span> keys<span class="EmpStrong">,</span> Hashmap_adler32_hash<span class="EmpStrong">);</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;fill_distribution<span class="EmpStrong">(</span>stats<span class="EmpStrong">[</span>ALGO_DJB<span class="EmpStrong">],</span> keys<span class="EmpStrong">,</span> Hashmap_djb_hash<span class="EmpStrong">);</span><br/>
+121<br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;fprintf<span class="EmpStrong">(</span>stderr<span class="EmpStrong">,</span> <span class="pd_green">"FNV\tA32\tDJB\n"</span><span class="EmpStrong">);</span><br/>
+123<br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> BUCKETS<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;fprintf<span class="EmpStrong">(</span>stderr<span class="EmpStrong">,</span> <span class="pd_green">"%d\t%d\t%d\n"</span><span class="EmpStrong">,</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;stats<span class="EmpStrong">[</span>ALGO_FNV1A<span class="EmpStrong">][</span>i<span class="EmpStrong">],</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;stats<span class="EmpStrong">[</span>ALGO_ADLER32<span class="EmpStrong">][</span>i<span class="EmpStrong">],</span> stats<span class="EmpStrong">[</span>ALGO_DJB<span class="EmpStrong">][</span>i<span class="EmpStrong">]);</span><br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+129<br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;destroy_keys<span class="EmpStrong">(</span>keys<span class="EmpStrong">);</span><br/>
+131<br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+133&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+134<br/>
+135&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+136&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+138<br/>
+139&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_fnv1a<span class="EmpStrong">);</span><br/>
+140&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_adler32<span class="EmpStrong">);</span><br/>
+141&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_djb<span class="EmpStrong">);</span><br/>
+142&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_distribution<span class="EmpStrong">);</span><br/>
+143<br/>
+144&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+145&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+146<br/>
+147&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent"><a id="page_245"/>I have the number of <code>BUCKETS</code> in this code set fairly high, since I have a fast enough computer, but if it runs slow, just lower it and <code>NUM_KEYS</code>. What this test lets me do is run the test and then look at the distribution of keys for each hash function using a bit of analysis with a language called R.</p>
+<p class="noindent">I do this by crafting a big list of keys using the <code>gen_keys</code> function. These keys are taken out of the <code>/dev/urandom</code> device and are random byte keys. I then use these keys to have the <code>fill_distribution</code> function fill up the <code>stats</code> array with where those keys would hash in a theoretical set of buckets. All this function does is go through all of the keys, do the hash, then do what the <code>Hashmap</code> would do to find its bucket.</p>
+<p class="noindent">Finally, I&#8217;m simply printing out a three-column table with the final count for each bucket, showing how many keys managed to get into each bucket randomly. I can then look at these numbers to see if the hash functions are distributing keys evenly.</p>
+<div class="heading">
+<h3 id="ch38lev1sec1">What You Should See</h3>
+<p class="noindent">Teaching you R is outside the scope of this book, but if you want to get it and try this, it can be found at <a href="http://www.r-project.org">www.r-project.org</a>.</p>
+</div>
+<p class="noindent">Here is an abbreviated shell session that shows me running <code>tests/hashmap_algos_test</code> to get the table produced by <code>test_distribution</code> (not shown here), and then using R to see what the summary statistics are.</p>
+<p class="ex-caption"><code>Exercise 38 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p245pro01" href="ch38_images.html#p245pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> tests/hashmap_algos_tests<br/>
+<span class="pd_brown">#</span> copy-paste the table it prints out<br/>
+<span class="pd_brown">$</span> vim hash.txt<br/>
+<span class="pd_brown">$</span> R<br/>
+<span class="pd_brown">&gt;</span> <span class="pd_blue">hash</span> &lt;- read.table<span class="pd_brown-1"><span class="EmpStrong">(</span></span><span class="pd_green">"hash.txt"</span>, header<span class="pd_brown-1"><span class="EmpStrong">=</span></span>T<span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+<span class="pd_brown">&gt;</span> summary<span class="pd_brown-1"><span class="EmpStrong">(</span></span><span class="pd_blue">hash</span><span class="pd_brown-1"><span class="EmpStrong">)</span></span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">FNV&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;A32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DJB</span><br/>
+&#160;<span class="EmpItalic">Min.&#160;&#160;&#160;: 945&#160;&#160;&#160;Min.&#160;&#160;&#160;: 908.0&#160;&#160;&#160;Min.&#160;&#160;&#160;: 927</span><br/>
+&#160;<span class="EmpItalic">1st Qu.: 980&#160;&#160;&#160;1st Qu.: 980.8&#160;&#160;&#160;1st Qu.: 979</span><br/>
+&#160;<span class="EmpItalic">Median : 998&#160;&#160;&#160;Median :1000.0&#160;&#160;&#160;Median : 998</span><br/>
+&#160;<span class="EmpItalic">Mean&#160;&#160;&#160;:1000&#160;&#160;&#160;Mean&#160;&#160;&#160;:1000.0&#160;&#160;&#160;Mean&#160;&#160;&#160;:1000</span><br/>
+&#160;<span class="EmpItalic">3rd Qu.:1016&#160;&#160;&#160;3rd Qu.:1019.2&#160;&#160;&#160;3rd Qu.:1021</span><br/>
+&#160;<span class="EmpItalic">Max.&#160;&#160;&#160;:1072&#160;&#160;&#160;Max.&#160;&#160;&#160;:1075.0&#160;&#160;&#160;Max.&#160;&#160;&#160;:1082</span><br/>
+<span class="pd_brown">&gt;</span></p>
+<p class="noindent">First, I just run the test, which on your screen will print the table. Then, I just copy-paste it out of my terminal and use <code>vim hash.txt</code> to save the data. If you look at the data, it has the header <code>FNV A32 DJB</code> for each of the three algorithms.</p>
+<p class="noindent">Secondly, I run R and load the data using the <code>read.table</code> command. This is a smart function that works with this kind of tab-delimited data, and I only have to tell it <code>header=T</code> for it to know that the data has a header.</p>
+<p class="noindent"><a id="page_246"/>Finally, I have the data loaded and can use <code>summary</code> to print out its summary statistics for each column. Here you can see that each function actually does alright with this random data. Here&#8217;s what each of these rows means:</p>
+<p class="indenthanging"><strong>Min.</strong> This is the minimum value found for the data in that column. <code>FNV-la</code> seems to win on this run since it has the largest number, meaning it has a tighter range at the low end.</p>
+<p class="indenthanging"><strong>1st Qu.</strong> This is the point where the first quarter of the data ends.</p>
+<p class="indenthanging"><strong>Median</strong> This is the number that&#8217;s in the middle if you sorted them. Median is most useful when compared to mean.</p>
+<p class="indenthanging"><strong>Mean</strong> Mean is the average most people think of, and it&#8217;s the sum divided by the count of the data. If you look, all of them are 1,000, which is great. If you compare this to the median, you see that all three have really close medians to the mean. What this means is the data isn&#8217;t skewed in one direction, so you can trust the mean.</p>
+<p class="indenthanging"><strong>3rd Qu.</strong> This is the point where the last quarter of the data starts and represents the tail end of the numbers.</p>
+<p class="indenthanging"><strong>Max.</strong> This is the maximum number of the data, and presents the upper bound on all of them.</p>
+<p class="noindent">Looking at this data, you see that all of these hashes seem to do well on random keys, and the means match the <code>NUM_KEYS</code> setting that I made. What I&#8217;m looking for is this: If I make 1,000 keys per bucket (BUCKETS &#215; 1000), then on average each bucket should have 1,000 keys in it. If the hash function isn&#8217;t working, then you&#8217;ll see these summary statistics show a mean that&#8217;s not 1,000, and really high ranges at the first and third quarters. A good hash function should have a dead-on 1,000 mean, and as tight a range as possible.</p>
+<p class="noindent">You should also know that you&#8217;ll get different numbers from mine, and even between different runs of this unit test.</p>
+<div class="heading">
+<h3 id="ch38lev1sec2">How to Break It</h3>
+<p class="noindent">I&#8217;m finally going to have you do some breaking in this exercise. I want you to write the worst hash function you can, and then use the data to prove that it&#8217;s really bad. You can use R to do the statistics, just like I did, but maybe you have another tool that you can use to give you the same summary statistics.</p>
+</div>
+<p class="noindent">The goal is to make a hash function that seems normal to an untrained eye, but when actually run, it has a bad mean and is all over the place. That means you can&#8217;t just have it return 1. You have to give a stream of numbers that seem alright but aren&#8217;t, and they&#8217;re loading up some buckets too much.</p>
+<p class="noindent"><a id="page_247"/>Extra points if you can make a minimal change to one of the four hash algorithms that I gave you to do this.</p>
+<p class="noindent">The purpose of this exercise is to imagine that some friendly coder comes to you and offers to improve your hash function, but actually just makes a nice little back door that really screws up your <code>Hashmap</code>.</p>
+<p class="noindent">As the Royal Society says, &#8220;<em>Nullius in verba</em>.&#8221;</p>
+<div class="heading">
+<h3 id="ch38lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Take the <code>default_hash</code> out of the <code>hashmap.c</code>, make it one of the algorithms in <code>hashmap_algos.c</code>, and then make all of the tests work again.</p>
+</div>
+<p class="indenthangingB">&#8226; Add the <code>default_hash</code> to the <code>hashmap_algos_tests.c</code> test and compare its statistics to the other hash functions.</p>
+<p class="indenthangingB">&#8226; Find a few more hash functions and add them, too. You can never have too many hash functions!</p>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 14. Writing and Using Functions</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch14"><a id="page_58"/>Exercise 14. Writing and Using Functions</h2>
+<p class="noindent">Up until now, we&#8217;ve just used functions that are part of the <code>stdio.h</code> header file. In this exercise, you&#8217;ll write some functions and use some other functions.</p>
+<p class="ex-caption"><code>ex14.c</code></p>
+<hr/>
+<p class="codelink"><a id="p058pro01" href="ch14_images.html#p058pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;ctype.h&gt;</span></span><br/>
+&#160;3<br/>
+&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// forward declarations</span></span><br/>
+&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> can_print_it<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> ch<span class="EmpStrong">);</span><br/>
+&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> print_letters<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> arg<span class="EmpStrong">[]);</span><br/>
+&#160;7<br/>
+&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> print_arguments<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;9&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+11<br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> argc<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;print_letters<span class="EmpStrong">(</span>argv<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+15&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+16<br/>
+17&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> print_letters<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> arg<span class="EmpStrong">[])</span><br/>
+18&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> arg<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> ch <span class="pd_brown-1"><span class="EmpStrong">=</span></span> arg<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+23<br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>can_print_it<span class="EmpStrong">(</span>ch<span class="EmpStrong">)) {</span><br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"'%c' == %d "</span><span class="EmpStrong">,</span> ch<span class="EmpStrong">,</span> ch<span class="EmpStrong">);</span><br/>
+26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+28<br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\n"</span><span class="EmpStrong">);</span><br/>
+30&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+31<br/>
+32&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> can_print_it<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> ch<span class="EmpStrong">)</span><br/>
+33&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> isalpha<span class="EmpStrong">(</span>ch<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> isblank<span class="EmpStrong">(</span>ch<span class="EmpStrong">);</span><br/>
+35&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+36<br/>
+37&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+38&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+39&#160;&#160;&#160;&#160;&#160;&#160;&#160;print_arguments<span class="EmpStrong">(</span>argc<span class="EmpStrong">,</span> argv<span class="EmpStrong">);</span><br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+41&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent"><a id="page_59"/>In this example we&#8217;re creating functions to print out the characters and ASCII codes for any that are <em>alpha</em> or <em>blanks</em>. Here&#8217;s the breakdown:</p>
+<p class="indenthanging"><strong>ex14.c:2</strong> Include a new header file, so we can gain access to <code>isalpha</code> and <code>isblank</code>.</p>
+<p class="indenthanging"><strong>ex14.c:5-6</strong> Tell C that you&#8217;ll be using some functions later in your program without actually having to define them. This is a <em>forward declaration</em> and it solves the chicken-and-egg problem of needing to use a function before you&#8217;ve defined it.</p>
+<p class="indenthanging"><strong>ex14.c:8-15</strong> Define the <code>print_arguments</code> function, which knows how to print the same array of strings that <code>main</code> typically gets.</p>
+<p class="indenthanging"><strong>ex14.c:17-30</strong> Define the next function, <code>print_letters</code>, which is called by <code>print_arguments</code> and knows how to print each of the characters and their codes.</p>
+<p class="indenthanging"><strong>ex14.c:32-35</strong> Define <code>can_print_it</code>, which simply returns the truth value (0 or 1) of <code>isalpha(ch) || isblank(ch)</code> back to its caller, <code>print_letters</code>.</p>
+<p class="indenthanging"><strong>ex14.c:38-42</strong> Finally, <code>main</code> simply calls <code>print_arguments</code> to make the whole chain of functions go.</p>
+<p class="noindent">I shouldn&#8217;t have to describe what&#8217;s in each function, because they&#8217;re all things you&#8217;ve run into before. What you should be able to see, though, is that I&#8217;ve simply defined functions the same way you&#8217;ve been defining <code>main</code>. The only difference is you have to help C out by telling it ahead of time if you&#8217;re going to use functions it hasn&#8217;t encountered yet in the file. That&#8217;s what the forward declarations do.</p>
+<div class="heading">
+<h3 id="ch14lev1sec1">What You Should See</h3>
+<p class="noindent">To play with this program, you just feed it different command line arguments, which get passed through your functions. Here&#8217;s me playing with it to demonstrate:</p>
+</div>
+<p class="ex-caption"><code>Exercise 14 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p059pro01" href="ch14_images.html#p059pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex14<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex14.c&#160;&#160;&#160;-o ex14</span><br/>
+<br/>
+<span class="pd_brown">$</span> ./ex14<br/>
+<span class="EmpItalic">'e' == 101 'x' == 120</span><br/>
+<br/>
+<span class="pd_brown">$</span> ./ex14 hi this is cool<br/>
+<span class="EmpItalic">'e' == 101 'x' == 120</span><br/>
+<span class="EmpItalic">'h' == 104 'i' == 105</span><br/>
+<span class="EmpItalic">'t' == 116 'h' == 104 'i' == 105 's' == 115</span><br/>
+<span class="EmpItalic">'i' == 105 's' == 115</span><br/>
+<span class="EmpItalic">'c' == 99 'o' == 111 'o' == 111 'l' == 108</span><br/>
+<br/>
+<a id="page_60"/><span class="pd_brown">$</span> ./ex14 <span class="pd_green">"I go 3 spaces"</span><br/>
+<span class="EmpItalic">'e' == 101 'x' == 120</span><br/>
+<span class="EmpItalic">'I' == 73 ' ' == 32 'g' == 103 'o' == 111 ' ' == 32 ' ' == 32\</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpItalic">'s' == 115 'p' == 112 'a' == 97 'c' == 99 'e' == 101 's' == 115</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">The <code>isalpha</code> and <code>isblank</code> do all the work of figuring out if the given character is a letter or a blank. When I do the last run, it prints everything but the <code>3</code> character since that&#8217;s a digit.</p>
+<div class="heading">
+<h3 id="ch14lev1sec2">How to Break It</h3>
+<p class="noindent">There are two different kinds of breaking in this program:</p>
+</div>
+<p class="indenthangingB">&#8226; Remove the forward declarations to confuse the compiler and cause it to complain about <code>can_print_it</code> and <code>print_letters</code>.</p>
+<p class="indenthangingB">&#8226; When you call <code>print_arguments</code> inside <code>main</code>, try adding 1 to <code>argc</code> so that it goes past the end of the <code>argv</code> array.</p>
+<div class="heading">
+<h3 id="ch14lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Rework these functions so that you have fewer functions. For example, do you really need <code>can_print_it</code>?</p>
+</div>
+<p class="indenthangingB">&#8226; Have <code>print_arguments</code> figure out how long each argument string is by using the <code>strlen</code> function, and then pass that length to <code>print_letters</code>. Then, rewrite <code>print_letters</code> so it only processes this fixed length and doesn&#8217;t rely on the <code>'\0'</code> terminator. You&#8217;ll need the <code>#include &lt;string.h&gt;</code> for this.</p>
+<p class="indenthangingB">&#8226; Use <code>man</code> to look up information on <code>isalpha</code> and <code>isblank</code>. Use other similar functions to print out only digits or other characters.</p>
+<p class="indenthangingB">&#8226; Go read about how other people like to format their functions. Never use the K&#38;R syntax (it&#8217;s antiquated and confusing) but understand what it&#8217;s doing in case you run into someone who likes it.<a id="page_61"/></p>
+</body>
+</html>

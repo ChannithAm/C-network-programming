@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 6. Memorizing C Syntax</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch06"><a id="page_26"/>Exercise 6. Memorizing C Syntax</h2>
+<p class="noindent">After learning the operators, it&#8217;s time to memorize the keywords and basic syntax structures you&#8217;ll be using. Trust me when I tell you that the small amount of time spent memorizing these things will pay huge dividends later as you go through the book.</p>
+<p class="noindent">As I mentioned in <a href="ch05.html#ch05">Exercise 5</a>, you don&#8217;t have to stop reading the book while you memorize these things. You can and should do both. Use your flash cards as a warm up before coding that day. Take them out and drill on them for 15&#8211;30 minutes, then sit down and do some more exercises in the book. As you go through the book, try to use the code you&#8217;re typing as more of a way to practice what you&#8217;re memorizing. One trick is to build a pile of flash cards containing operators and keywords that you don&#8217;t immediately recognize while you&#8217;re coding. After you&#8217;re done for the day, practice those flash cards for another 15&#8211;30 minutes.</p>
+<p class="noindent">Keep this up and you&#8217;ll learn C much faster and more solidly than you would if you just stumbled around typing code until you memorized it secondhand.</p>
+<div class="heading">
+<h3 id="ch06lev1sec1">The Keywords</h3>
+<p class="noindent">The <em>keywords</em> of a language are words that augment the symbols so that the language reads well. There are some languages like APL that don&#8217;t really have keywords. There are other languages like Forth and LISP that are almost nothing but keywords. In the middle are languages like C, Python, Ruby, and many more that mix sets of keywords with symbols to create the basis of the language.</p>
+</div>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">The technical term for processing the symbols and keywords of a programming language is <em>lexical analysis</em>. The word for one of these symbols or keywords is a <em>lexeme</em>.</p>
+<hr/></div>
+<div class="image"><img src="graphics/026tab01.jpg" alt="Image"/></div>
+<div class="image"><a id="page_27"/><img src="graphics/026tab01a.jpg" alt="Image"/></div>
+<div class="heading">
+<h3 id="ch06lev1sec2">Syntax Structures</h3>
+<p class="noindent">I suggest you memorize those keywords, as well as memorizing the syntax structures. A <em>syntax structure</em> is a pattern of symbols that make up a C program code form, such as the form of an <code>if-statement</code> or a <code>while-loop</code>. You should find most of these familiar, since you already know one language. The only trouble is then learning how C does it.</p>
+</div>
+<p class="noindent"><a id="page_28"/>Here&#8217;s how you read these:</p>
+<p class="indenthangingN"><strong>1.</strong> Anything in <code>ALLCAPS</code> is meant as a replacement spot or hole.</p>
+<p class="indenthangingN"><strong>2.</strong> Seeing <code>[ALLCAPS]</code> means that part is optional.</p>
+<p class="indenthangingN"><strong>3.</strong> The best way to test your memory of syntax structures is to open a text editor, and where you see <code>switch-statement</code>, try to write the code form after saying what it does.</p>
+<p class="noindent">An <code>if-statement</code> is your basic logic branching control:</p>
+<p class="pre">if(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+} else if(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+} else {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">A <code>switch-statement</code> is like an <code>if-statement</code> but works on simple integer constants:</p>
+<p class="pre">switch (OPERAND) {<br/>
+&#160;&#160;&#160;&#160;case CONSTANT:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;CODE;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;default:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">A <code>while-loop</code> is your most basic loop:</p>
+<p class="pre">while(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">You can also use <code>continue</code> to cause it to loop. Call this form <code>while-continue-loop</code> for now:</p>
+<p class="pre">while(TEST) {<br/>
+&#160;&#160;&#160;&#160;if(OTHER_TEST) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;continue;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">You can also use <code>break</code> to exit a loop. Call this form <code>while-break-loop</code>:</p>
+<p class="pre">while(TEST) {<br/>
+&#160;&#160;&#160;&#160;if(OTHER_TEST) {<br/>
+<a id="page_29"/>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">The <code>do-while-loop</code> is an inverted version of a <code>while-loop</code> that runs the code <em>then</em> tests to see if it should run again:</p>
+<p class="pre">do {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+} while(TEST);</p>
+<p class="noindent">It can also have <code>continue</code> and <code>break</code> inside to control how it operates.</p>
+<p class="noindent">The <code>for-loop</code> does a controlled counted loop through a (hopefully) fixed number of iterations using a counter:</p>
+<p class="pre">for(INIT; TEST; POST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent">An <code>enum</code> creates a set of integer constants:</p>
+<p class="codelink"><a id="p029pro01" href="ch06_images.html#p029pro01a">Click here to view code image</a></p>
+<p class="pre">enum { CONST1, CONST2, CONST3 } NAME;</p>
+<p class="noindent">A <code>goto</code> will jump to a label, and is only used in a few useful situations like error detection and exiting:</p>
+<p class="pre">if(ERROR_TEST) {<br/>
+&#160;&#160;&#160;&#160;goto fail;<br/>
+}<br/>
+<br/>
+fail:<br/>
+&#160;&#160;&#160;&#160;CODE;</p>
+<p class="noindent">A <code>function</code> is defined this way:</p>
+<p class="pre">TYPE NAME(ARG1, ARG2, ..) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+&#160;&#160;&#160;&#160;return VALUE;<br/>
+}</p>
+<p class="noindent">That may be hard to remember, so try this example to see what&#8217;s meant by <code>TYPE</code>, <code>NAME</code>, <code>ARG</code> and <code>VALUE</code>:</p>
+<p class="pre">int name(arg1, arg2) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+<a id="page_30"/>&#160;&#160;&#160;&#160;return 0;<br/>
+}</p>
+<p class="noindent">A <code>typedef</code> defines a new type:</p>
+<p class="codelink"><a id="p030pro01" href="ch06_images.html#p030pro01a">Click here to view code image</a></p>
+<p class="pre">typedef DEFINITION IDENTIFIER;</p>
+<p class="noindent">A more concrete form of this is:</p>
+<p class="codelink"><a id="p030pro02" href="ch06_images.html#p030pro02a">Click here to view code image</a></p>
+<p class="pre">typedef unsigned char byte;</p>
+<p class="noindent">Don&#8217;t let the spaces fool you; the <code>DEFINITION</code> is <code>unsigned char</code> and the <code>IDENTIFIER</code> is <code>byte</code> in that example.</p>
+<p class="noindent">A <code>struct</code> is a packaging of many base data types into a single concept, which are used heavily in C:</p>
+<p class="pre">struct NAME {<br/>
+&#160;&#160;&#160;&#160;ELEMENTS;<br/>
+} [VARIABLE_NAME];</p>
+<p class="noindent">The <code>[VARIABLE_NAME]</code> is optional, and I prefer not to use it except in a few small cases. This is commonly combined with <code>typedef</code> like this:</p>
+<p class="codelink"><a id="p030pro03" href="ch06_images.html#p030pro03a">Click here to view code image</a></p>
+<p class="pre">typedef struct [STRUCT_NAME] {<br/>
+&#160;&#160;&#160;&#160;ELEMENTS;<br/>
+} IDENTIFIER;</p>
+<p class="noindent">Finally, <code>union</code> creates something like a <code>struct</code>, but the elements will overlap in memory. This is strange to understand, so simply memorize the form for now:</p>
+<p class="pre">union NAME {<br/>
+&#160;&#160;&#160;&#160;ELEMENTS;<br/>
+} [VARIABLE_NAME];</p>
+<div class="heading">
+<h3 id="ch06lev1sec3">A Word of Encouragement</h3>
+<p class="noindent">Once you&#8217;ve created flash cards for each of these, drill on them in the usual way by starting with the name side, and then reading the description and form on the other side. In the video for this exercise, I show you how to use Anki to do this efficiently, but you can replicate the experience with simple index cards, too.</p>
+</div>
+<p class="noindent">I&#8217;ve noticed some fear or discomfort in students who are asked to memorize something like this. I&#8217;m not exactly sure why, but I encourage you to do it anyway. Look at this as an opportunity to <a id="page_31"/>improve your memorization and learning skills. The more you do it, the better at it you get and the easier it gets.</p>
+<p class="noindent">It&#8217;s normal to feel discomfort and frustration. Don&#8217;t take it personally. You might spend 15 minutes and simply <em>hate</em> doing it and feel like a total failure. This is normal, and it doesn&#8217;t mean you actually are a failure. Perseverance will get you past the initial frustration, and this little exercise will teach you two things:</p>
+<p class="indenthangingN"><strong>1.</strong> You can use memorization as a self-evaluation of your competence. Nothing tells you how well you really know a subject like a memory test of its concepts.</p>
+<p class="indenthangingN"><strong>2.</strong> The way to conquer difficulty is a little piece at a time. Programming is a great way to learn this because it&#8217;s so easy to break down into small parts and focus on what&#8217;s lacking. Take this as an opportunity to build your confidence in tackling large tasks in small pieces.</p>
+<div class="heading">
+<h3 id="ch06lev1sec4">A Word of Warning</h3>
+<p class="noindent">I&#8217;ll add a final word of warning about memorization. Memorizing a large quantity of facts doesn&#8217;t automatically make you good at applying those facts. You can memorize the entire ANSI C standards document and still be a terrible programmer. I&#8217;ve encountered many <em>supposed</em> C experts who know every square inch of standard C grammar but still write terrible, buggy, weird code, or don&#8217;t code at all.</p>
+</div>
+<p class="noindent">Never confuse an ability to regurgitate memorized facts with ability to actually do something well. To do that you need to apply these facts in different situations until you know how to use them. That&#8217;s what the rest of this book will help you do.</p>
+</body>
+</html>

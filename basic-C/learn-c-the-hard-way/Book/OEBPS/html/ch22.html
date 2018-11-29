@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 22. The Stack, Scope, and Globals</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch22"><a id="page_112"/>Exercise 22. The Stack, Scope, and Globals</h2>
+<p class="noindent">The concept of scope seems to confuse quite a few people when they first start programming. It originally came from the use of the system stack (which we lightly covered earlier), and how it was used to store temporary variables. In this exercise, we&#8217;ll learn about scope by learning how a stack data structure works, and then feeding that concept back in to how modern C does scoping.</p>
+<p class="noindent">The real purpose of this exercise, though, is to learn where the hell things live in C. When someone doesn&#8217;t grasp the concept of scope, it&#8217;s almost always a failure in understanding where variables are created, exist, and die. Once you know where things are, the concept of scope becomes easier.</p>
+<p class="noindent">This exercise will require three files:</p>
+<p class="indenthanging"><strong>ex22.h</strong> A header file that sets up some external variables and some functions.</p>
+<p class="indenthanging"><strong>ex22.c</strong> This isn&#8217;t your <code>main</code> like normal, but instead a source file that will become the object file <code>ex22.o</code>, which will have some functions and variables in it defined from <code>ex22.h</code>.</p>
+<p class="indenthanging"><strong>ex22_main.c</strong> The actual <code>main</code> that will include the other two, and demonstrate what they contain, as well as other scope concepts.</p>
+<div class="heading">
+<h3 id="ch22lev1sec1">ex22.h and ex22.c</h3>
+<p class="noindent">Your first step is to create your own header file named <code>ex22.h</code> that defines the functions and extern variables:</p>
+</div>
+<p class="ex-caption"><code>ex22.h</code></p>
+<hr/>
+<p class="codelink"><a id="p112pro01" href="ch22_images.html#p112pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _ex22_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _ex22_h</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">// makes THE_SIZE in ex22.c available to other .c files</span></span><br/>
+<span class="pd_blue"><span class="EmpStrong">extern int</span></span> THE_SIZE<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">// gets and sets an internal static variable in ex22.c</span></span><br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> get_age<span class="EmpStrong">();</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> set_age<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> age<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">// updates a static variable that's inside update_ratio</span></span><br/>
+<span class="pd_blue"><span class="EmpStrong">double</span></span> update_ratio<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">double</span></span> ratio<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_113"/><span class="pd_blue"><span class="EmpStrong">void</span></span> print_size<span class="EmpStrong">();</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent">The important thing to see here is the use of <code>extern int THE_SIZE</code>, which I&#8217;ll explain after you create this matching <code>ex22.c</code>:</p>
+<p class="ex-caption"><code>ex22.c</code></p>
+<hr/>
+<p class="codelink"><a id="p113pro01" href="ch22_images.html#p113pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "ex22.h"</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> THE_SIZE <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1000</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6<br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> THE_AGE <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">37</span></span><span class="EmpStrong">;</span><br/>
+&#160;&#160;8<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> get_age<span class="EmpStrong">()</span><br/>
+&#160;10&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> THE_AGE<span class="EmpStrong">;</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> set_age<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> age<span class="EmpStrong">)</span><br/>
+&#160;15&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;THE_AGE <span class="pd_brown-1"><span class="EmpStrong">=</span></span> age<span class="EmpStrong">;</span><br/>
+&#160;17&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> update_ratio<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">double</span></span> new_ratio<span class="EmpStrong">)</span><br/>
+&#160;20&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static double</span></span> ratio <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1.0</span></span><span class="EmpStrong">;</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">double</span></span> old_ratio <span class="pd_brown-1"><span class="EmpStrong">=</span></span> ratio<span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;ratio <span class="pd_brown-1"><span class="EmpStrong">=</span></span> new_ratio<span class="EmpStrong">;</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> old_ratio<span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> print_size<span class="EmpStrong">()</span><br/>
+<a id="page_114"/>&#160;30&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"I think size is: %d"</span><span class="EmpStrong">,</span> THE_SIZE<span class="EmpStrong">);</span><br/>
+&#160;32&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">These two files introduce some new kinds of storage for variables:</p>
+<p class="indenthanging"><strong>extern</strong> This keyword is a way to tell the compiler &#8220;the variable exists, but it&#8217;s in another &#8216;external&#8217; location.&#8221; Typically this means that one .c file is going to use a variable that&#8217;s been defined in another .c file. In this case, we&#8217;re saying <code>ex22.c</code> has a variable <code>THE_SIZE</code> that will be accessed from <code>ex22_main.c</code>.</p>
+<p class="indenthanging"><strong>static (file)</strong> This keyword is kind of the inverse of <code>extern</code>, and says that the variable is only used in this .c file and should not be available to other parts of the program. Keep in mind that <code>static</code> at the file level (as with <code>THE_AGE</code> here) is different than in other places.</p>
+<p class="indenthanging"><strong>static (function)</strong> If you declare a variable in a function <code>static</code>, then that variable acts like a <code>static</code> defined in the file, but it&#8217;s only accessible from that function. It&#8217;s a way of creating constant state for a function, but in reality it&#8217;s <em>rarely</em> used in modern C programming because they are hard to use with threads.</p>
+<p class="noindent">In these two files, you should understand the following variables and functions:</p>
+<p class="indenthanging"><strong>THE_SIZE</strong> This is the variable you declared <code>extern</code> that you&#8217;ll play with from <code>ex22_main.c</code>.</p>
+<p class="indenthanging"><strong>get_age and set_age</strong> These are taking the static variable <code>THE_AGE</code>, but exposing it to other parts of the program through functions. You can&#8217;t access <code>THE_AGE</code> directly, but these functions can.</p>
+<p class="indenthanging"><strong>update_ratio</strong> This takes a new <code>ratio</code> value, and returns the old one. It uses a function level static variable <code>ratio</code> to keep track of what the ratio currently is.</p>
+<p class="indenthanging"><strong>print_size</strong> This prints out what <code>ex22.c</code> thinks <code>THE_SIZE</code> is currently.</p>
+<div class="heading">
+<h3 id="ch22lev1sec2">ex22_main.c</h3>
+<p class="noindent">Once you have that file written, you can then make the <code>main</code> function, which uses all of these and demonstrates some more scope conventions.</p>
+</div>
+<p class="ex-caption"><code>ex22_main.c</code></p>
+<hr/>
+<p class="codelink"><a id="p114pro01" href="ch22_images.html#p114pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "ex22.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;3<br/>
+<a id="page_115"/>&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>MY_NAME <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"Zed A. Shaw"</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> scope_demo<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> count<span class="EmpStrong">)</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"count is: %d"</span><span class="EmpStrong">,</span> count<span class="EmpStrong">);</span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>count <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span><span class="EmpStrong">) {</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">;</span>&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// BAD! BUGS!</span></span><br/>
+&#160;12<br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"count in this scope is %d"</span><span class="EmpStrong">,</span> count<span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"count is at exit: %d"</span><span class="EmpStrong">,</span> count<span class="EmpStrong">);</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">3000</span></span><span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"count after assign: %d"</span><span class="EmpStrong">,</span> count<span class="EmpStrong">);</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test out THE_AGE accessors</span></span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"My name: %s, age: %d"</span><span class="EmpStrong">,</span> MY_NAME<span class="EmpStrong">,</span> get_age<span class="EmpStrong">());</span><br/>
+&#160;27<br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;set_age<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">);</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"My age is now: %d"</span><span class="EmpStrong">,</span> get_age<span class="EmpStrong">());</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test out THE_SIZE extern</span></span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"THE_SIZE is: %d"</span><span class="EmpStrong">,</span> THE_SIZE<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;print_size<span class="EmpStrong">();</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;THE_SIZE <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">9</span></span><span class="EmpStrong">;</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"THE SIZE is now: %d"</span><span class="EmpStrong">,</span> THE_SIZE<span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;print_size<span class="EmpStrong">();</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test the ratio function static</span></span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Ratio at first: %f"</span><span class="EmpStrong">,</span> update_ratio<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">2.0</span></span><span class="EmpStrong">));</span><br/>
+<a id="page_116"/>&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Ratio again: %f"</span><span class="EmpStrong">,</span> update_ratio<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">10.0</span></span><span class="EmpStrong">));</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"Ratio once more: %f"</span><span class="EmpStrong">,</span> update_ratio<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">300.0</span></span><span class="EmpStrong">));</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test the scope demo</span></span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;scope_demo<span class="EmpStrong">(</span>count<span class="EmpStrong">);</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;scope_demo<span class="EmpStrong">(</span>count <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span><span class="EmpStrong">);</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;log_info<span class="EmpStrong">(</span><span class="pd_green">"count after calling scope_demo: %d"</span><span class="EmpStrong">,</span> count<span class="EmpStrong">);</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">I&#8217;ll break this file down line by line, but as I do, you should find each variable and where it lives.</p>
+<p class="indenthanging"><strong>ex22_main.c:4</strong> A <code>const</code>, which stands for constant, and is an alternative to using a <code>define</code> to create a constant variable.</p>
+<p class="indenthanging"><strong>ex22_main.c:6</strong> A simple function that demonstrates more scope issues in a function.</p>
+<p class="indenthanging"><strong>ex22_main.c:8</strong> This prints out the value of <code>count</code> as it is at the top of the function.</p>
+<p class="indenthanging"><strong>ex22_main.c:10</strong> An <code>if-statement</code> that starts a new <em>scope block</em>, and then has another <code>count</code> variable in it. This version of <code>count</code> is actually a whole new variable. It&#8217;s kind of like the <code>if-statement</code> started a new mini function.</p>
+<p class="indenthanging"><strong>ex22_main.c:11</strong> The <code>count</code> that is local to this block is actually different from the one in the function&#8217;s parameter list.</p>
+<p class="indenthanging"><strong>ex22_main.c:13</strong> This prints it out so you can see it&#8217;s actually 100 here, not what was passed to <code>scope_demo</code>.</p>
+<p class="indenthanging"><strong>ex22_main.c:16</strong> Now for the freaky part. You have <code>count</code> in two places: the parameters to this function, and in the <code>if-statement</code>. The <code>if-statement</code> created a new block, so the <code>count</code> on line 11 <em>does not impact the parameter with the same name</em>. This line prints it out, and you&#8217;ll see that it prints the value of the parameter, not 100.</p>
+<p class="indenthanging"><strong>ex22_main.c:18-20</strong> Then, I set the parameter <code>count</code> to 3000 and print that out, which will demonstrate that you can change function parameters and they don&#8217;t impact the caller&#8217;s version of the variable.</p>
+<p class="noindent">Make sure that you trace through this function, but don&#8217;t think that you understand scope quite yet. Just start to realize that if you make a variable inside a block (as in <code>if-statements</code> or <code>while-loops</code>), then those variables are <em>new</em> variables that exist only in that block. This is crucial to understand, <a id="page_117"/>and is also a <em>source of many bugs</em>. We&#8217;ll address why you shouldn&#8217;t make a variable inside a block shortly.</p>
+<p class="noindent">The rest of the <code>ex22_main.c</code> then demonstrates all of these by manipulating and printing them out:</p>
+<p class="indenthanging"><strong>ex22_main.c:26</strong> This prints out the current values of <code>MY_NAME</code>, and gets <code>THE_AGE</code> from <code>ex22.c</code> by using the accessor function <code>get_age</code>.</p>
+<p class="indenthanging"><strong>ex22_main.c:27-30</strong> This uses <code>set_age</code> in <code>ex22.c</code> to change <code>THE_AGE</code> and then print it out.</p>
+<p class="indenthanging"><strong>ex22_main.c:33-39</strong> Then I do the same thing to <code>THE_SIZE</code> from <code>ex22.c</code>, but this time I&#8217;m accessing it directly. I&#8217;m also demonstrating that it&#8217;s actually changing in that file by printing it here and with <code>print_size</code>.</p>
+<p class="indenthanging"><strong>ex22_main.c:42-44</strong> Here, I show how the static variable <code>ratio</code> inside <code>update_ratio</code> is maintained between function calls.</p>
+<p class="indenthanging"><strong>ex22_main.c:46-51</strong> Finally, I&#8217;m running <code>scope_demo</code> a few times so you can see the scope in action. The big thing to notice is that the local <code>count</code> variable remains unchanged. You <em>must</em> understand that passing in a variable like this won&#8217;t let you change it in the function. To do that, you need our old friend the pointer. If you were to pass a pointer to this <code>count</code>, then the called function would have the address of it and could change it.</p>
+<p class="noindent">That explains what&#8217;s going on, but you should trace through these files and make sure you know where everything is as you study it.</p>
+<div class="heading">
+<h3 id="ch22lev1sec3">What You Should See</h3>
+<p class="noindent">This time, instead of using your <code>Makefile</code>, I want you to build these two files manually so you can see how the compiler actually puts them together. Here&#8217;s what you should do and see for output:</p>
+</div>
+<p class="ex-caption"><code>Exercise 22 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p117pro01" href="ch22_images.html#p117pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> cc -Wall -g -DNDEBUG&#160;&#160;-c -o ex22.o ex22.c<br/>
+<span class="pd_brown">$</span> cc -Wall -g -DNDEBUG&#160;&#160;&#160;ex22_main.c ex22.o&#160;&#160;&#160;-o ex22_main<br/>
+<span class="pd_brown">$</span> ./ex22_main<br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:26) My name: Zed A. Shaw, age: 37</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:30) My age is now: 100</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:33) THE_SIZE is: 1000</span><br/>
+<span class="EmpItalic">[INFO] (ex22.c:32) I think size is: 1000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:38) THE SIZE is now: 9</span><br/>
+<a id="page_118"/><span class="EmpItalic">[INFO] (ex22.c:32) I think size is: 9</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:42) Ratio at first: 1.000000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:43) Ratio again: 2.000000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:44) Ratio once more: 10.000000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:8) count is: 4</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:16) count is at exit: 4</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:20) count after assign: 3000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:8) count is: 80</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:13) count in this scope is 100</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:16) count is at exit: 80</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:20) count after assign: 3000</span><br/>
+<span class="EmpItalic">[INFO] (ex22_main.c:51) count after calling scope_demo: 4</span></p>
+<p class="noindent">Make sure you trace how each variable is changing and match it to the line that gets output. I&#8217;m using <code>log_info</code> from the <code>dbg.h</code> macros so you can get the exact line number where each variable is printed, and find it in the files for tracing.</p>
+<div class="heading">
+<h3 id="ch22lev1sec4">Scope, Stack, and Bugs</h3>
+<p class="noindent">If you&#8217;ve done this right, you should now see many of the different ways you can place variables in your C code. You can use <code>extern</code> or access functions like <code>get_age</code> to create globals. You can make new variables inside any blocks, and they&#8217;ll retain their own values until that block exits, leaving the outer variables alone. You also can pass a value to a function, and change the parameter but without changing the caller&#8217;s version of it.</p>
+</div>
+<p class="noindent">The most important thing to realize is that all of this causes bugs. C&#8217;s ability to place things in many places in your machine, and then let you access it in those places, means that you can get easily confused about where something lives. If you don&#8217;t know where it lives, then there&#8217;s a chance you won&#8217;t manage it properly.</p>
+<p class="noindent">With that in mind, here are some rules to follow when writing C code so you can avoid bugs related to the stack:</p>
+<p class="indenthangingB">&#8226; Do not shadow a variable like I&#8217;ve done here with <code>count</code> in <code>scope_demo</code>. It leaves you open to subtle and hidden bugs where you <em>think</em> you&#8217;re changing a value but you&#8217;re actually not.</p>
+<p class="indenthangingB">&#8226; Avoid using too many globals, especially if across multiple files. If you have to use them, then use accessor functions like I&#8217;ve done with <code>get_age</code>. This doesn&#8217;t apply to constants, since those are read-only. I&#8217;m talking about variables like <code>THE_SIZE</code>. If you want people to modify or set this variable, then make accessor functions.</p>
+<p class="indenthangingB">&#8226; When in doubt, put it on the heap. Don&#8217;t rely on the semantics of the stack or specialized locations. Just create things with <code>malloc</code>.</p>
+<p class="indenthangingB"><a id="page_119"/>&#8226; Don&#8217;t use function static variables like I did in <code>update_ratio</code>. They&#8217;re rarely useful and end up being a huge pain when you need to make your code concurrent in threads. They&#8217;re also hard as hell to find compared to a well-done global variable.</p>
+<p class="indenthangingB">&#8226; Avoid reusing function parameters. It&#8217;s confusing as to whether you&#8217;re just reusing it or if you think you&#8217;re changing the <em>caller&#8217;s</em> version of it.</p>
+<p class="noindent">As with all things, these rules can be broken when it&#8217;s practical. In fact, I guarantee you&#8217;ll run into code that breaks all of these rules and is perfectly fine. The constraints of different platforms even make it necessary sometimes.</p>
+<div class="heading">
+<h3 id="ch22lev1sec5">How to Break It</h3>
+<p class="noindent">For this exercise, try to access or change some things you can&#8217;t to break the program.</p>
+</div>
+<p class="indenthangingB">&#8226; Try to directly access variables in <code>ex22.c</code> from <code>ex22_main.c</code> that you think you can&#8217;t access. For example, can you get at <code>ratio</code> inside <code>update_ratio</code>? What if you had a pointer to it?</p>
+<p class="indenthangingB">&#8226; Ditch the <code>extern</code> declaration in <code>ex22.h</code> to see what errors or warnings you get.</p>
+<p class="indenthangingB">&#8226; Add <code>static</code> or <code>const</code> specifiers to different variables, and then try to change them.</p>
+<div class="heading">
+<h3 id="ch22lev1sec6">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Research the concept of pass by value versus pass by reference. Write an example of both.</p>
+</div>
+<p class="indenthangingB">&#8226; Use pointers to gain access to things you shouldn&#8217;t have access to.</p>
+<p class="indenthangingB">&#8226; Use your debugger to see what this kind of access looks like when you do it wrong.</p>
+<p class="indenthangingB">&#8226; Write a recursive function that causes a stack overflow. Don&#8217;t know what a recursive function is? Try calling <code>scope_demo</code> at the bottom of <code>scope_demo</code> itself so that it loops.</p>
+<p class="indenthangingB">&#8226; Rewrite the <code>Makefile</code> so that it can build this.</p>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 20. Advanced Debugging Techniques</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch20"><a id="page_100"/>Exercise 20. Advanced Debugging Techniques</h2>
+<p class="noindent">I&#8217;ve already taught you about my awesome debug macros, and you&#8217;ve been using them. When I debug code I use the <code>debug()</code> macro almost exclusively to analyze what&#8217;s going on and track down the problem. In this exercise, I&#8217;m going to teach you the basics of using GDB to inspect a simple program that runs and doesn&#8217;t exit. You&#8217;ll learn how to use GDB to attach to a running process, stop it, and see what&#8217;s happening. After that, I&#8217;ll give you some little tips and tricks that you can use with GDB.</p>
+<p class="noindent">This is another video-focused exercise where I show you advanced debugging tricks with my technique. The discussion below reinforces the video, so watch the video first. Debugging will be much easier to learn by watching me do it first.</p>
+<div class="heading">
+<h3 id="ch20lev1sec1">Debug Printing versus GDB</h3>
+<p class="noindent">I approach debugging primarily with a &#8220;scientific method&#8221; style: I come up with possible causes and then rule them out or prove that they cause the defect. The problem many programmers have with this approach is that they feel like it will slow them down. They panic and rush to solve the bug, but in their rush they fail to notice that they&#8217;re really just flailing around and gathering no useful information. I find that logging (debug printing) forces me to solve a bug scientifically, and it&#8217;s also just easier to gather information in most situations.</p>
+</div>
+<p class="noindent">In addition, I have these reasons for using debug printing as my primary debugging tool:</p>
+<p class="indenthangingB">&#8226; You see an entire tracing of a program&#8217;s execution with debug printing of variables, which lets you track how things are going wrong. With GDB, you have to place <code>watch</code> and <code>debug</code> statements all over the place for everything you want, and it&#8217;s difficult to get a solid trace of the execution.</p>
+<p class="indenthangingB">&#8226; The debug prints can stay in the code, and when you need them, you can recompile and they come back. With GDB, you have to configure the same information uniquely for every defect you have to hunt down.</p>
+<p class="indenthangingB">&#8226; It&#8217;s easier to turn on debug logging on a server that&#8217;s not working right, and then inspect the logs while it runs to see what&#8217;s going on. System administrators know how to handle logging, but they don&#8217;t know how to use GDB.</p>
+<p class="indenthangingB">&#8226; Printing things is just easier. Debuggers are always obtuse and weird with their own quirky interfaces and inconsistencies. There&#8217;s nothing complicated about <code>debug("Yo, dis right? %d", my_stuff);</code>.</p>
+<p class="indenthangingB"><a id="page_101"/>&#8226; When you write debug prints to find a defect, you&#8217;re forced to actually analyze the code and use the scientific method. You can think of debug usage as, &#8220;I hypothesize that the code is broken here.&#8221; Then when you run it, you get your hypothesis tested, and if it&#8217;s not broken, then you can move to another part where it could be. This may seem like it takes longer, but it&#8217;s actually faster because you go through a process of differential diagnosis and rule out possible causes until you find the real one.</p>
+<p class="indenthangingB">&#8226; Debug printing works better with unit testing. You can actually just compile the debugs while you work, and when a unit test explodes, just go look at the logs at any time. With GDB, you&#8217;d have to rerun the unit test under GDB and then trace through it to see what&#8217;s going on.</p>
+<p class="noindent">Despite all of these reasons that I rely on <code>debug</code> over <code>GDB</code>, I still use <code>GDB</code> in a few situations, and I think you should have any tool that helps you get your work done. Sometimes, you just have to connect to a broken program and poke around. Or, maybe you&#8217;ve got a server that&#8217;s crashing and you can only get at core files to see why. In these and a few other cases, GDB is the way to go, and it&#8217;s always good to have as many tools as possible to help solve problems.</p>
+<p class="noindent">Here&#8217;s a breakdown of when I use GDB versus Valgrind versus debug printing:</p>
+<p class="indenthangingB">&#8226; I use Valgrind to catch all memory errors. I use GDB if Valgrind is having problems or if using Valgrind would slow the program down too much.</p>
+<p class="indenthangingB">&#8226; I use print with debug to diagnose and fix defects related to logic or usage. This amounts to about 90% of the defects after you start using Valgrind.</p>
+<p class="indenthangingB">&#8226; I use GDB for the remaining mysteriously weird stuff or emergency situations to gather information. If Valgrind isn&#8217;t turning anything up, and I can&#8217;t even print out the information that I need, then I bust out GDB and start poking around. My use of GDB in this case is entirely to gather information. Once I have an idea of what&#8217;s going on, I&#8217;ll go back to writing a unit test to cause the defect, and then do print statements to find out why.</p>
+<div class="heading">
+<h3 id="ch20lev1sec2">A Debugging Strategy</h3>
+<p class="noindent">This process will actually work with any debugging technique you&#8217;re using. I&#8217;m going to describe it in terms of using <code>GDB</code> since it seems people skip this process the most when using debuggers. Use this for every bug until you only need it on the very difficult ones.</p>
+</div>
+<p class="indenthangingB">&#8226; Start a little text file called <code>notes.txt</code> and use it as a kind of lab notes for ideas, bugs, problems, and so on.</p>
+<p class="indenthangingB">&#8226; Before you use <code>GDB</code>, write out the bug you&#8217;re going to fix and what could be causing it.</p>
+<p class="indenthangingB">&#8226; For each cause, write out the files and functions where you think the cause is coming from, or just write that you don&#8217;t know.</p>
+<p class="indenthangingB"><a id="page_102"/>&#8226; Now start <code>GDB</code> and pick the first possible cause with good file and function variables and set breakpoints there.</p>
+<p class="indenthangingB">&#8226; Use <code>GDB</code> to then run the program and confirm whether that is the cause. The best way is to see if you can use the <code>set</code> command to either fix the program easily or cause the error immediately.</p>
+<p class="indenthangingB">&#8226; If this isn&#8217;t the cause, then mark in the <code>notes.txt</code> that it wasn&#8217;t, and why. Move on to the next possible cause that&#8217;s easiest to debug, and keep adding information.</p>
+<p class="noindent">In case you haven&#8217;t noticed, this is basically the scientific method. You write down a set of hypotheses, then you use debugging to prove or disprove them. This gives you insight into more possible causes and eventually you find it. This process helps you avoid going over the same possible causes repeatedly after you&#8217;ve found that they aren&#8217;t possible.</p>
+<p class="noindent">You can also do this with debug printing, the only difference is that you actually write out your hypotheses in the source code instead of in the <code>notes.txt</code>. In a way, debug printing forces you to tackle bugs scientifically because you have to write out hypotheses as print statements.</p>
+<div class="heading">
+<h3 id="ch20lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Find a graphical debugger and compare using it to raw <code>GDB</code>. These are useful when the program you&#8217;re looking at is local, but they are pointless if you have to debug a program on a server.</p>
+</div>
+<p class="indenthangingB">&#8226; You can enable core dumps on your OS, and when a program crashes, you&#8217;ll get a core file. This core file is like a postmortem of the program that you can load up to see what happened right at the crash and what caused it. Change <code>ex18.c</code> so that it crashes after a few iterations, then try to get a core dump and analyze it.<a id="page_103"/></p>
+</body>
+</html>

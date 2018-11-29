@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 34. Dynamic Array</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch34"><a id="page_198"/>Exercise 34. Dynamic Array</h2>
+<p class="noindent">This is an array that grows on its own and has most of the same features as a linked list. It will usually take up less space, run faster, and has other beneficial properties. This exercise will cover a few of the disadvantages, like very slow removal from the front, with a solution to just do it at the end.</p>
+<p class="noindent">A dynamic array is simply an array of <code>void **</code> pointers that&#8217;s pre-allocated in one shot and that point at the data. In the linked list, you had a full structure that stored the <code>void *value</code> pointer, but in a dynamic array, there&#8217;s just a single array with all of them. This means you don&#8217;t need any other pointers for next and previous records since you can just index into the dynamic array directly.</p>
+<p class="noindent">To start, I&#8217;ll give you the header file you should type in for the implementation:</p>
+<p class="ex-caption"><code>darray.h</code></p>
+<hr/>
+<p class="codelink"><a id="p198pro01" href="ch34_images.html#p198pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _DArray_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _DArray_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> DArray <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> end<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> max<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> element_size<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> expand_rate<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>contents<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> DArray<span class="EmpStrong">;</span><br/>
+<br/>
+DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">size_t</span></span> element_size<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> initial_max<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_destroy<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_clear<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_expand<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_contract<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_push<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_pop<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_clear_destroy<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">);</span><br/>
+<br/>
+<a id="page_199"/><span class="pd_brown"><span class="EmpItalic">#define DArray_last(A) ((A)-&gt;contents[(A)-&gt;end - 1])</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DArray_first(A) ((A)-&gt;contents[0])</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DArray_end(A) ((A)-&gt;end)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DArray_count(A) DArray_end(A)</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define DArray_max(A) ((A)-&gt;max)</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define DEFAULT_EXPAND_RATE 300</span></span><br/>
+<br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> DArray_set<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> i<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el<span class="EmpStrong">)</span><br/>
+<span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">,</span> <span class="pd_green">"darray attempt to set past max"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">)</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> i<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> el<span class="EmpStrong">;</span><br/>
+<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span><span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_get<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> i<span class="EmpStrong">)</span><br/>
+<span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">,</span> <span class="pd_green">"darray attempt to get past max"</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_remove<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> i<span class="EmpStrong">)</span><br/>
+<span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el <span class="pd_brown-1"><span class="EmpStrong">=</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> el<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_new<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+<span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>element_size <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span><br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Can't use DArray_new on 0 size darrays."</span><span class="EmpStrong">);</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>element_size<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#define DArray_free(E) free((E))</span></span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent"><a id="page_200"/>This header file is showing you a new technique where I put <code>static inline</code> functions right in the header. These function definitions will work similarly to the <code>#define</code> macros that you&#8217;ve been making, but they&#8217;re cleaner and easier to write. If you need to create a block of code for a macro and you don&#8217;t need code generation, then use a <code>static inline</code> function.</p>
+<p class="noindent">Compare this technique to the <code>LIST_FOREACH</code> that <em>generates</em> a proper <code>for-loop</code> for a list. This would be impossible to do with a <code>static inline</code> function because it actually has to generate the inner block of code for the loop. The only way to do that is with a callback function, but that&#8217;s not as fast and it&#8217;s harder to use.</p>
+<p class="noindent">I&#8217;ll then change things up and have you create the unit test for <code>DArray</code>:</p>
+<p class="ex-caption"><code>darray_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p200pro01" href="ch34_images.html#p200pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static</span></span> DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>array <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;array <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">),</span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">);</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"DArray_create failed."</span><span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"contents are wrong in darray"</span><span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"end isn't at the right spot"</span><span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>element_size <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="pd_blue"><span class="EmpStrong">(int)</span></span><span class="EmpStrong">,</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"element size is wrong."</span><span class="EmpStrong">);</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span>, <span class="pd_green">"wrong max length on initial size"</span><span class="EmpStrong">);</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;20<br/>
+&#160;21&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;24<br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;27<br/>
+&#160;28&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_new<span class="EmpStrong">()</span><br/>
+&#160;29&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;val1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_new<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val1 <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"failed to make a new element"</span><span class="EmpStrong">);</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;val2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_new<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val2 <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"failed to make a new element"</span><span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+<a id="page_201"/>&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_set<span class="EmpStrong">()</span><br/>
+&#160;40&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_set<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> val1<span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_set<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> val2<span class="EmpStrong">);</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;45&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_get<span class="EmpStrong">()</span><br/>
+&#160;48&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> val1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong first value."</span><span class="EmpStrong">);</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> val2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong second value."</span><span class="EmpStrong">);</span><br/>
+&#160;51<br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;53&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_remove<span class="EmpStrong">()</span><br/>
+&#160;56&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val_check <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_remove<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">);</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val_check <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should not get NULL."</span><span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>val_check <span class="pd_brown-1"><span class="EmpStrong">== *</span></span>val1<span class="EmpStrong">,</span> <span class="pd_green">"Should get the first value."</span><span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should be gone."</span><span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_free<span class="EmpStrong">(</span>val_check<span class="EmpStrong">);</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;val_check <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_remove<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val_check <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should not get NULL."</span><span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>val_check <span class="pd_brown-1"><span class="EmpStrong">== *</span></span>val2<span class="EmpStrong">,</span> <span class="pd_green">"Should get the first value."</span><span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>DArray_get<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should be gone."</span><span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_free<span class="EmpStrong">(</span>val_check<span class="EmpStrong">);</span><br/>
+&#160;68<br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;70&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_expand_contract<span class="EmpStrong">()</span><br/>
+&#160;73&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> old_max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">;</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_expand<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">((</span><span class="pd_blue"><span class="EmpStrong">unsigned int</span></span><span class="EmpStrong">)</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> old_max <span class="pd_brown-1"><span class="EmpStrong">+</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate<span class="EmpStrong">,</span><br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Wrong size after expand."</span><span class="EmpStrong">);</span><br/>
+&#160;78<br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_contract<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">((</span><span class="pd_blue"><span class="EmpStrong">unsigned int</span></span><span class="EmpStrong">)</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Should stay at the expand_rate at least."</span><span class="EmpStrong">);</span><br/>
+&#160;82<br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_contract<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">((</span><span class="pd_blue"><span class="EmpStrong">unsigned int</span></span><span class="EmpStrong">)</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span><br/>
+&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Should stay at the expand_rate at least."</span><span class="EmpStrong">);</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;88&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;89<br/>
+<a id="page_202"/>&#160;90&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_push_pop<span class="EmpStrong">()</span><br/>
+&#160;91&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1000</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_new<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> i <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">333</span></span><span class="EmpStrong">;</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_push<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> val<span class="EmpStrong">);</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;98<br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1201</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong max size."</span><span class="EmpStrong">);</span><br/>
+100<br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">999</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">) {</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_pop<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Shouldn't get a NULL."</span><span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span><span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> i <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue-1"><span class="EmpStrong">333</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong value."</span><span class="EmpStrong">);</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_free<span class="EmpStrong">(</span>val<span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+109&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+110<br/>
+111&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+112&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+114<br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_new<span class="EmpStrong">);</span><br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_set<span class="EmpStrong">);</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_get<span class="EmpStrong">);</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_remove<span class="EmpStrong">);</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_expand_contract<span class="EmpStrong">);</span><br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_push_pop<span class="EmpStrong">);</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+123<br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+125&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+126<br/>
+127&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">This shows you how all of the operations are used, which then makes implementing the <code>DArray</code> much easier:</p>
+<p class="ex-caption"><code>darray.c</code></p>
+<hr/>
+<p class="codelink"><a id="p202pro01" href="ch34_images.html#p202pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/darray.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+<a id="page_203"/>&#160;&#160;4&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">size_t</span></span> element_size<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> initial_max<span class="EmpStrong">)</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span>array <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>DArray<span class="EmpStrong">));</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> initial_max<span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"You must set an initial_max &gt; 0."</span><span class="EmpStrong">);</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span>initial_max<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="pd_blue"><span class="EmpStrong">(void</span></span> <span class="EmpStrong"><span class="pd_brown-1">*</span>));</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">);</span><br/>
+&#160;13<br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>element_size <span class="pd_brown-1"><span class="EmpStrong">=</span></span> element_size<span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DEFAULT_EXPAND_RATE<span class="EmpStrong">;</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> array<span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>array<span class="EmpStrong">)</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_clear<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>element_size <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;36&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline int</span></span> DArray_resize<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">size_t</span></span> newsize<span class="EmpStrong">)</span><br/>
+&#160;39&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> newsize<span class="EmpStrong">;</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"The newsize must be &gt; 0."</span><span class="EmpStrong">);</span><br/>
+&#160;42<br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">=</span></span> realloc<span class="EmpStrong">(</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">,</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">*</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="pd_blue"><span class="EmpStrong">(void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">));</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// check contents and assume realloc doesn't harm the original on error</span></span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>contents<span class="EmpStrong">);</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">=</span></span> contents<span class="EmpStrong">;</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span>;<br/>
+<a id="page_204"/>&#160;54&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+&#160;56&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_expand<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;57&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">size_t</span></span> old_max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max<span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>DArray_resize<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">+</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to expand array to new size: %d"</span><span class="EmpStrong">,</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>max <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue"><span class="EmpStrong">(int)</span></span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate<span class="EmpStrong">);</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;memset<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents <span class="pd_brown-1"><span class="EmpStrong">+</span></span> old_max<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span>;<br/>
+&#160;68&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_contract<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;71&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> new_size <span class="pd_brown-1"><span class="EmpStrong">=</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue"><span class="EmpStrong">(int)</span></span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate <span class="pd_brown-1"><span class="EmpStrong">?</span></span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">(<span class="pd_blue">int</span>)</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span><span class="pd_orange">expand_rate</span> <span class="EmpStrong">:</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">;</span><br/>
+&#160;74<br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> DArray_resize<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> new_size <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+&#160;76&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;77<br/>
+&#160;78&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_destroy<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;79&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>array<span class="EmpStrong">) {</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">)</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">);</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;85&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;86<br/>
+&#160;87&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> DArray_clear_destroy<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+&#160;88&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_clear<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_destroy<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+&#160;91&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> DArray_push<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el<span class="EmpStrong">)</span><br/>
+&#160;94&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;95&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>contents<span class="EmpStrong">[</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> el<span class="EmpStrong">;</span><br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;97<br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>DArray_end<span class="EmpStrong">(</span>array<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> DArray_max<span class="EmpStrong">(</span>array<span class="EmpStrong">)) {</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> DArray_expand<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+103&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104<br/>
+<a id="page_205"/>105&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>DArray_pop<span class="EmpStrong">(</span>DArray <span class="pd_brown-1"><span class="EmpStrong">*</span></span> array<span class="EmpStrong">)</span><br/>
+106&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Attempt to pop from empty array."</span><span class="EmpStrong">);</span><br/>
+108<br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>el <span class="pd_brown-1"><span class="EmpStrong">=</span></span> DArray_remove<span class="EmpStrong">(</span>array<span class="EmpStrong">,</span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">);</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>end<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">;</span><br/>
+111<br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>DArray_end<span class="EmpStrong">(</span>array<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue"><span class="EmpStrong">(int)</span></span>array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate<br/>
+113&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> DArray_end<span class="EmpStrong">(</span>array<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">%</span></span> array<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>expand_rate<span class="EmpStrong">) {</span><br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;DArray_contract<span class="EmpStrong">(</span>array<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> el<span class="EmpStrong">;</span><br/>
+118&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+120&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">This shows you another way to tackle complex code. Instead of diving right into the <code>.c</code> implementation, look at the header file, and then read the unit test. This gives you an abstract-to-concrete understanding of how the pieces work together, making it easier to remember.</p>
+<div class="heading">
+<h3 id="ch34lev1sec1">Advantages and Disadvantages</h3>
+<p class="noindent">A <code>DArray</code> is better when you need to optimize these operations:</p>
+</div>
+<p class="indenthangingB">&#8226; Iteration: You can just use a basic <code>for-loop</code> and <code>DArray_count</code> with <code>DArray_get</code>, and you&#8217;re done. No special macros needed, and it&#8217;s faster because you aren&#8217;t walking through pointers.</p>
+<p class="indenthangingB">&#8226; Indexing: You can use <code>DArray_get</code> and <code>DArray_set</code> to access any element at random, but with a <code>List</code> you have to go through N elements to get to N+1.</p>
+<p class="indenthangingB">&#8226; Destroying: You can just free the struct and the <code>contents</code> in two operations. A <code>List</code> requires a series of <code>free</code> calls and walking every element.</p>
+<p class="indenthangingB">&#8226; Cloning: You can also clone it in just two operations (plus whatever it&#8217;s storing) by copying the struct and <code>contents</code>. Again, a list requires walking through the whole thing and copying every <code>ListNode</code> plus its value.</p>
+<p class="indenthangingB">&#8226; Sorting: As you saw, <code>List</code> is horrible if you need to keep the data sorted. A <code>DArray</code> opens up a whole class of great sorting algorithms, because now you can access elements randomly.</p>
+<p class="indenthangingB">&#8226; Large Data: If you need to keep around a lot of data, then a <code>DArray</code> wins since its base, <code>contents</code>, takes up less memory than the same number of <code>ListNode</code> structs.</p>
+<p class="noindent"><a id="page_206"/>However, the <code>List</code> wins on these operations:</p>
+<p class="indenthangingB">&#8226; Insert and remove on the front (what I called shift): A <code>DArray</code> needs special treatment to be able to do this efficiently, and usually it has to do some copying.</p>
+<p class="indenthangingB">&#8226; Splitting or joining: A <code>List</code> can just copy some pointers and it&#8217;s done, but with a <code>DArray</code>, you have copy all of the arrays involved.</p>
+<p class="indenthangingB">&#8226; Small Data: If you only need to store a few elements, then typically the storage will be smaller in a <code>List</code> than a generic <code>DArray</code>. This is because the <code>DArray</code> needs to expand the backing store to accommodate future inserts, while a <code>List</code> only makes what it needs.</p>
+<p class="noindent">With this, I prefer to use a <code>DArray</code> for most of the things you see other people use a <code>List</code> for. I reserve using <code>List</code> for any data structure that requires a small number of nodes to be added and removed from either end. I&#8217;ll show you two similar data structures called a <code>Stack</code> and <code>Queue</code> where this is important.</p>
+<div class="heading">
+<h3 id="ch34lev1sec2">How to Improve It</h3>
+<p class="noindent">As usual, go through each function and operation and add the defensive programming checks, pre-conditions, invariants, and anything else you can find to make the implementation more bulletproof.</p>
+</div>
+<div class="heading">
+<h3 id="ch34lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Improve the unit tests to cover more of the operations, and test them using a <code>for-loop</code> to ensure that they work.</p>
+</div>
+<p class="indenthangingB">&#8226; Research what it would take to implement bubble sort and merge sort for DArray, but don&#8217;t do it yet. I&#8217;ll be implementing DArray algorithms next, so you&#8217;ll do this then.</p>
+<p class="indenthangingB">&#8226; Write some performance tests for common operations and compare them to the same operations in <code>List</code>. You did some of this already, but this time, write a unit test that repeatedly does the operation in question and then, in the main runner, do the timing.</p>
+<p class="indenthangingB">&#8226; Look at how the <code>DArray_expand</code> is implemented using a constant increase (size + 300). Typically, dynamic arrays are implemented with a multiplicative increase (size &#215; 2), but I&#8217;ve found this to cost needless memory for no real performance gain. Test my assertion and see when you&#8217;d want a multiplicative increase instead of a constant increase.<a id="page_207"/></p>
+</body>
+</html>

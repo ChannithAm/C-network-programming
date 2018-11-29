@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 40. Binary Search Trees</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch40"><a id="page_260"/>Exercise 40. Binary Search Trees</h2>
+<p class="noindent">The binary tree is the simplest tree-based data structure, and even though it&#8217;s been replaced by hash maps in many languages, it&#8217;s still useful for many applications. Variants on the binary tree exist for very useful things like database indexes, search algorithm structures, and even graphics.</p>
+<p class="noindent">I&#8217;m calling my binary tree a <code>BSTree</code> for binary search tree, and the best way to describe it is that it&#8217;s another way to do a <code>Hashmap</code> style key/value store. The difference is that instead of hashing the key to find a location, the <code>BSTree</code> compares the key to nodes in a tree, and then walks through the tree to find the best place to store it, based on how it compares to other nodes.</p>
+<p class="noindent">Before I really explain how this works, let me show you the <code>bstree.h</code> header file so that you can see the data structures, and then I can use that to explain how it&#8217;s built.</p>
+<p class="ex-caption"><code>bstree.h</code></p>
+<hr/>
+<p class="codelink"><a id="p260pro01" href="ch40_images.html#p260pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown"><span class="EmpItalic">#ifndef _lcthw_BSTree_h</span></span><br/>
+<span class="pd_brown"><span class="EmpItalic">#define _lcthw_BSTree_h</span></span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(<span class="pd_brown-1">*</span></span>BSTree_compare<span class="EmpStrong">) (</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> BSTreeNode <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">;</span><br/>
+<br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>left<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>right<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>parent<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> BSTreeNode<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> BSTree <span class="EmpStrong">{</span><br/>
+&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;BSTree_compare compare<span class="EmpStrong">;</span><br/>
+&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>root<span class="EmpStrong">;</span><br/>
+<span class="EmpStrong">}</span> BSTree<span class="EmpStrong">;</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">typedef</span></span> int <span class="EmpStrong">(<span class="pd_brown-1">*</span></span>BSTree_traverse_cb<span class="EmpStrong">) (</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">);</span><br/>
+<br/>
+BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_create<span class="EmpStrong">(</span>BSTree_compare compare<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> BSTree_destroy<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> BSTree_set<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">);</span><br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_get<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">int</span></span> BSTree_traverse<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> BSTree_traverse_cb traverse_cb<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_delete<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">);</span><br/>
+<br/>
+<span class="pd_brown"><span class="EmpItalic">#endif</span></span></p>
+<p class="noindent"><a id="page_261"/>This follows the same pattern that I&#8217;ve been using this whole time where I have a base container named <code>BSTree</code>, which has nodes named <code>BSTreeNode</code> that make up the actual contents. Bored yet? Good, there&#8217;s no reason to be clever with this kind of structure.</p>
+<p class="noindent">The important thing is how the <code>BSTreeNode</code> is configured, and how it gets used to do each operation: <code>set</code>, <code>get</code>, and <code>delete</code>. I&#8217;ll cover <code>get</code> first since it&#8217;s the easiest operation, and I&#8217;ll pretend I&#8217;m doing it manually against the data structure:</p>
+<p class="indenthangingB">&#8226; I take the key you&#8217;re looking for and I start at the root. First thing I do is compare your key with that node&#8217;s key.</p>
+<p class="indenthangingB">&#8226; If your key is less than the <code>node.key</code>, then I traverse down the tree using the <code>left</code> pointer.</p>
+<p class="indenthangingB">&#8226; If your key is greater than the <code>node.key</code>, then I go down with <code>right</code>.</p>
+<p class="indenthangingB">&#8226; I repeat steps 2 and 3 until I either find a matching node.key or get to a node that has no left and right. In the first case, I return the <code>node.data</code>. In the second, I return <code>NULL</code>.</p>
+<p class="noindent">That&#8217;s all there is to <code>get</code>, so now on to <code>set</code>. It&#8217;s nearly the same thing, except you&#8217;re looking for where to put a new node:</p>
+<p class="indenthangingB">&#8226; If there is no <code>BSTree.root</code>, then I just make it and we&#8217;re done. That&#8217;s the first node.</p>
+<p class="indenthangingB">&#8226; After that, I compare your key to <code>node.key</code>, starting at the root.</p>
+<p class="indenthangingB">&#8226; If your key is less than or equal to the <code>node.key</code>, then I want to go left. If your key is greater than and not equal to the <code>node.key</code>, then I want to go right.</p>
+<p class="indenthangingB">&#8226; I keep repeating step 3 until I reach a node where left or right doesn&#8217;t exist, but that&#8217;s the direction I need to go.</p>
+<p class="indenthangingB">&#8226; Once there, I set that direction (left or right) to a new node for the key and data I want, and then set this new node&#8217;s parent to the previous node I came from. I&#8217;ll use the parent node when I do <code>delete</code>.</p>
+<p class="noindent">This also makes sense given how <code>get</code> works. If finding a node involves going left or right depending on how the key compares, then setting a node involves the same thing until I can set the left or right for a new node.</p>
+<p class="noindent">Take some time to draw out a few trees on paper and go through setting and getting nodes so you understand how this works. After that, you&#8217;re ready to look at the implementation, and I can explain <code>delete</code>. Deleting in trees is a <em>major</em> pain, and so it&#8217;s best explained by doing a line-by-line code breakdown.</p>
+<p class="ex-caption"><code>bstree.c</code></p>
+<hr/>
+<p class="codelink"><a id="p261pro01" href="ch40_images.html#p261pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/dbg.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstree.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+<a id="page_262"/>&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> default_compare<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>a<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>b<span class="EmpStrong">)</span><br/>
+&#160;&#160;7&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> bstrcmp<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> a<span class="EmpStrong">, (</span>bstring<span class="EmpStrong">)</span> b<span class="EmpStrong">);</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_create<span class="EmpStrong">(</span>BSTree_compare compare<span class="EmpStrong">)</span><br/>
+&#160;12&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="EmpStrong"><span class="pd_blue">sizeof</span>(</span>BSTree<span class="EmpStrong">));</span><br/>
+&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;15<br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare <span class="pd_brown-1"><span class="EmpStrong">=</span></span> compare <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_orange">default_compare</span> <span class="EmpStrong">:</span> compare<span class="EmpStrong">;</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> map<span class="EmpStrong">;</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="EmpStrong">) {</span><br/>
+&#160;22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_destroy<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;26<br/>
+&#160;27&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> BSTree_destroy_cb<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;28&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> BSTree_destroy<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">)</span><br/>
+&#160;34&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="EmpStrong">) {</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_traverse<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> BSTree_destroy_cb<span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;39&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTreeNode_create<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> parent<span class="EmpStrong">,</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;43&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> calloc<span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="EmpStrong"><span class="pd_blue">sizeof</span>(</span>BSTreeNode<span class="EmpStrong">));</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> key<span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> data<span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent <span class="pd_brown-1"><span class="EmpStrong">=</span></span> parent<span class="EmpStrong">;</span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;51<br/>
+&#160;52&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;54&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;55<br/>
+<a id="page_263"/>&#160;56&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> BSTree_setnode<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;58&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> cmp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_setnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTreeNode_create<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+&#160;69&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_setnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;71&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTreeNode_create<span class="EmpStrong">(</span>node<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;72&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;74&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> BSTree_set<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data<span class="EmpStrong">)</span><br/>
+&#160;77&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// first so just make it and get out</span></span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTreeNode_create<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;81&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_mem<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">);</span><br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;83&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_setnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">,</span> key<span class="EmpStrong">,</span> data<span class="EmpStrong">);</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;85<br/>
+&#160;86&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;87&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="EmpStrong"><span class="pd_blue-1">1</span>;</span><br/>
+&#160;89&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;90<br/>
+&#160;91&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_getnode<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+&#160;93&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> cmp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>cmp <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> BSTree_getnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+<a id="page_264"/>105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> BSTree_getnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+111&#160;&#160;<span class="EmpStrong">}</span><br/>
+112<br/>
+113&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_get<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+114&#160;&#160;<span class="EmpStrong">{</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+116&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_getnode<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">:</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+121&#160;&#160;<span class="EmpStrong">}</span><br/>
+122<br/>
+123&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline int</span></span> BSTree_traverse_nodes<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span><br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_traverse_cb traverse_cb<span class="EmpStrong">)</span><br/>
+125&#160;&#160;<span class="EmpStrong">{</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+127<br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_traverse_nodes<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">,</span> traverse_cb<span class="EmpStrong">);</span><br/>
+130&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+133<br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+135&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_traverse_nodes<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">,</span> traverse_cb<span class="EmpStrong">);</span><br/>
+136&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> rc<span class="EmpStrong">;</span><br/>
+138&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+139<br/>
+140&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> traverse_cb<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+141&#160;&#160;<span class="EmpStrong">}</span><br/>
+142<br/>
+143&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> BSTree_traverse<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> BSTree_traverse_cb traverse_cb<span class="EmpStrong">)</span><br/>
+144&#160;&#160;<span class="EmpStrong">{</span><br/>
+145&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">) {</span><br/>
+146&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> BSTree_traverse_nodes<span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">,</span> traverse_cb<span class="EmpStrong">);</span><br/>
+147&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+148<br/>
+149&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+150&#160;&#160;<span class="EmpStrong">}</span><br/>
+151<br/>
+152&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_find_min<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+153&#160;&#160;<span class="EmpStrong">{</span><br/>
+154&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+<a id="page_265"/>155&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">;</span><br/>
+156&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+157<br/>
+158&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+159&#160;&#160;<span class="EmpStrong">}</span><br/>
+160<br/>
+161&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> BSTree_replace_node_in_parent<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span><br/>
+162&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span><br/>
+163&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> new_value<span class="EmpStrong">)</span><br/>
+164&#160;&#160;<span class="EmpStrong">{</span><br/>
+165&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent<span class="EmpStrong">) {</span><br/>
+166&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node <span class="pd_brown-1"><span class="EmpStrong">==</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+167&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left <span class="pd_brown-1"><span class="EmpStrong">=</span></span> new_value<span class="EmpStrong">;</span><br/>
+168&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+169&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right <span class="pd_brown-1"><span class="EmpStrong">=</span></span> new_value<span class="EmpStrong">;</span><br/>
+170&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+171&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+172&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this is the root so gotta change it</span></span><br/>
+173&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root <span class="pd_brown-1"><span class="EmpStrong">=</span></span> new_value<span class="EmpStrong">;</span><br/>
+174&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+175<br/>
+176&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>new_value<span class="EmpStrong">) {</span><br/>
+177&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;new_value<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>parent<span class="EmpStrong">;</span><br/>
+178&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+179&#160;&#160;<span class="EmpStrong">}</span><br/>
+180<br/>
+181&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline void</span></span> BSTree_swap<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> a<span class="EmpStrong">,</span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> b<span class="EmpStrong">)</span><br/>
+182&#160;&#160;<span class="EmpStrong">{</span><br/>
+183&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+184&#160;&#160;&#160;&#160;&#160;&#160;temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">;</span><br/>
+185&#160;&#160;&#160;&#160;&#160;&#160;b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key;<br/>
+186&#160;&#160;&#160;&#160;&#160;&#160;a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key <span class="pd_brown-1"><span class="EmpStrong">=</span></span> temp<span class="EmpStrong">;</span><br/>
+187&#160;&#160;&#160;&#160;&#160;&#160;temp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+188&#160;&#160;&#160;&#160;&#160;&#160;b<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+189&#160;&#160;&#160;&#160;&#160;&#160;a<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> temp<span class="EmpStrong">;</span><br/>
+190&#160;&#160;<span class="EmpStrong">}</span><br/>
+191<br/>
+192&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static inline</span></span> BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_node_delete<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span><br/>
+193&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">,</span><br/>
+194&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+195&#160;&#160;<span class="EmpStrong">{</span><br/>
+196&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> cmp <span class="pd_brown-1"><span class="EmpStrong">=</span></span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>compare<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+197<br/>
+198&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>cmp <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+199&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+200&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> BSTree_node_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+201&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+202&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// not found</span></span><br/>
+203&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+204&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+<a id="page_266"/>205&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>cmp <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">) {</span><br/>
+206&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+207&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> BSTree_node_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+208&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+209&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// not found</span></span><br/>
+210&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+211&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+212&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+213&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+214&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// swap this node for the smallest node that is bigger than us</span></span><br/>
+215&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>successor <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_find_min<span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">);</span><br/>
+216&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_swap<span class="EmpStrong">(</span>successor<span class="EmpStrong">,</span> node<span class="EmpStrong">);</span><br/>
+217<br/>
+218&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// this leaves the old successor with possibly a right child</span></span><br/>
+219&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// so replace it with that right child</span></span><br/>
+220&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_replace_node_in_parent<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> successor<span class="EmpStrong">,</span><br/>
+221&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;successor<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">);</span><br/>
+222<br/>
+223&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// finally it's swapped, so return successor instead of node</span></span><br/>
+224&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> successor<span class="EmpStrong">;</span><br/>
+225&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">) {</span><br/>
+226&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_replace_node_in_parent<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>left<span class="EmpStrong">);</span><br/>
+227&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">) {</span><br/>
+228&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_replace_node_in_parent<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="EmpStrong">,</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>right<span class="EmpStrong">);</span><br/>
+229&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+230&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_replace_node_in_parent<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> node<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+231&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+232<br/>
+233&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> node<span class="EmpStrong">;</span><br/>
+234&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+235&#160;&#160;<span class="EmpStrong">}</span><br/>
+236<br/>
+237&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>BSTree_delete<span class="EmpStrong">(</span>BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> map<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>key<span class="EmpStrong">)</span><br/>
+238&#160;&#160;<span class="EmpStrong">{</span><br/>
+239&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+240<br/>
+241&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">) {</span><br/>
+242&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span>node <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_node_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> map<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>root<span class="EmpStrong">,</span> key<span class="EmpStrong">);</span><br/>
+243<br/>
+244&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>node<span class="EmpStrong">) {</span><br/>
+245&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>data<span class="EmpStrong">;</span><br/>
+246&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>node<span class="EmpStrong">);</span><br/>
+247&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+248&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+249<br/>
+250&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> data<span class="EmpStrong">;</span><br/>
+251&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">Before getting into how <code>BSTree_delete</code> works, I want to explain a pattern for doing recursive function calls in a sane way. You&#8217;ll find that many tree-based data structures are easy to write if you use recursion, but formulate a single recursive function. Part of the problem is that you need <a id="page_267"/>to set up some initial data for the first operation, <em>then</em> recurse into the data structure, which is hard to do with one function.</p>
+<p class="noindent">The solution is to use two functions: One function sets up the data structure and initial recursion conditions so that a second function can do the real work. Take a look at <code>BSTree_get</code> first to see what I mean.</p>
+<p class="indenthangingB">&#8226; I have an initial condition: If <code>map-&gt;root</code> is <code>NULL</code>, then return <code>NULL</code> and don&#8217;t recurse.</p>
+<p class="indenthangingB">&#8226; I then set up a call to the real recursion, which is in <code>BSTree_getnode</code>. I create the initial condition of the root node to start with the key and then the <code>map</code>.</p>
+<p class="indenthangingB">&#8226; In the <code>BSTree_getnode</code>, I then do the actual recursive logic. I compare the keys with <code>map-&gt;compare(node-&gt;key, key)</code> and go left, right, or equal to depending on the results.</p>
+<p class="indenthangingB">&#8226; Since this function is self-similar and doesn&#8217;t have to handle any initial conditions (because <code>BSTree_get</code> did), then I can structure it very simply. When it&#8217;s done, it returns to the caller, and that return then comes back to <code>BSTree_get</code> for the result.</p>
+<p class="indenthangingB">&#8226; At the end, the <code>BSTree_get</code> handles getting the <code>node.data</code> element but only if the result isn&#8217;t <code>NULL</code>.</p>
+<p class="noindent">This way of structuring a recursive algorithm matches the way I structure my recursive data structures. I have an initial base function that handles initial conditions and some edge cases, and then it calls a clean recursive function that does the work. Compare that with how I have a base structure in <code>BStree</code> combined with recursive <code>BSTreeNode</code> structures, which all reference each other in a tree. Using this pattern makes it easy to deal with recursion and keep it straight.</p>
+<p class="noindent">Next, go look at <code>BSTree_set</code> and <code>BSTree_setnode</code> to see the exact same pattern. I use <code>BSTree_set</code> to configure the initial conditions and edge cases. A common edge case is that there&#8217;s no root node, so I have to make one to get things started.</p>
+<p class="noindent">This pattern will work with nearly any recursive algorithm you have to figure out. The way I do it is by following this pattern:</p>
+<p class="indenthangingB">&#8226; Figure out the initial variables, how they change, and what the stopping conditions are for each recursive step.</p>
+<p class="indenthangingB">&#8226; Write a recursive function that calls itself, and has arguments for each stopping condition and initial variable.</p>
+<p class="indenthangingB">&#8226; Write a setup function to set initial starting conditions for the algorithm and handle edge cases, then have it call the recursive function.</p>
+<p class="indenthangingB">&#8226; Finally, the setup function returns the final result, and possibly alters it if the recursive function can&#8217;t handle final edge cases.</p>
+<p class="noindent"><a id="page_268"/>This finally leads me to <code>BSTree_delete</code> and <code>BSTree_node_delete</code>. First, you can just look at <code>BSTree_delete</code> and see that it&#8217;s the setup function. What it&#8217;s doing is grabbing the resulting node data and freeing the node that&#8217;s found. Things get more complex in <code>BSTree_node_delete</code>, because to delete a node at any point in the tree, I have to <em>rotate</em> that node&#8217;s children up to the parent. Here&#8217;s a breakdown of this function and the functions it uses:</p>
+<p class="indenthanging"><strong>bstree.c:190</strong> I run the compare function to figure out which direction I&#8217;m going.</p>
+<p class="indenthanging"><strong>bstree.c:192-198</strong> This is the usual less-than branch to use when I want to go left. I&#8217;m handling the case that left doesn&#8217;t exist here, and returning <code>NULL</code> to say &#8220;not found.&#8221; This covers deleting something that isn&#8217;t in the <code>BSTree</code>.</p>
+<p class="indenthanging"><strong>bstree.c:199-205</strong> This is the same thing, but for the right branch of the tree. Just keep recursing down into the tree just like in the other functions, and return <code>NULL</code> if it doesn&#8217;t exist.</p>
+<p class="indenthanging"><strong>bstree.c:206</strong> This is where I have found the node, since the key is equal (<code>compare</code> return 0).</p>
+<p class="indenthanging"><strong>bstree.c:207</strong> This node has both a <code>left</code> and <code>right</code> branch, so it&#8217;s deeply embedded in the tree.</p>
+<p class="indenthanging"><strong>bstree.c:209</strong> To remove this node, I first need to find the smallest node that&#8217;s greater than this node, which means I call <code>BSTree_find_min</code> on the right child.</p>
+<p class="indenthanging"><strong>bstree.c:210</strong> Once I have this node, I&#8217;ll swap its <code>key</code> and <code>data</code> with the current node&#8217;s values. This will effectively take this node that was down at the bottom of the tree and put its contents here, so that I don&#8217;t have to try and shuffle the node out by its pointers.</p>
+<p class="indenthanging"><strong>bstree.c:214</strong> The <code>successor</code> is now this dead branch that has the current node&#8217;s values. It could just be removed, but there&#8217;s a chance that it has a right node value. This means I need to do a single rotate so that the successor&#8217;s right node gets moved up to completely detach it.</p>
+<p class="indenthanging"><strong>bstree.c:217</strong> At this point, the successor is removed from the tree, its values are replaced the current node&#8217;s values, and any children it had are moved up into the parent. I can return the <code>successor</code> as if it were the <code>node</code>.</p>
+<p class="indenthanging"><strong>bstree.c:218</strong> At this branch, I know that the node has a left but no right, so I want to replace this node with its left child.</p>
+<p class="indenthanging"><strong>bstree.c:219</strong> I again use <code>BSTree_replace_node_in_parent</code> to do the replace, rotating the left child up.</p>
+<p class="indenthanging"><strong>bstree.c:220</strong> This branch of the if-statement means I have a right child but no left child, so I want to rotate the right child up.</p>
+<p class="indenthanging"><strong>bstree.c:221</strong> Again, I use the function to do the rotate, but this time, rotate the right node.</p>
+<p class="indenthanging"><a id="page_269"/><strong>bstree.c:222</strong> Finally, the only thing that&#8217;s left is the condition where I&#8217;ve found the node, and it has no children (no left or right). In this case, I simply replace this node with NULL by using the same function I did with all of the others.</p>
+<p class="indenthanging"><strong>bstree.c:210</strong> After all that, I have the current node rotated out of the tree and replaced with some child element that will fit in the tree. I just return this to the caller so it can be freed and managed.</p>
+<p class="noindent">This operation is very complex, and to be honest, I just don&#8217;t bother doing deletes in some tree data structures, and I treat them like constant data in my software. If I need to do heavy inserting and deleting, I use a <code>Hashmap</code> instead.</p>
+<p class="noindent">Finally, you can look at the unit test to see how I&#8217;m testing it:</p>
+<p class="ex-caption"><code>bstree_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p269pro01" href="ch40_images.html#p269pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstree.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;time.h&gt;</span></span><br/>
+&#160;&#160;7<br/>
+&#160;&#160;8&#160;&#160;&#160;BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_called <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 1"</span><span class="EmpStrong">);</span><br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"test data 2"</span><span class="EmpStrong">);</span><br/>
+&#160;12&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring test3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"xest data 3"</span><span class="EmpStrong">);</span><br/>
+&#160;13&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect1 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 1"</span><span class="EmpStrong">);</span><br/>
+&#160;14&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect2 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 2"</span><span class="EmpStrong">);</span><br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> tagbstring expect3 <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsStatic<span class="EmpStrong">(</span><span class="pd_green">"THE VALUE 3"</span><span class="EmpStrong">);</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_good_cb<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;18&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"KEY: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">));</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;22&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;23<br/>
+&#160;24&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static int</span></span> traverse_fail_cb<span class="EmpStrong">(</span>BSTreeNode <span class="pd_brown-1"><span class="EmpStrong">*</span></span> node<span class="EmpStrong">)</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"KEY: %s"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> node<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>key<span class="EmpStrong">));</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">;</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">) {</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;34&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;35<br/>
+<a id="page_270"/>&#160;36&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+&#160;37&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_create<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>map <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create map."</span><span class="EmpStrong">);</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;42&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;43<br/>
+&#160;44&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;45&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_destroy<span class="EmpStrong">(</span>map<span class="EmpStrong">);</span><br/>
+&#160;47<br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;49&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_get_set<span class="EmpStrong">()</span><br/>
+&#160;52&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect1<span class="EmpStrong">);</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set &#38;test1"</span><span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect1<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test1."</span><span class="EmpStrong">);</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect2<span class="EmpStrong">);</span><br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set test2"</span><span class="EmpStrong">);</span><br/>
+&#160;60&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect2<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test2."</span><span class="EmpStrong">);</span><br/>
+&#160;62<br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_set<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>expect3<span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to set test3"</span><span class="EmpStrong">);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect3<span class="EmpStrong">,</span> <span class="pd_green">"Wrong value for test3."</span><span class="EmpStrong">);</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;69&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;70<br/>
+&#160;71&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_traverse<span class="EmpStrong">()</span><br/>
+&#160;72&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_traverse<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> traverse_good_cb<span class="EmpStrong">);</span><br/>
+&#160;74&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;75&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">3</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;76<br/>
+&#160;77&#160;&#160;&#160;&#160;&#160;&#160;&#160;traverse_called <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_traverse<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> traverse_fail_cb<span class="EmpStrong">);</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to traverse."</span><span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>traverse_called <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count traverse for fail."</span><span class="EmpStrong">);</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;83&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;84<br/>
+<a id="page_271"/>&#160;85&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_delete<span class="EmpStrong">()</span><br/>
+&#160;86&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;87&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> BSTree_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;88&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+&#160;89&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect1<span class="EmpStrong">,</span> <span class="pd_green">"Should get test1"</span><span class="EmpStrong">);</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+&#160;92<br/>
+&#160;93&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> BSTree_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test1<span class="EmpStrong">);</span><br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should get NULL on delete"</span><span class="EmpStrong">);</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> BSTree_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+&#160;98&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect2<span class="EmpStrong">,</span> <span class="pd_green">"Should get test2"</span><span class="EmpStrong">);</span><br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test2<span class="EmpStrong">);</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+101<br/>
+102&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> BSTree_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Got NULL on delete."</span><span class="EmpStrong">);</span><br/>
+104&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">== &#38;</span></span>expect3<span class="EmpStrong">,</span> <span class="pd_green">"Should get test3"</span><span class="EmpStrong">);</span><br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should delete."</span><span class="EmpStrong">);</span><br/>
+107<br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// test deleting non-existent stuff</span></span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;deleted <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">(</span>bstring<span class="EmpStrong">)</span> BSTree_delete<span class="EmpStrong">(</span>map<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>test3<span class="EmpStrong">);</span><br/>
+110&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>deleted <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Should get NULL"</span><span class="EmpStrong">);</span><br/>
+111<br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+113&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+114<br/>
+115&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_fuzzing<span class="EmpStrong">()</span><br/>
+116&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+117&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>store <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_create<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+120&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring numbers<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_blue">NULL</span> <span class="EmpStrong">};</span><br/>
+121&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring data<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_blue">NULL</span> <span class="EmpStrong">};</span><br/>
+122&#160;&#160;&#160;&#160;&#160;&#160;&#160;srand<span class="EmpStrong">((</span><span class="pd_blue"><span class="EmpStrong">unsigned int</span></span><span class="EmpStrong">)</span>time<span class="EmpStrong">(</span><span class="pd_blue">NULL</span><span class="EmpStrong">));</span><br/>
+123<br/>
+124&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+125&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> num <span class="pd_brown-1"><span class="EmpStrong">=</span></span> rand<span class="EmpStrong">();</span><br/>
+126&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bformat<span class="EmpStrong">(</span><span class="pd_green">"%d"</span><span class="EmpStrong">,</span> num<span class="EmpStrong">);</span><br/>
+127&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;data<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bformat<span class="EmpStrong">(</span><span class="pd_green">"data %d"</span><span class="EmpStrong">,</span> num<span class="EmpStrong">);</span><br/>
+128&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_set<span class="EmpStrong">(</span>store<span class="EmpStrong">,</span> numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> data<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+129&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+130<br/>
+131&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">100</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+132&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_delete<span class="EmpStrong">(</span>store<span class="EmpStrong">,</span> numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+133&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>value <span class="pd_brown-1"><span class="EmpStrong">==</span></span> data<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span><br/>
+134&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to delete the right number."</span><span class="EmpStrong">);</span><br/>
+135<br/>
+<a id="page_272"/>136&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>BSTree_delete<span class="EmpStrong">(</span>store<span class="EmpStrong">,</span> numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">])</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span><br/>
+137&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Should get nothing."</span><span class="EmpStrong">);</span><br/>
+138<br/>
+139&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>j <span class="pd_brown-1"><span class="EmpStrong">=</span></span> i <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> j <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">99</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span> i<span class="EmpStrong">;</span> j<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+140&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring value <span class="pd_brown-1"><span class="EmpStrong">=</span></span> BSTree_get<span class="EmpStrong">(</span>store<span class="EmpStrong">,</span> numbers<span class="EmpStrong">[</span>j<span class="EmpStrong">]);</span><br/>
+141&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>value <span class="pd_brown-1"><span class="EmpStrong">==</span></span> data<span class="EmpStrong">[</span>j<span class="EmpStrong">],</span><br/>
+142&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Failed to get the right number."</span><span class="EmpStrong">);</span><br/>
+143&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+144<br/>
+145&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>value<span class="EmpStrong">);</span><br/>
+146&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>numbers<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+147&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+148<br/>
+149&#160;&#160;&#160;&#160;&#160;&#160;&#160;BSTree_destroy<span class="EmpStrong">(</span>store<span class="EmpStrong">);</span><br/>
+150<br/>
+151&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+152&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+153<br/>
+154&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+155&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+156&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+157<br/>
+158&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+159&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_get_set<span class="EmpStrong">);</span><br/>
+160&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_traverse<span class="EmpStrong">);</span><br/>
+161&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_delete<span class="EmpStrong">);</span><br/>
+162&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+163&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_fuzzing<span class="EmpStrong">);</span><br/>
+164<br/>
+165&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+166&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+167<br/>
+168&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">I&#8217;ll point you to the <code>test_fuzzing</code> function, which is an interesting technique for testing complex data structures. It is difficult to create a set of keys that cover all of the branches in <code>BSTree_node_ delete</code>, and chances are, I would miss some edge case. A better way is to create a <code>fuzz</code> function that does all of the operations, but does them in a horrible and random way. In this case, I&#8217;m inserting a set of random string keys, and then I&#8217;m deleting them and trying to get the rest after each delete.</p>
+<p class="noindent">Doing this prevents you from testing only what you know to work, and then miss things you don&#8217;t know. By throwing random junk at your data structures, you&#8217;ll hit things you didn&#8217;t expect and be able to work out any bugs you have.</p>
+<div class="heading">
+<h3 id="ch40lev1sec1"><a id="page_273"/>How to Improve It</h3>
+<p class="noindent">Do <em>not</em> do any of these yet. In the next exercise I&#8217;ll be using this unit test to teach you some more performance-tuning tricks, and you&#8217;ll come back and do these after you complete <a href="ch41.html#ch41">Exercise 41</a>.</p>
+</div>
+<p class="indenthangingB">&#8226; As usual, you should go through all of the defensive programming checks and add <code>assert``s</code> for conditions that shouldn&#8217;t happen. For example, you shouldn&#8217;t be getting <code>``NULL</code> values for the recursion functions, so assert that.</p>
+<p class="indenthangingB">&#8226; The <code>traverse</code> function walks through the tree in order by traversing left, then right, and then the current node. You can create <code>traverse</code> functions for the reverse order, as well.</p>
+<p class="indenthangingB">&#8226; It does a full string <code>compare</code> on every node, but I could use the <code>Hashmap</code> hashing functions to speed this up. I could hash the keys, and then keep the hash in the <code>BSTreeNode</code>. Then, in each of the setup functions, I can hash the key ahead of time and pass it down to the recursive function. Using this hash, I can then compare each node much quicker in a way that&#8217;s similar to what I do in <code>Hashmap</code>.</p>
+<div class="heading">
+<h3 id="ch40lev1sec2">Extra Credit</h3>
+<p class="indenthangingB">&#8226; There&#8217;s an alternative way to do this data structure without using recursion. The Wikipedia page shows alternatives that don&#8217;t use recursion but do the same thing. Why would this be better or worse?</p>
+</div>
+<p class="indenthangingB">&#8226; Read up on all of the different but similar trees you can find. There are AVL trees (named after Georgy Adelson-Velsky and E.M. Landis), red-black trees, and some non-tree structures like skip lists.</p>
+</body>
+</html>

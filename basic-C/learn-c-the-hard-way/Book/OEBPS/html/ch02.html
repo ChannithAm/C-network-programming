@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 2. Using Makefiles to Build</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch02"><a id="page_10"/>Exercise 2. Using <span class="EmpStrong">Makefile</span>s to Build</h2>
+<p class="noindent">We&#8217;re going to use a program called <code>make</code> to simplify building your exercise code. The <code>make</code> program has been around for a very long time, and because of this it knows how to build quite a few types of software. In this exercise, I&#8217;ll teach you just enough <code>Makefile</code> syntax to continue with the course, and then an exercise later will teach you more complete <code>Makefile</code> usage.</p>
+<div class="heading">
+<h3 id="ch02lev1sec1">Using <span class="EmpStrong">Make</span></h3>
+<p class="noindent">How <code>make</code> works is you declare dependencies, and then describe how to build them or rely on the program&#8217;s internal knowledge of how to build most common software. It has decades of knowledge about building a wide variety of files from other files. In the last exercise, you did this already using commands:</p>
+</div>
+<p class="pre">$ make ex1<br/>
+# or this one too<br/>
+$ CFLAGS="-Wall" make ex1</p>
+<p class="noindent">In the first command, you&#8217;re telling <code>make</code>, &#8220;I want a file named ex1 to be created.&#8221; The program then asks and does the following:</p>
+<p class="indenthangingN"><strong>1.</strong> Does the file <code>ex1</code> exist already?</p>
+<p class="indenthangingN"><strong>2.</strong> No. Okay, is there another file that starts with <code>ex1</code>?</p>
+<p class="indenthangingN"><strong>3.</strong> Yes, it&#8217;s called <code>ex1.c</code>. Do I know how to build <code>.c</code> files?</p>
+<p class="indenthangingN"><strong>4.</strong> Yes, I run this command <code>cc ex1.c -o ex1</code> to build them.</p>
+<p class="indenthangingN"><strong>5.</strong> I shall make you one <code>ex1</code> by using <code>cc</code> to build it from <code>ex1.c</code>.</p>
+<p class="noindent">The second command in the listing above is a way to pass <em>modifiers</em> to the <code>make</code> command. If you&#8217;re not familiar with how the UNIX shell works, you can create these <em>environment variables</em> that will get picked up by programs you run. Sometimes you do this with a command like <code>export CFLAGS="-Wall"</code> depending on the shell you use. You can, however, also just put them before the command you want to run, and that environment variable will be set only while that command runs.</p>
+<p class="noindent">In this example, I did <code>CFLAGS="-Wall" make ex1</code> so that it would add the command line option <code>-Wall</code> to the <code>cc</code> command that <code>make</code> normally runs. That command line option tells the compiler <code>cc</code> to report all warnings (which, in a sick twist of fate, isn&#8217;t actually all the warnings possible).</p>
+<p class="noindent"><a id="page_11"/>You can actually get pretty far with just using <code>make</code> in that way, but let&#8217;s get into making a <code>Makefile</code> so you can understand <code>make</code> a little better. To start off, create a file with just the following in it.</p>
+<p class="ex-caption"><code>ex2.1.mak</code></p>
+<hr/>
+<p class="pre">CFLAGS<span class="pd_brown-1"><span class="EmpStrong">=</span></span>-Wall -g<br/>
+<br/>
+clean<span class="pd_brown-1"><span class="EmpStrong">:</span></span><br/>
+&#160;&#160;&#160;&#160;rm -f ex1</p>
+<p class="noindent">Save this file as <code>Makefile</code> in your current directory. The program automatically assumes there&#8217;s a file called <code>Makefile</code> and will just run it.</p>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">Make sure you are only entering TAB characters, not mixtures of TAB and spaces.</p>
+<hr/></div>
+<p class="noindent">This <code>Makefile</code> is showing you some new stuff with <code>make</code>. First, we set <code>CFLAGS</code> in the file so we never have to set it again, as well as adding the <code>-g</code> flag to get debugging. Then, we have a section named <code>clean</code> that tells <code>make</code> how to clean up our little project.</p>
+<p class="noindent">Make sure it&#8217;s in the same directory as your <code>ex1.c</code> file, and then run these commands:</p>
+<p class="pre">$ make clean<br/>
+$ make ex1</p>
+<div class="heading">
+<h3 id="ch02lev1sec2">What You Should See</h3>
+<p class="noindent">If that worked, then you should see this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 2 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p011pro01" href="ch02_images.html#p011pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make clean<br/>
+<span class="EmpItalic">rm -f ex1</span><br/>
+<span class="pd_brown">$</span> make ex1<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex1.c&#160;&#160;&#160;-o ex1</span><br/>
+<span class="EmpItalic">ex1.c: In function 'main':</span><br/>
+<span class="EmpItalic">ex1.c:3: warning: implicit declaration of function 'puts'</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">Here you can see that I&#8217;m running <code>make clean</code>, which tells <code>make</code> to run our <code>clean</code> target. Go look at the <code>Makefile</code> again and you&#8217;ll see that under this command, I indent and then put in the shell commands I want <code>make</code> to run for me. You could put as many commands as you wanted in there, so it&#8217;s a great automation tool.</p>
+<div class="note"><hr/>
+<p class="title"><a id="page_12"/>Warning!</p>
+<p class="sb-noindent">If you fixed <code>ex1.c</code> to have <code>#include &lt;stdio.h&gt;</code>, then your output won&#8217;t have the warning (which should really be an error) about puts. I have the error here because I didn&#8217;t fix it.</p>
+<hr/></div>
+<p class="noindent">Notice that even though we don&#8217;t mention <code>ex1</code> in the <code>Makefile</code>, <code>make</code> still knows how to build it <em>and</em> use our special settings.</p>
+<div class="heading">
+<h3 id="ch02lev1sec3">How to Break It</h3>
+<p class="noindent">That should be enough to get you started, but first let&#8217;s break this <code>Makefile</code> in a particular way so you can see what happens. Take the line <code>rm -f ex1</code> and remove the indent (move it all the way left) so you can see what happens. Rerun <code>make clean</code>, and you should get something like this:</p>
+</div>
+<p class="codelink"><a id="p012pro01" href="ch02_images.html#p012pro01a">Click here to view code image</a></p>
+<p class="pre">$ make clean<br/>
+Makefile:4: *** missing separator.&#160;&#160;Stop.</p>
+<p class="noindent">Always remember to indent, and if you get weird errors like this, double check that you&#8217;re consistently using tab characters because some <code>make</code> variants are very picky.</p>
+<div class="heading">
+<h3 id="ch02lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Create an <code>all: ex1</code> target that will build <code>ex1</code> with just the command <code>make</code>.</p>
+</div>
+<p class="indenthangingB">&#8226; Read <code>man make</code> to find out more information on how to run it.</p>
+<p class="indenthangingB">&#8226; Read <code>man cc</code> to find out more information on what the flags <code>-Wall</code> and <code>-g</code> do.</p>
+<p class="indenthangingB">&#8226; Research <code>Makefile</code>s online and see if you can improve this one.</p>
+<p class="indenthangingB">&#8226; Find a <code>Makefile</code> in another C project and try to understand what it&#8217;s doing.<a id="page_13"/></p>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 10. Switch Statements</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch10"><a id="page_42"/>Exercise 10. Switch Statements</h2>
+<p class="noindent">In other languages, like Ruby, you have a <code>switch-statement</code> that can take any expression. Some languages, like Python, don&#8217;t have a <code>switch-statement</code> because an <code>if-statement</code> with Boolean expressions is about the same thing. For these languages, <code>switch-statements</code> are more like alternatives to <code>if-statements</code> and work the same internally.</p>
+<p class="noindent">In C, the <code>switch-statement</code> is actually quite different and is really a <em>jump table</em>. Instead of random Boolean expressions, you can only put expressions that result in integers. These integers are used to calculate jumps from the top of the <code>switch</code> to the part that matches that value. Here&#8217;s some code to help you understand this concept of jump tables:</p>
+<p class="ex-caption"><code>ex10.c</code></p>
+<hr/>
+<p class="codelink"><a id="p042pro01" href="ch10_images.html#p042pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;6<br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// go through each string in argv</span></span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// why am I skipping argv[0]?</span></span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span>; i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> argc<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"arg %d: %s\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> argv<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+12<br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// let's make our own array of strings</span></span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>states<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"California"</span><span class="EmpStrong">,</span> <span class="pd_green">"Oregon"</span><span class="EmpStrong">,</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Washington"</span><span class="EmpStrong">,</span> <span class="pd_green">"Texas"</span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+18<br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> num_states <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">4</span></span><span class="EmpStrong">;</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> num_states<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"state %d: %s\n"</span><span class="EmpStrong">,</span> i<span class="EmpStrong">,</span> states<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+24<br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+26&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">In this program, we take a single command line argument and print out all vowels in an incredibly tedious way to demonstrate a <code>switch-statement</code>. Here&#8217;s how the <code>switch-statement</code> works:</p>
+<p class="indenthangingB">&#8226; The compiler marks the place in the program where the <code>switch-statement</code> starts. Let&#8217;s call this location Y.</p>
+<p class="indenthangingB"><a id="page_43"/>&#8226; It then evaluates the expression in <code>switch(letter)</code> to come up with a number. In this case, the number will be the raw ASCII code of the letter in <code>argv[1]</code>.</p>
+<p class="indenthangingB">&#8226; The compiler also translates each of the <code>case</code> blocks like <code>case 'A':</code> into a location in the program that&#8217;s that far away. So the code under <code>case 'A'</code> is at Y + A in the program.</p>
+<p class="indenthangingB">&#8226; It then does the math to figure out where Y + letter is located in the <code>switch-statement</code>, and if it&#8217;s too far, then it adjusts it to Y + default.</p>
+<p class="indenthangingB">&#8226; Once it knows the location, the program <em>jumps</em> to that spot in the code, and then continues running. This is why you have <code>break</code> on some of the <code>case</code> blocks but not on others.</p>
+<p class="indenthangingB">&#8226; If <code>'a'</code> is entered, then it jumps to <code>case 'a'</code>. There&#8217;s no break, so it &#8220;falls through&#8221; to the one right under it, <code>case 'A'</code>, which has code and a <code>break</code>.</p>
+<p class="indenthangingB">&#8226; Finally, it runs this code, hits the break, and then exits out of the <code>switch-statement</code> entirely.</p>
+<p class="noindent">This is a deep dive into how the <code>switch-statement</code> works, but in practice you just have to remember a few simple rules:</p>
+<p class="indenthangingB">&#8226; Always include a <code>default:</code> branch so that you catch any missing inputs.</p>
+<p class="indenthangingB">&#8226; Don&#8217;t allow <em>fall through</em> unless you really want it. It&#8217;s also a good idea to add a <code>//fallthrough</code> comment so people know it&#8217;s on purpose.</p>
+<p class="indenthangingB">&#8226; Always write the <code>case</code> and the <code>break</code> before you write the code that goes in it.</p>
+<p class="indenthangingB">&#8226; Try to use <code>if-statements</code> instead if you can.</p>
+<div class="heading">
+<h3 id="ch10lev1sec1">What You Should See</h3>
+<p class="noindent">Here&#8217;s an example of me playing with this, and also demonstrating various ways to pass in the argument:</p>
+</div>
+<p class="ex-caption"><code>Exercise 10 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p043pro01" href="ch10_images.html#p043pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex10<br/>
+<span class="EmpItalic">cc -Wall -gex10.c&#160;&#160;&#160;-o ex10</span><br/>
+<span class="pd_brown">$</span> ./ex10<br/>
+<span class="EmpItalic">ERROR: You need one argument.</span><br/>
+<span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./ex10 Zed<br/>
+<span class="EmpItalic">0: Z is not a vowel</span><br/>
+<span class="EmpItalic">1: 'E'</span><br/>
+<span class="EmpItalic">2: d is not a vowel</span><br/>
+<span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./ex10 Zed Shaw<br/>
+<span class="EmpItalic">ERROR: You need one argument.</span><br/>
+<span class="pd_brown">$</span><br/>
+<span class="pd_brown">$</span> ./ex10 <span class="pd_green">"Zed Shaw"</span><br/>
+<a id="page_44"/><span class="EmpItalic">0: Z is not a vowel</span><br/>
+<span class="EmpItalic">1: 'E'</span><br/>
+<span class="EmpItalic">2: d is not a vowel</span><br/>
+<span class="EmpItalic">3:&#160;&#160;&#160;is not a vowel</span><br/>
+<span class="EmpItalic">4: S is not a vowel</span><br/>
+<span class="EmpItalic">5: h is not a vowel</span><br/>
+<span class="EmpItalic">6: 'A'</span><br/>
+<span class="EmpItalic">7: w is not a vowel</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">Remember that there&#8217;s an <code>if-statement</code> at the top that exits with a <code>return 1;</code> when you don&#8217;t provide enough arguments. A return that&#8217;s not 0 indicates to the OS that the program had an error. You can test for any value that&#8217;s greater than 0 in scripts and other programs to figure out what happened.</p>
+<div class="heading">
+<h3 id="ch10lev1sec2">How to Break It</h3>
+<p class="noindent">It&#8217;s <em>incredibly</em> easy to break a <code>switch-statement</code>. Here are just a few ways you can mess one of these up:</p>
+</div>
+<p class="indenthangingB">&#8226; Forget a <code>break</code>, and it&#8217;ll run two or more blocks of code you don&#8217;t want it to run.</p>
+<p class="indenthangingB">&#8226; Forget a <code>default</code>, and it&#8217;ll silently ignore values you forgot.</p>
+<p class="indenthangingB">&#8226; Accidentally put a variable into the <code>switch</code> that evaluates to something unexpected, like an <code>int</code>, which becomes weird values.</p>
+<p class="indenthangingB">&#8226; Use uninitialized values in the <code>switch</code>.</p>
+<p class="noindent">You can also break this program in a few other ways. See if you can bust it yourself.</p>
+<div class="heading">
+<h3 id="ch10lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Write another program that uses math on the letter to convert it to lowercase, and then remove all of the extraneous uppercase letters in the switch.</p>
+</div>
+<p class="indenthangingB">&#8226; Use the <code>','</code> (comma) to initialize <code>letter</code> in the <code>for-loop</code>.</p>
+<p class="indenthangingB">&#8226; Make it handle all of the arguments you pass it with yet another <code>for-loop</code>.</p>
+<p class="indenthangingB">&#8226; Convert this <code>switch-statement</code> to an <code>if-statement</code>. Which do you like better?</p>
+<p class="indenthangingB">&#8226; In the case for <code>'Y'</code> I have the break outside of the <code>if-statement</code>. What&#8217;s the impact of this, and what happens if you move it inside of the <code>if-statement</code>. Prove to yourself that you&#8217;re right.<a id="page_45"/></p>
+</body>
+</html>

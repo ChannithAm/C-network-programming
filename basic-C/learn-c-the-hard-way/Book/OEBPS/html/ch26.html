@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 26. Project logfind</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch26"><a id="page_138"/>Exercise 26. Project <span class="EmpStrong">logfind</span></h2>
+<p class="noindent">This is a small project for you to attempt on your own. To be effective at C, you&#8217;ll need to learn to apply what you know to problems. In this exercise, I describe a tool I want you to implement, and I describe it in a vague way on purpose. This is done so that you will try to implement whatever you can, however you can. When you&#8217;re done, you can then watch a video for the exercise that shows you how <em>I</em> did it, and then you can get the code and compare it to yours.</p>
+<p class="noindent">Think of this project as a real-world puzzle that you might have to solve.</p>
+<div class="heading">
+<h3 id="ch26lev1sec1">The <span class="EmpStrong">logfind</span> Specification</h3>
+<p class="noindent">I want a tool called <code>logfind</code> that lets me search through log files for text. This tool is a specialized version of another tool called <code>grep</code>, but designed only for log files on a system. The idea is that I can type:</p>
+</div>
+<p class="pre">logfind zedshaw</p>
+<p class="noindent">And, it will search all the common places that log files are stored, and print out every file that has the word &#8220;zedshaw&#8221; in it.</p>
+<p class="noindent">The <code>logfind</code> tool should have these basic features:</p>
+<p class="indenthangingN"><strong>1.</strong> This tool takes any sequence of words and assumes I mean &#8220;and&#8221; for them. So <code>logfind zedshaw smart guy</code> will find all files that have <code>zedshaw</code> <em>and</em> <code>smart</code> <em>and</em> <code>guy</code> in them.</p>
+<p class="indenthangingN"><strong>2.</strong> It takes an optional argument of <code>-o</code> if the parameters are meant to be <em>or</em> logic.</p>
+<p class="indenthangingN"><strong>3.</strong> It loads the list of allowed log files from <code>~/.logfind</code>.</p>
+<p class="indenthangingN"><strong>4.</strong> The list of file names can be anything that the <code>glob</code> function allows. Refer to <code>man 3 glob</code> to see how this works. I suggest starting with just a flat list of exact files, and then add <code>glob</code> functionality.</p>
+<p class="indenthangingN"><strong>5.</strong> You should output the matching lines as you scan, and try to match them as fast as possible.</p>
+<p class="noindent">That&#8217;s the entire description. Remember that this may be <em>very</em> hard, so take it a tiny bit at a time. Write some code, test it, write more, test that, and so on in little chunks until you have it working. Start with the simplest thing that gets it working, and then slowly add to it and refine it until every feature is done.<a id="page_139"/></p>
+</body>
+</html>

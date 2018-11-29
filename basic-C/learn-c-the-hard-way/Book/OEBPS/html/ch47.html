@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 47. A Fast URL Router</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch47"><a id="page_332"/>Exercise 47. A Fast URL Router</h2>
+<p class="noindent">Im now going to show you how I use the <code>TSTree</code> to do fast URL routing in Web servers that I&#8217;ve written. This works for simple URL routing that you might use at the edge of an application, but it doesn&#8217;t really work for the more complex (and sometimes unnecessary) routing found in many Web application frameworks.</p>
+<p class="noindent">To play with routing, I&#8217;m going to make a little command line tool that I&#8217;m calling <code>urlor</code>, which reads a simple file of routes, and then prompts the user to enter in URLs.</p>
+<p class="ex-caption"><code>urlor.c</code></p>
+<hr/>
+<p class="codelink"><a id="p332pro01" href="ch47_images.html#p332pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/tstree.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/bstrlib.h&gt;</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>add_route_data<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> routes<span class="EmpStrong">,</span> bstring line<span class="EmpStrong">)</span><br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> bstrList <span class="pd_brown-1"><span class="EmpStrong">*</span></span>data <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bsplit<span class="EmpStrong">(</span>line<span class="EmpStrong">,</span> <span class="pd_green">' '</span><span class="EmpStrong">);</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>data<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>qty <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Line '%s' does not have 2 columns"</span><span class="EmpStrong">,</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdata<span class="EmpStrong">(</span>line<span class="EmpStrong">));</span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;routes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_insert<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span><br/>
+&#160;11&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdata<span class="EmpStrong">(</span>data<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>entry<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">]),</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;blength<span class="EmpStrong">(</span>data<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>entry<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">]),</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstrcpy<span class="EmpStrong">(</span>data<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>entry<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]));</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstrListDestroy<span class="EmpStrong">(</span>data<span class="EmpStrong">);</span><br/>
+&#160;16<br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> routes<span class="EmpStrong">;</span><br/>
+&#160;18<br/>
+&#160;19&#160;&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>load_routes<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>file<span class="EmpStrong">)</span><br/>
+&#160;24&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>routes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">FILE</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>routes_map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;routes_map <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fopen<span class="EmpStrong">(</span>file<span class="EmpStrong">,</span> <span class="pd_green">"r"</span><span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>routes_map <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to open routes: %s"</span><span class="EmpStrong">,</span> file<span class="EmpStrong">);</span><br/>
+&#160;31<br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">((</span>line <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bgets<span class="EmpStrong">((</span>bNgetc<span class="EmpStrong">)</span> fgetc<span class="EmpStrong">,</span> routes_map<span class="EmpStrong">,</span> <span class="pd_green">'\n'</span><span class="EmpStrong">))</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>btrimws<span class="EmpStrong">(</span>line<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> BSTR_OK<span class="EmpStrong">,</span> <span class="pd_green">"Failed to trim line."</span><span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;routes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> add_route_data<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span> line<span class="EmpStrong">);</span><br/>
+<a id="page_333"/>&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>routes <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to add route."</span><span class="EmpStrong">);</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;38<br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;fclose<span class="EmpStrong">(</span>routes_map<span class="EmpStrong">);</span><br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> routes<span class="EmpStrong">;</span><br/>
+&#160;41<br/>
+&#160;42&#160;&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>routes_map<span class="EmpStrong">)</span> fclose<span class="EmpStrong">(</span>routes_map<span class="EmpStrong">);</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>line<span class="EmpStrong">)</span> bdestroy<span class="EmpStrong">(</span>line<span class="EmpStrong">);</span><br/>
+&#160;45<br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;&#160;bstring match_url<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> routes<span class="EmpStrong">,</span> bstring url<span class="EmpStrong">)</span><br/>
+&#160;50&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring route <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>url<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span>url<span class="EmpStrong">));</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>route <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">) {</span><br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"No exact match found, trying prefix.\n"</span><span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;route <span class="pd_brown-1"><span class="EmpStrong">=</span></span> TSTree_search_prefix<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>url<span class="EmpStrong">),</span> blength<span class="EmpStrong">(</span>url<span class="EmpStrong">));</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;57<br/>
+&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> route<span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;bstring read_line<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>prompt<span class="EmpStrong">)</span><br/>
+&#160;62&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s"</span><span class="EmpStrong">,</span> prompt<span class="EmpStrong">);</span><br/>
+&#160;64<br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring result <span class="pd_brown-1"><span class="EmpStrong">=</span></span> bgets<span class="EmpStrong">((</span>bNgetc<span class="EmpStrong">)</span> fgetc<span class="EmpStrong">,</span> stdin<span class="EmpStrong">,</span> <span class="pd_green">'\n'</span><span class="EmpStrong">);</span><br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>result <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"stdin closed."</span><span class="EmpStrong">);</span><br/>
+&#160;67<br/>
+&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>btrimws<span class="EmpStrong">(</span>result<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> BSTR_OK<span class="EmpStrong">,</span> <span class="pd_green">"Failed to trim."</span><span class="EmpStrong">);</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> result<span class="EmpStrong">;</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;74&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;75<br/>
+&#160;76&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> bdestroy_cb<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>value<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">void</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>ignored<span class="EmpStrong">)</span><br/>
+&#160;77&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;78&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">void</span></span><span class="EmpStrong">)</span>ignored<span class="EmpStrong">;</span><br/>
+&#160;79&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">((</span>bstring<span class="EmpStrong">)</span> value<span class="EmpStrong">);</span><br/>
+&#160;80&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;81<br/>
+&#160;82&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> destroy_routes<span class="EmpStrong">(</span>TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span> routes<span class="EmpStrong">)</span><br/>
+&#160;83&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;84&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_traverse<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span> bdestroy_cb<span class="EmpStrong">,</span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+<a id="page_334"/>&#160;85&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree_destroy<span class="EmpStrong">(</span>routes<span class="EmpStrong">);</span><br/>
+&#160;86&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;87<br/>
+&#160;88&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;89&#160;&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;90&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;91&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bstring route <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;92&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;TSTree <span class="pd_brown-1"><span class="EmpStrong">*</span></span>routes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;93<br/>
+&#160;94&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">,</span> <span class="pd_green">"USAGE: urlor &lt;urlfile&gt;"</span><span class="EmpStrong">);</span><br/>
+&#160;95<br/>
+&#160;96&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;routes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> load_routes<span class="EmpStrong">(</span>argv<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]);</span><br/>
+&#160;97&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>routes <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Your route file has an error."</span><span class="EmpStrong">);</span><br/>
+&#160;98<br/>
+&#160;99&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">(</span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">) {</span><br/>
+100&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;url <span class="pd_brown-1"><span class="EmpStrong">=</span></span> read_line<span class="EmpStrong">(</span><span class="pd_green">"URL&gt; "</span><span class="EmpStrong">);</span><br/>
+101&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;check_debug<span class="EmpStrong">(</span>url <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"goodbye."</span><span class="EmpStrong">);</span><br/>
+102<br/>
+103&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;route <span class="pd_brown-1"><span class="EmpStrong">=</span></span> match_url<span class="EmpStrong">(</span>routes<span class="EmpStrong">,</span> url<span class="EmpStrong">);</span><br/>
+104<br/>
+105&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>route<span class="EmpStrong">) {</span><br/>
+106&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"MATCH: %s == %s\n"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>url<span class="EmpStrong">),</span> bdata<span class="EmpStrong">(</span>route<span class="EmpStrong">));</span><br/>
+107&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+108&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"FAIL: %s\n"</span><span class="EmpStrong">,</span> bdata<span class="EmpStrong">(</span>url<span class="EmpStrong">));</span><br/>
+109&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+110<br/>
+111&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;bdestroy<span class="EmpStrong">(</span>url<span class="EmpStrong">);</span><br/>
+112&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+113<br/>
+114&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;destroy_routes<span class="EmpStrong">(</span>routes<span class="EmpStrong">);</span><br/>
+115&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+116<br/>
+117&#160;&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+118&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;destroy_routes<span class="EmpStrong">(</span>routes<span class="EmpStrong">);</span><br/>
+119&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+120&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">I&#8217;ll then make a simple file with some fake routes to play with:</p>
+<p class="pre">/ MainApp<br/>
+<br/>
+/hello Hello<br/>
+<br/>
+/hello/ Hello<br/>
+<br/>
+/signup Signup<br/>
+<br/>
+/logout Logout<br/>
+<br/>
+/album/ Album</p>
+<div class="heading">
+<h3 id="ch47lev1sec1"><a id="page_335"/>What You Should See</h3>
+<p class="noindent">Once you have <code>urlor</code> working, and a routes file, you can try it out here:</p>
+</div>
+<p class="ex-caption"><code>Exercise 47 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p335pro01" href="ch47_images.html#p335pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> ./bin/urlor urls.txt<br/>
+<span class="EmpItalic">URL&gt; /</span><br/>
+<span class="EmpItalic">MATCH: / == MainApp</span><br/>
+<span class="EmpItalic">URL&gt; /hello</span><br/>
+<span class="EmpItalic">MATCH: /hello == Hello</span><br/>
+<span class="EmpItalic">URL&gt; /hello/zed</span><br/>
+<span class="EmpItalic">No exact match found, trying prefix.</span><br/>
+<span class="EmpItalic">MATCH: /hello/zed == Hello</span><br/>
+<span class="EmpItalic">URL&gt; /album</span><br/>
+<span class="EmpItalic">No exact match found, trying prefix.</span><br/>
+<span class="EmpItalic">MATCH: /album == Album</span><br/>
+<span class="EmpItalic">URL&gt; /album/12345</span><br/>
+<span class="EmpItalic">No exact match found, trying prefix.</span><br/>
+<span class="EmpItalic">MATCH: /album/12345 == Album</span><br/>
+<span class="EmpItalic">URL&gt; asdfasfdasfd</span><br/>
+<span class="EmpItalic">No exact match found, trying prefix.</span><br/>
+<span class="EmpItalic">FAIL: asdfasfdasfd</span><br/>
+<span class="EmpItalic">URL&gt; /asdfasdfasf</span><br/>
+<span class="EmpItalic">No exact match found, trying prefix.</span><br/>
+<span class="EmpItalic">MATCH: /asdfasdfasf == MainApp</span><br/>
+<span class="EmpItalic">URL&gt;</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">You can see that the routing system first tries an exact match, and if it can&#8217;t find one, it will give a prefix match. This is mostly done to try out the difference between the two. Depending on the semantics of your URLs, you may want to always match exactly, always to prefixes, or do both and pick the best one.</p>
+<div class="heading">
+<h3 id="ch47lev1sec2">How to Improve It</h3>
+<p class="noindent">URLs are weird because people want them to magically handle all of the insane things their Web applications do, even if that&#8217;s not very logical. In this simple demonstration of how to use the <code>TSTree</code> to do routing, there are some flaws that people wouldn&#8217;t be able to articulate. For example, the TSTree will match <code>/al</code> to <code>Album</code>, which generally isn&#8217;t what they want. They want <code>/album/*</code> to match <code>Album</code>, and <code>/al</code> to be a 404 error.</p>
+</div>
+<p class="noindent">This isn&#8217;t difficult to implement, though, since you could change the prefix algorithm to match any way you want. If you change the matching algorithm to find <em>all</em> matching prefixes, and then pick the best one, you&#8217;ll be able to do it easily. In this case, <code>/al</code> could match <code>MainApp</code> or <code>Album</code>. Take those results, and then do a little logic to determine which is better.</p>
+<p class="noindent">Another thing you can do in a real routing system is use the <code>TSTree</code> to find all possible matches, <a id="page_336"/>but these matches are a small set of patterns to check. In many Web applications, there&#8217;s a list of regular expressions (regex) that has to be matched against URLs on each request. Running all of the regex can be time consuming, so you can use a <code>TSTree</code> to find all of the possible matches by their prefixes. That way you narrow down the patterns to try to a few very quickly.</p>
+<p class="noindent">Using this method, your URLs will match exactly since you&#8217;re actually running real regex patterns, and they&#8217;ll match much faster since you&#8217;re finding them by possible prefixes.</p>
+<p class="noindent">This kind of algorithm also works for anything else that needs to have flexible user-visible routing mechanisms: domain names, IP addresses, registries and directories, files, or URLs.</p>
+<div class="heading">
+<h3 id="ch47lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Instead of just storing the string for the handler, create an actual engine that uses a <code>Handler</code> struct to store the application. The structure would store the URL to which it&#8217;s attached, the name, and anything else you&#8217;d need to make an actual routing system.</p>
+</div>
+<p class="indenthangingB">&#8226; Instead of mapping URLs to arbitrary names, map them to <code>.so</code> files and use the <code>dlopen</code> system to load handlers on the fly and call callbacks they contain. Put these callbacks in your <code>Handler</code> struct, and then you have yourself a fully dynamic callback handler system in C.<a id="page_337"/></p>
+</body>
+</html>

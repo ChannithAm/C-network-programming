@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 3. Formatted Printing</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch03"><a id="page_14"/>Exercise 3. Formatted Printing</h2>
+<p class="noindent">Keep that <code>Makefile</code> around since it&#8217;ll help you spot errors, and we&#8217;ll be adding to it when we need to automate more things.</p>
+<p class="noindent">Many programming languages use the C way of formatting output, so let&#8217;s try it:</p>
+<p class="ex-caption"><code>ex3.c</code></p>
+<hr/>
+<p class="codelink"><a id="p014pro01" href="ch03_images.html#p014pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">()</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">10</span></span>;<br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> height <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">72</span></span>;<br/>
+&#160;7<br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"I am %d years old.\n"</span><span class="EmpStrong">,</span> age<span class="EmpStrong">);</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"I am %d inches tall.\n"</span><span class="EmpStrong">,</span> height<span class="EmpStrong">);</span><br/>
+10<br/>
+11&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span>;<br/>
+12&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">Once you&#8217;ve finished that, do the usual <code>make ex3</code> to build and run it. Make sure you <em>fix all warnings</em>.</p>
+<p class="noindent">This exercise has a whole lot going on in a small amount of code, so let&#8217;s break it down:</p>
+<p class="indenthangingB">&#8226; First we&#8217;re including another <em>header file</em> called <code>stdio.h</code>. This tells the compiler that you&#8217;re going to use the standard Input/Output functions. One of those is <code>printf</code>.</p>
+<p class="indenthangingB">&#8226; Then we&#8217;re using a variable named <code>age</code> and setting it to 10.</p>
+<p class="indenthangingB">&#8226; Next we&#8217;re using a variable <code>height</code> and setting it to 72.</p>
+<p class="indenthangingB">&#8226; Then we&#8217;re adding the <code>printf</code> function to print the age and height of the tallest 10-year-old on the planet.</p>
+<p class="indenthangingB">&#8226; In <code>printf</code>, you&#8217;ll notice we&#8217;re including a format string, as seen in many other languages.</p>
+<p class="indenthangingB">&#8226; After this format string, we&#8217;re putting in the variables that should be &#8220;replaced&#8221; into the format string by <code>printf</code>.</p>
+<p class="noindent">The result is giving <code>printf</code> some variables and it&#8217;s constructing a new string and then printing it to the terminal.</p>
+<div class="heading">
+<h3 id="ch03lev1sec1"><a id="page_15"/>What You Should See</h3>
+<p class="noindent">When you do the whole build, you should see something like this:</p>
+</div>
+<p class="ex-caption"><code>Exercise 3 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p015pro01" href="ch03_images.html#p015pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex3<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex3.c&#160;&#160;&#160;&#160;-o ex3</span><br/>
+<span class="pd_brown">$</span> ./ex3<br/>
+<span class="EmpItalic">I am 10 years old.</span><br/>
+<span class="EmpItalic">I am 72 inches tall.</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">Pretty soon I&#8217;m going to stop telling you to run <code>make</code> and what the build looks like, so please make sure you&#8217;re getting this right and that it&#8217;s working.</p>
+<div class="heading">
+<h3 id="ch03lev1sec2">External Research</h3>
+<p class="noindent">In the Extra Credit section of each exercise, you may have you go find information on your own and figure things out. This is an important part of being a self-sufficient programmer. If you&#8217;re constantly running to ask someone a question before trying to figure things out yourself, then you&#8217;ll never learn how to solve problems independently. You&#8217;ll never build confidence in your skills and will always need someone else around to do your work.</p>
+</div>
+<p class="noindent">The way to break this habit is to <em>force</em> yourself to try to answer your own question first, and then confirm that your answer is right. You do this by trying to break things, experimenting with your answer, and doing your own research.</p>
+<p class="noindent">For this exercise, I want you to go online and find out <em>all</em> of the <code>printf</code> escape codes and format sequences. Escape codes are <code>\n</code> or <code>\t</code> that let you print a newline or tab, respectively. Format sequences are the <code>%s</code> or <code>%d</code> that let you print a string or integer. Find them all, learn how to modify them, and see what kind of &#8220;precisions&#8221; and widths you can do.</p>
+<p class="noindent">From now on, these kinds of tasks will be in the Extra Credit sections, and you should do them.</p>
+<div class="heading">
+<h3 id="ch03lev1sec3">How to Break It</h3>
+<p class="noindent">Try a few of these ways to break this program, which may or may not cause it to crash on your computer:</p>
+</div>
+<p class="indenthangingB">&#8226; Take the <code>age</code> variable out of the first <code>printf</code> call, then recompile. You should get a couple of warnings.</p>
+<p class="indenthangingB">&#8226; Run this new program and it will either crash or print out a really crazy age.</p>
+<p class="indenthangingB"><a id="page_16"/>&#8226; Put the <code>printf</code> back the way it was, and then don&#8217;t set <code>age</code> to an initial value by changing that line to <code>int age;</code>, and then rebuild it and run it again.</p>
+<p class="ex-caption"><code>Exercise 3.bad Session</code></p>
+<hr/>
+<p class="codelink"><a id="p016pro01" href="ch03_images.html#p016pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">#</span> edit ex3.c to <span class="pd_blue">break printf</span><br/>
+<span class="pd_brown">$</span> make ex3<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex3.c&#160;&#160;&#160;-o ex3</span><br/>
+<span class="EmpItalic">ex3.c: In function 'main':</span><br/>
+<span class="EmpItalic">ex3.c:8: warning: too few arguments for format</span><br/>
+<span class="EmpItalic">ex3.c:5: warning: unused variable 'age'</span><br/>
+<span class="pd_brown">$</span> ./ex3<br/>
+<span class="EmpItalic">I am -919092456 years old.</span><br/>
+<span class="EmpItalic">I am 72 inches tall.</span><br/>
+<span class="pd_brown">#</span> edit ex3.c again to fix <span class="pd_blue">printf</span>, but don<span class="pd_a30000">'</span>t init age<br/>
+<span class="pd_brown">$</span> make ex3<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex3.c&#160;&#160;&#160;-o ex3</span><br/>
+<span class="EmpItalic">ex3.c: In function 'main':</span><br/>
+<span class="EmpItalic">ex3.c:8: warning: 'age' is used uninitialized in this function</span><br/>
+<span class="pd_brown">$</span> ./ex3<br/>
+<span class="EmpItalic">I am 0 years old.</span><br/>
+<span class="EmpItalic">I am 72 inches tall.</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch03lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Find as many other ways to break <code>ex3.c</code> as you can.</p>
+</div>
+<p class="indenthangingB">&#8226; Run <code>man 3 printf</code> and read about the other <code>%</code> format characters you can use. These should look familiar if you used them in other languages (they come from <code>printf</code>).</p>
+<p class="indenthangingB">&#8226; Add <code>ex3</code> to the <code>all</code> list in your <code>Makefile</code>. Use this to <code>make clean all</code> and build all of your exercises thus far.</p>
+<p class="indenthangingB">&#8226; Add <code>ex3</code> to the <code>clean</code> list in your <code>Makefile</code> as well. Use <code>make clean</code> to remove it when you need to.<a id="page_17"/></p>
+</body>
+</html>

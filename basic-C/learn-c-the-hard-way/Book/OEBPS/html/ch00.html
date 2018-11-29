@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 0. The Setup</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch00"><a id="page_2"/>Exercise 0. The Setup</h2>
+<p class="noindent">The traditional first exercise, Excercise 0, is where you set up your computer for the rest of this book. In this exercise you&#8217;ll install packages and software depending on the type of computer you have.</p>
+<p class="noindent">If you have problems following this exercise, then simply watch the <a href="ch00.html#ch00">Exercise 0</a> video for your computer and follow along with my setup instructions. That video should demonstrate how to do each step and help you solve any problems that might come up.</p>
+<div class="heading">
+<h3 id="ch00lev1sec1">Linux</h3>
+<p class="noindent">Linux is most likely the easiest system to configure for C development. For Debian systems you run this command from the command line:</p>
+</div>
+<p class="codelink"><a id="p002pro01" href="ch00_images.html#p002pro01a">Click here to view code image</a></p>
+<p class="pre">$ sudo apt&#8722;get install build&#8722;essential</p>
+<p class="noindent">Here&#8217;s how you would install the same setup on an RPM-based Linux like Fedora, RedHat, or CentOS 7:</p>
+<p class="codelink"><a id="p002pro02" href="ch00_images.html#p002pro02a">Click here to view code image</a></p>
+<p class="pre">$ sudo yum groupinstall development&#8722;tools</p>
+<p class="noindent">If you have a different variant of Linux, simply search for &#8220;c development tools&#8221; and your brand of Linux to find out what&#8217;s required. Once you have that installed, you should be able to type:</p>
+<p class="pre">$ cc --version</p>
+<p class="noindent">to see what compiler was installed. You will most likely have the GNU C Compiler (GCC) installed but don&#8217;t worry if it&#8217;s a different one from what I use in the book. You could also try installing the Clang C compiler using the <em>Clang&#8217;s Getting Started</em> instructions for your version of Linux, or searching online if those don&#8217;t work.</p>
+<div class="heading">
+<h3 id="ch00lev1sec2">Mac OS X</h3>
+<p class="noindent">On Mac OS X, the install is even easier. First, you&#8217;ll need to either download the latest <code>XCode</code> from Apple, or find your install DVD and install it from there. The download will be massive and could take forever, so I recommend installing from the DVD. Also, search online for &#8220;installing xcode&#8221; for instructions on how to do it. You can also use the App Store to install it just as you would any other app, and if you do it that way you&#8217;ll receive updates automatically.</p>
+</div>
+<p class="noindent"><a id="page_3"/>To confirm that your C compiler is working, type this:</p>
+<p class="pre">$ cc &#8722;&#8722;version</p>
+<p class="noindent">You should see that you are using a version of the Clang C Compiler, but if your XCode is older you may have GCC installed. Either is fine.</p>
+<div class="heading">
+<h3 id="ch00lev1sec3">Windows</h3>
+<p class="noindent">For Microsoft Windows, I recommend you use the Cygwin system to acquire many of the standard UNIX software development tools. It should be easy to install and use, but watch the videos for this exercise to see how I do it. An alternative to Cygwin is the MinGW system; it is more minimalist but should also work. I will warn you that Microsoft seems to be phasing out C support in their development tools, so you may have problems using Microsoft&#8217;s compilers to build the code in this book.</p>
+</div>
+<p class="noindent">A slightly more advanced option is to use VirtualBox to install a Linux distribution and run a complete Linux system on your Windows computer. This has the added advantage that you can completely destroy this virtual machine without worrying about destroying your Windows configuration. It&#8217;s also an opportunity to learn to use Linux, which is both fun and beneficial to your development as a programmer. Linux is currently deployed as the main operating system for many distributed computer and cloud infrastructure companies. Learning Linux will definitely improve your knowledge of the future of computing.</p>
+<div class="heading">
+<h3 id="ch00lev1sec4">Text Editor</h3>
+<p class="noindent">The choice of text editor for a programmer is a tough one. For beginners, I say just use Gedit since it&#8217;s simple and it works for code. However, it doesn&#8217;t work in certain international situations, and if you&#8217;ve been programming for a while, chances are you already have a favorite text editor.</p>
+</div>
+<p class="noindent">With this in mind, I want you to try out a few of the standard programmer text editors for your platform and then stick with the one that you like best. If you&#8217;ve been using GEdit and like it, then stick with it. If you want to try something different, then try it out real quick and pick one.</p>
+<p class="noindent">The most important thing is <em>do not get stuck trying to pick the perfect editor</em>. Text editors all just kind of suck in odd ways. Just pick one, stick with it, and if you find something else you like, try it out. Don&#8217;t spend days on end configuring it and making it perfect.</p>
+<p class="noindent">Some text editors to try out:</p>
+<p class="indenthangingB">&#8226; GEdit on Linux and OS X.</p>
+<p class="indenthangingB">&#8226; TextWrangler on OS X.</p>
+<p class="indenthangingB"><a id="page_4"/>&#8226; Nano, which runs in Terminal and works nearly everywhere.</p>
+<p class="indenthangingB">&#8226; Emacs and Emacs for OS X; be prepared to do some learning, though.</p>
+<p class="indenthangingB">&#8226; Vim and MacVim.</p>
+<p class="noindent">There is probably a different editor for every person out there, but these are just a few of the free ones that I know work. Try out a few of these&#8212;and maybe some commercial ones&#8212;until you find one that you like.</p>
+<div class="heading">
+<h4 id="ch00lev2sec1">Do Not Use an IDE</h4>
+<div class="note"><hr/>
+<p class="title">Warning!</p>
+<p class="sb-noindent">Avoid using an integrated development environment (IDE) while you are learning a language. They are helpful when you need to get things done, but their help tends also to prevent you from really learning the language. In my experience, the stronger programmers don&#8217;t use an IDE and also have no problem producing code at the same speed as IDE users. I also find that the code produced with an IDE is of lower quality. I have no idea why that is the case, but if you want deep, solid skills in a programming language, I highly recommend that you avoid IDEs while you&#8217;re learning.</p>
+<p class="sb-indent">Knowing how to use a professional programmer&#8217;s text editor is also a useful skill in your professional life. When you&#8217;re dependent on an IDE, you have to wait for a new IDE before you can learn the newer programming languages. This adds a cost to your career: It prevents you from getting ahead of shifts in language popularity. With a generic text editor, you can code in any language, any time you like, without waiting for anyone to add it to an IDE. A generic text editor means freedom to explore on your own and manage your career as you see fit.<a id="page_5"/></p>
+<hr/></div>
+</div>
+</body>
+</html>

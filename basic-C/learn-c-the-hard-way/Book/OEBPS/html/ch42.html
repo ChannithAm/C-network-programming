@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 42. Stacks and Queues</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch42"><a id="page_296"/>Exercise 42. Stacks and Queues</h2>
+<p class="noindent">At this point in the book, you should know most of the data structures that are used to build all of the other data structures. If you have some kind of <code>List</code>, <code>DArray</code>, <code>Hashmap</code>, and <code>Tree</code>, then you can build almost anything else out there. Everything else you run into either uses these or some variant of these. If it doesn&#8217;t, then it&#8217;s most likely an exotic data structure that you probably won&#8217;t need.</p>
+<p class="noindent"><code>Stacks</code> and <code>Queues</code> are very simple data structures that are really variants of the <code>List</code> data structure. All they do is use a <code>List</code> with a discipline or convention that says you always place elements on one end of the <code>List</code>. For a <code>Stack</code>, you always push and pop. For a <code>Queue</code>, you always shift to the front, but pop from the end.</p>
+<p class="noindent">I can implement both data structures using nothing but the CPP and two header files. My header files are 21 lines long and do all of the <code>Stack</code> and <code>Queue</code> operations without any fancy <code>define</code>s.</p>
+<p class="noindent">To see if you&#8217;ve been paying attention, I&#8217;m going to show you the unit tests, and then have <em>you</em> implement the header files needed to make them work. To pass this exercise, you can&#8217;t create any <code>stack.c</code> or <code>queue.c</code> implementation files. Use only the <code>stack.h</code> and <code>queue.h</code> files to make the tests run.</p>
+<p class="ex-caption"><code>stack_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p296pro01" href="ch42_images.html#p296pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/stack.h&gt;</span></span><br/>
+&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;4<br/>
+&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static</span></span> Stack <span class="pd_brown-1"><span class="EmpStrong">*</span></span>stack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>tests<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_green">"test1 data"</span><span class="EmpStrong">,</span> <span class="pd_green">"test2 data"</span><span class="EmpStrong">,</span> <span class="pd_green">"test3 data"</span> <span class="EmpStrong">};</span><br/>
+&#160;7<br/>
+&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define NUM_TESTS 3</span></span><br/>
+&#160;9<br/>
+10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;stack <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Stack_create<span class="EmpStrong">();</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>stack <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create stack."</span><span class="EmpStrong">);</span><br/>
+14<br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+16&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+17<br/>
+18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+19&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+20&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>stack <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make stack #2"</span><span class="EmpStrong">);</span><br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stack_destroy<span class="EmpStrong">(</span>stack<span class="EmpStrong">);</span><br/>
+22<br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+25<br/>
+26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_push_pop<span class="EmpStrong">()</span><br/>
+27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_TESTS<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Stack_push<span class="EmpStrong">(</span>stack<span class="EmpStrong">,</span> tests<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Stack_peek<span class="EmpStrong">(</span>stack<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> tests<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> <span class="pd_green">"Wrong next value."</span><span class="EmpStrong">);</span><br/>
+32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+33<br/>
+34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Stack_count<span class="EmpStrong">(</span>stack<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> NUM_TESTS<span class="EmpStrong">,</span> <span class="pd_green">"Wrong count on push."</span><span class="EmpStrong">);</span><br/>
+35<br/>
+36&#160;&#160;&#160;&#160;&#160;&#160;&#160;STACK_FOREACH<span class="EmpStrong">(</span>stack<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"VAL: %s"</span><span class="EmpStrong">, (<span class="pd_blue">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">)</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+39<br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> NUM_TESTS <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">--</span></span><span class="EmpStrong">) {</span><br/>
+41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Stack_pop<span class="EmpStrong">(</span>stack<span class="EmpStrong">);</span><br/>
+42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> tests<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> <span class="pd_green">"Wrong value on pop."</span><span class="EmpStrong">);</span><br/>
+43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+44<br/>
+45&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Stack_count<span class="EmpStrong">(</span>stack<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count after pop."</span><span class="EmpStrong">);</span><br/>
+46<br/>
+<a id="page_297"/>47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+48&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+49<br/>
+50&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+51&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+52&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+53<br/>
+54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+55&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_push_pop<span class="EmpStrong">);</span><br/>
+56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+57<br/>
+58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+59&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+60<br/>
+61&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<p class="noindent">Then, the <code>queue_tests.c</code> is almost the same, only using <code>Queue</code>:</p>
+<p class="ex-caption"><code>queue_tests.c</code></p>
+<hr/>
+<p class="codelink"><a id="p297pro01" href="ch42_images.html#p297pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "minunit.h"</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;lcthw/queue.h&gt;</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;4<br/>
+&#160;&#160;5&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">static</span></span> Queue <span class="pd_brown-1"><span class="EmpStrong">*</span></span>queue <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>tests<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_green">"test1 data"</span><span class="EmpStrong">,</span> <span class="pd_green">"test2 data"</span><span class="EmpStrong">,</span> <span class="pd_green">"test3 data"</span> <span class="EmpStrong">};</span><br/>
+&#160;&#160;7<br/>
+<a id="page_298"/>&#160;&#160;8&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define NUM_TESTS 3</span></span><br/>
+&#160;&#160;9<br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_create<span class="EmpStrong">()</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;queue <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Queue_create<span class="EmpStrong">();</span><br/>
+&#160;13&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>queue <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to create queue."</span><span class="EmpStrong">);</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;16&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;17<br/>
+&#160;18&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_destroy<span class="EmpStrong">()</span><br/>
+&#160;19&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>queue <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to make queue #2"</span><span class="EmpStrong">);</span><br/>
+&#160;21&#160;&#160;&#160;&#160;&#160;&#160;&#160;Queue_destroy<span class="EmpStrong">(</span>queue<span class="EmpStrong">);</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;25<br/>
+&#160;26&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>test_send_recv<span class="EmpStrong">()</span><br/>
+&#160;27&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_TESTS<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Queue_send<span class="EmpStrong">(</span>queue<span class="EmpStrong">,</span> tests<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Queue_peek<span class="EmpStrong">(</span>queue<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> tests<span class="EmpStrong">[</span><span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">],</span> <span class="pd_green">"Wrong next value."</span><span class="EmpStrong">);</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Queue_count<span class="EmpStrong">(</span>queue<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> NUM_TESTS<span class="EmpStrong">,</span> <span class="pd_green">"Wrong count on send."</span><span class="EmpStrong">);</span><br/>
+&#160;35<br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;QUEUE_FOREACH<span class="EmpStrong">(</span>queue<span class="EmpStrong">,</span> cur<span class="EmpStrong">) {</span><br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"VAL: %s"</span><span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">(char *</span></span><span class="EmpStrong">)</span>cur<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>value<span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> NUM_TESTS<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>val <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Queue_recv<span class="EmpStrong">(</span>queue<span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>val <span class="pd_brown-1"><span class="EmpStrong">==</span></span> tests<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> <span class="pd_green">"Wrong value on recv."</span><span class="EmpStrong">);</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;44<br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_assert<span class="EmpStrong">(</span>Queue_count<span class="EmpStrong">(</span>queue<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Wrong count after recv."</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;49<br/>
+&#160;50&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>all_tests<span class="EmpStrong">()</span><br/>
+&#160;51&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_suite_start<span class="EmpStrong">();</span><br/>
+&#160;53<br/>
+&#160;54&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_create<span class="EmpStrong">);</span><br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_send_recv<span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;mu_run_test<span class="EmpStrong">(</span>test_destroy<span class="EmpStrong">);</span><br/>
+&#160;57<br/>
+<a id="page_299"/>&#160;58&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;59&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;RUN_TESTS<span class="EmpStrong">(</span>all_tests<span class="EmpStrong">);</span></p>
+<div class="heading">
+<h3 id="ch42lev1sec1">What You Should See</h3>
+<p class="noindent">Your unit test should run without your having to change the tests, and it should pass the debugger with no memory errors. Here&#8217;s what it looks like if I run <code>stack_tests</code> directly:</p>
+</div>
+<p class="ex-caption"><code>Exercise 42.1 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p299pro01" href="ch42_images.html#p299pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> ./tests/stack_tests<br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:60: ----- RUNNING: ./tests/stack_tests</span><br/>
+<span class="EmpItalic">----</span><br/>
+<span class="EmpItalic">RUNNING: ./tests/stack_tests</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:53:</span><br/>
+<span class="EmpItalic">----- test_create</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:54:</span><br/>
+<span class="EmpItalic">----- test_push_pop</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:37: VAL: test3 data</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:37: VAL: test2 data</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:37: VAL: test1 data</span><br/>
+<span class="EmpItalic">DEBUG tests/stack_tests.c:55:</span><br/>
+<span class="EmpItalic">----- test_destroy</span><br/>
+<span class="EmpItalic">ALL TESTS PASSED</span><br/>
+<span class="EmpItalic">Tests run: 3</span><br/>
+<span class="pd_brown">$</span></p>
+<p class="noindent">The <code>queue_test</code> is basically the same kind of output, so I shouldn&#8217;t have to show it to you at this stage.</p>
+<div class="heading">
+<h3 id="ch42lev1sec2">How to Improve It</h3>
+<p class="noindent">The only real improvement you could make to this is switching from a <code>List</code> to a <code>DArray</code>. The <code>Queue</code> data structure is more difficult to do with a <code>DArray</code> because it works at both ends of the list of nodes.</p>
+</div>
+<p class="noindent">One disadvantage of doing this entirely in a header file is that you can&#8217;t easily performance tune it. Mostly, what you&#8217;re doing with this technique is establishing a protocol for how to use a <code>List</code> in a certain style. When performance tuning, if you make <code>List</code> fast, then these two should improve as well.</p>
+<div class="heading">
+<h3 id="ch42lev1sec3">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Implement <code>Stack</code> using <code>DArray</code> instead of <code>List</code>, but without changing the unit test. That means you&#8217;ll have to create your own <code>STACK_FOREACH</code>.</p>
+</div>
+</body>
+</html>

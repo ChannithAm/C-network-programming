@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 27. Creative and Defensive Programming</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch27"><a id="page_140"/>Exercise 27. Creative and Defensive Programming</h2>
+<p class="noindent">You have now learned most of the basics of C programming and are ready to start becoming a serious programmer. This is where you go from beginner to expert, both with C and hopefully with core computer science concepts. I will be teaching you a few of the core data structures and algorithms that every programmer should know, and then a few very interesting ones I&#8217;ve used in real software for years.</p>
+<p class="noindent">Before I can do that, I have to teach you some basic skills and ideas that will help you make better software. <a href="ch27.html#ch27">Exercises 27</a> through <a href="ch31.html#ch31">31</a> will teach you advanced concepts, featuring more talking than coding. After that, you&#8217;ll apply what you&#8217;ve learned to make a core library of useful data structures.</p>
+<p class="noindent">The first step in getting better at writing C code (and really any language) is to learn a new mind-set called <em>defensive programming</em>. Defensive programming assumes that you are going to make many mistakes, and then attempts to prevent them at every possible step. In this exercise, I&#8217;m going to teach you how to think about programming defensively.</p>
+<div class="heading">
+<h3 id="ch27lev1sec1">The Creative Programmer Mind-Set</h3>
+<p class="noindent">It&#8217;s not possible to show you how to be creative in a short exercise like this, but I will tell you that creativity involves taking risks and being open-minded. Fear will quickly kill creativity, so the mind-set I adopt, and many programmers copy, is that accidents are designed to make you unafraid of taking chances and looking like an idiot. Here&#8217;s my mind-set:</p>
+</div>
+<p class="indenthangingB">&#8226; I can&#8217;t make a mistake.</p>
+<p class="indenthangingB">&#8226; It doesn&#8217;t matter what people think.</p>
+<p class="indenthangingB">&#8226; Whatever my brain comes up with is going to be a great idea.</p>
+<p class="noindent">I only adopt this mind-set temporarily, and even have little tricks to turn it on. By doing this, I can come up with ideas, find creative solutions, open my thoughts to odd connections, and just generally invent weirdness without fear. In this mind-set, I&#8217;ll typically write a horrible first version of something just to get the idea out.</p>
+<p class="noindent">However, when I&#8217;ve finished my creative prototype, I will throw it out and get serious about making it solid. Where other people make a mistake is carrying the creative mind-set into their implementation phase. This then leads to a very different, destructive mind-set: the dark side of the creative mind-set:</p>
+<p class="indenthangingB"><a id="page_141"/>&#8226; It&#8217;s possible to write perfect software.</p>
+<p class="indenthangingB">&#8226; My brain tells me the truth, and it can&#8217;t find any errors: I have therefore written perfect software.</p>
+<p class="indenthangingB">&#8226; My code is who I am and people who criticize its perfection are criticizing me.</p>
+<p class="noindent">These are lies. You will frequently run into programmers who feel intense pride about what they&#8217;ve created, which is natural, but this pride gets in the way of their ability to objectively improve their craft. Because of this pride and attachment to what they&#8217;ve written, they can continue to believe that what they write is perfect. As long as they ignore other people&#8217;s criticism of their code, they can protect their fragile egos and never improve.</p>
+<p class="noindent">The trick to being creative <em>and</em> making solid software is the ability to adopt a defensive programming mind-set.</p>
+<div class="heading">
+<h3 id="ch27lev1sec2">The Defensive Programmer Mind-Set</h3>
+<p class="noindent">After you have a working, creative prototype and you&#8217;re feeling good about the idea, it&#8217;s time to switch to being a defensive programmer. The defensive programmer basically hates your code and believes these things:</p>
+</div>
+<p class="indenthangingB">&#8226; Software has errors.</p>
+<p class="indenthangingB">&#8226; You aren&#8217;t your software, yet you&#8217;re responsible for the errors.</p>
+<p class="indenthangingB">&#8226; You can never remove the errors, only reduce their probability.</p>
+<p class="noindent">This mind-set lets you be honest about your work and critically analyze it for improvements. Notice that it doesn&#8217;t say <em>you</em> are full of errors? It says your <em>code</em> is full of errors. This is a significant thing to understand because it gives you the power of objectivity for the next implementation.</p>
+<p class="noindent">Just like the creative mind-set, the defensive programming mind-set has a dark side, as well. Defensive programmers are paranoid, and this fear prevents them from ever possibly being wrong or making mistakes. That&#8217;s great when you&#8217;re trying to be ruthlessly consistent and correct, but it&#8217;s murder on creative energy and concentration.</p>
+<div class="heading">
+<h3 id="ch27lev1sec3">The Eight Defensive Programmer Strategies</h3>
+<p class="noindent">Once you&#8217;ve adopted this mind-set, you can then rewrite your prototype and follow a set of eight strategies to make your code as solid as possible. While I work on the real version, I ruthlessly follow these strategies and try to remove as many errors as I can, thinking like someone who wants to break the software.</p>
+</div>
+<p class="indenthanging"><a id="page_142"/><strong>Never Trust Input</strong> Never trust the data you&#8217;re given and always validate it.</p>
+<p class="indenthanging"><strong>Prevent Errors</strong> If an error is possible, no matter how probable, try to prevent it.</p>
+<p class="indenthanging"><strong>Fail Early and Openly</strong> Fail early, cleanly, and openly, stating what happened, where, and how to fix it.</p>
+<p class="indenthanging"><strong>Document Assumptions</strong> Clearly state the pre-conditions, post-conditions, and invariants.</p>
+<p class="indenthanging"><strong>Prevention over Documentation</strong> Don&#8217;t do with documentation that which can be done with code or avoided completely.</p>
+<p class="indenthanging"><strong>Automate Everything</strong> Automate everything, especially testing.</p>
+<p class="indenthanging"><strong>Simplify and Clarify</strong> Always simplify the code to the smallest, cleanest form that works without sacrificing safety.</p>
+<p class="indenthanging"><strong>Question Authority</strong> Don&#8217;t blindly follow or reject rules.</p>
+<p class="noindent">These aren&#8217;t the only strategies, but they&#8217;re the core things I feel programmers have to focus on when trying to make good, solid code. Notice that I don&#8217;t really say exactly how to do these. I&#8217;ll go into each of these in more detail, and some of the exercises will actually cover them extensively.</p>
+<div class="heading">
+<h3 id="ch27lev1sec4">Applying the Eight Strategies</h3>
+<p class="noindent">These ideas are all as great pop-psychology platitudes, but how do you actually apply them to working code? I&#8217;m now going to give you a set of things to always do in this book&#8217;s code that demonstrates each one with a concrete example. The ideas aren&#8217;t limited to just these examples, so you should use these as a guide to making your own code more solid.</p>
+</div>
+<div class="heading">
+<h4 id="ch27lev2sec1">Never Trust Input</h4>
+<p class="noindent">Let&#8217;s look at an example of bad design and better design. I won&#8217;t say good design because this could be done even better. Take a look at these two functions that both copy a string and a simple <code>main</code> to test out the better one.</p>
+</div>
+<p class="ex-caption"><code>ex27_1.c</code></p>
+<hr/>
+<p class="codelink"><a id="p142pro01" href="ch27_images.html#p142pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#undef NDEBUG</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/*</span></span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* Naive copy that assumes all inputs are always valid</span></span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* taken from K&#38;R C and cleaned up a bit.</span></span><br/>
+&#160;&#160;9&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;10&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> copy<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> to<span class="EmpStrong">[],</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> from<span class="EmpStrong">[])</span><br/>
+&#160;11&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;13<br/>
+<a id="page_143"/>&#160;14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// while loop will not end if from isn't '\0' terminated</span></span><br/>
+&#160;15&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">while</span></span> <span class="EmpStrong">((</span>to<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from<span class="EmpStrong">[</span>i<span class="EmpStrong">])</span> <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">) {</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">++</span></span>i<span class="EmpStrong">;</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;18&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;19<br/>
+&#160;20&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">/*</span></span><br/>
+&#160;21&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* A safer version that checks for many common errors using the</span></span><br/>
+&#160;22&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">* length of each string to control the loops and termination.</span></span><br/>
+&#160;23&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">*/</span></span><br/>
+&#160;24&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> safercopy<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> from_len<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>from<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> to_len<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>to<span class="EmpStrong">)</span><br/>
+&#160;25&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>from <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> to <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> <span class="pd_green">"from and to can't be NULL"</span><span class="EmpStrong">);</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> max <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from_len <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">?</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">:</span></span> from_len<span class="EmpStrong">;</span><br/>
+&#160;29<br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// to_len must have at least 1 byte</span></span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>from_len <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="pd_brown-1"><span class="EmpStrong">||</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">)</span><br/>
+&#160;32&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;33<br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> max<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;to<span class="EmpStrong">[</span>i<span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> from<span class="EmpStrong">[</span>i<span class="EmpStrong">];</span><br/>
+&#160;36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;37<br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;to<span class="EmpStrong">[</span>to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">;</span><br/>
+&#160;39<br/>
+&#160;40&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> i<span class="EmpStrong">;</span><br/>
+&#160;41&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;42<br/>
+&#160;43&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;44&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// careful to understand why we can get these sizes</span></span><br/>
+&#160;46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> from<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"0123456789"</span><span class="EmpStrong">;</span><br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> from_len <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>from<span class="EmpStrong">);</span><br/>
+&#160;48<br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// notice that it's 7 chars + \0</span></span><br/>
+&#160;50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> to<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_green">"0123456"</span><span class="EmpStrong">;</span><br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> to_len <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>to<span class="EmpStrong">);</span><br/>
+&#160;52<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"Copying '%s':%d to '%s':%d"</span><span class="EmpStrong">,</span> from<span class="EmpStrong">,</span> from_len<span class="EmpStrong">,</span> to<span class="EmpStrong">,</span> to_len<span class="EmpStrong">);</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> safercopy<span class="EmpStrong">(</span>from_len<span class="EmpStrong">,</span> from<span class="EmpStrong">,</span> to_len<span class="EmpStrong">,</span> to<span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to safercopy."</span><span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>to<span class="EmpStrong">[</span>to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">,</span> <span class="pd_green">"String not terminated."</span><span class="EmpStrong">);</span><br/>
+&#160;58<br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;debug<span class="EmpStrong">(</span><span class="pd_green">"Result is: '%s':%d"</span><span class="EmpStrong">,</span> to<span class="EmpStrong">,</span> to_len<span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// now try to break it</span></span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> safercopy<span class="EmpStrong">(</span>from_len <span class="pd_brown-1"><span class="EmpStrong">* -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> from<span class="EmpStrong">,</span> to_len<span class="EmpStrong">,</span> to<span class="EmpStrong">);</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"safercopy should fail #1"</span><span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>to<span class="EmpStrong">[</span>to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">,</span> <span class="pd_green">"String not terminated."</span><span class="EmpStrong">);</span><br/>
+&#160;65<br/>
+&#160;66&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> safercopy<span class="EmpStrong">(</span>from_len<span class="EmpStrong">,</span> from<span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> to<span class="EmpStrong">);</span><br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">== -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> <span class="pd_green">"safercopy should fail #2"</span><span class="EmpStrong">);</span><br/>
+<a id="page_144"/>&#160;68&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>to<span class="EmpStrong">[</span>to_len <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">]</span> <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="pd_green">'\0'</span><span class="EmpStrong">,</span> <span class="pd_green">"String not terminated."</span><span class="EmpStrong">);</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;71<br/>
+&#160;72&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;73&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;74&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">The <code>copy</code> function is typical C code and it&#8217;s the source of a huge number of buffer overflows. It&#8217;s flawed because it assumes that it will always receive a valid, terminated C string (with <code>'\0'</code>), and just uses a <code>while-loop</code> to process it. Problem is, to ensure that is incredibly difficult, and if it&#8217;s not handled right, it causes the <code>while-loop</code> to loop infinitely. <em>A cornerstone of writing solid code is never writing loops that can possibly loop forever.</em></p>
+<p class="noindent">The <code>safercopy</code> function tries to solve this by requiring the caller to give the lengths of the two strings it must deal with. By doing this, it can make certain checks about these strings that the <code>copy</code> function can&#8217;t. It can check that the lengths are right, and that the <code>to</code> string has enough space, and it will <em>always</em> terminate. It&#8217;s impossible for this function to run on forever like the <code>copy</code> function.</p>
+<p class="noindent">This is the idea behind never trusting the inputs you receive. If you assume that your function is going to get a string that&#8217;s not terminated (which is common), then you can design your function so that it doesn&#8217;t rely on it to work properly. If you need the arguments to never be <code>NULL</code>, then you should check for that, too. If the sizes should be within sane levels, then check that. You simply assume that whoever is calling you got it wrong, and then try to make it difficult for them to give you another bad state.</p>
+<p class="noindent">This extends to software you write that gets input from the external universe. The famous last words of the programmer are, &#8220;Nobody&#8217;s going to do that.&#8221; I&#8217;ve seen them say that and then the <em>next day</em> someone does exactly that, crashing or hacking their application. If you say nobody is going to do that, just throw in the code to make sure they simply can&#8217;t hack your application. You&#8217;ll be glad you did.</p>
+<p class="noindent">There is a diminishing return on this, but here&#8217;s a list of things I try to do in all of the functions I write in C:</p>
+<p class="indenthangingB">&#8226; For each parameter, identify what its preconditions are, and whether the precondition should cause a failure or return an error. If you are writing a library, favor errors over failures.</p>
+<p class="indenthangingB">&#8226; Add <code>assert</code> calls at the beginning that check for each failure precondition using <code>assert(test &#38;&#38; "message");</code>. This little hack does the test, and when it fails, the OS will typically print the <code>assert</code> line for you that includes that message. This is very helpful when you&#8217;re trying to figure out why that <code>assert</code> is there.</p>
+<p class="indenthangingB"><a id="page_145"/>&#8226; For the other preconditions, return the error code or use my <code>check</code> macro to give an error message. I didn&#8217;t use <code>check</code> in this example since it would confuse the comparison.</p>
+<p class="indenthangingB">&#8226; Document <em>why</em> these preconditions exist so that when a programmer hits the error, he or she can figure out if they&#8217;re really necessary or not.</p>
+<p class="indenthangingB">&#8226; If you&#8217;re modifying the inputs, make sure that they are correctly formed when the function exits, or abort if they aren&#8217;t.</p>
+<p class="indenthangingB">&#8226; Always check the error codes of functions you use. For example, people frequently forget to check the return codes from <code>fopen</code> or <code>fread</code>, which causes them to use the resources the return codes give despite the error. This causes your program to crash or open an avenue for an attack.</p>
+<p class="indenthangingB">&#8226; You also need to be returning consistent error codes so that you can do this for all of your functions. Once you get in this habit, you&#8217;ll then understand why my <code>check</code> macros work the way they do.</p>
+<p class="noindent">Just doing these simple things will improve your resource handling and prevent quite a few errors.</p>
+<div class="heading">
+<h4 id="ch27lev2sec2">Prevent Errors</h4>
+<p class="noindent">In response to the previous example, you might hear people say, &#8220;Well, it&#8217;s not very likely someone will use <code>copy</code> wrong.&#8221; Despite the mountain of attacks made against this very kind of function, some people still believe that the probability of this error is very low. Probability is a funny thing because people are incredibly bad at guessing the probability of any event. People are, however, much better at determining if something is <em>possible</em>. They might say the error in <code>copy</code> is not <code>probable</code>, but they can&#8217;t deny that it&#8217;s <code>possible</code>.</p>
+</div>
+<p class="noindent">The key reason is that for something to be probable, it first has to be possible. Determining the possibility is easy, since we can all imagine something happening. What&#8217;s not so easy is determining its probability after that. Is the chance that someone might use <code>copy</code> wrong 20%, 10%, or 1%? Who knows? You&#8217;d need to gather evidence, look at rates of failure in many software packages, and probably survey real programmers about how they use the function.</p>
+<p class="noindent">This means, if you&#8217;re going to prevent errors, you still need to try to prevent what&#8217;s possible but first focus your energies on what&#8217;s most probable. It may not be feasible to handle all of the possible ways your software can be broken, but you have to attempt it. But at the same time, if you don&#8217;t constrain your efforts to the most probable events, then you&#8217;ll be wasting time on irrelevant attacks.</p>
+<p class="noindent">Here&#8217;s a process for determining what to prevent in your software:</p>
+<p class="indenthangingB">&#8226; List all the possible errors that can happen, no matter how probable (within reason, of course). No point listing &#8220;aliens sucking your memories out to steal your passwords.&#8221;</p>
+<p class="indenthangingB">&#8226; Give each possible error a probability that&#8217;s a percentage of the operations that can be vulnerable. If you are handling requests from the Internet, then it&#8217;s the percentage of <a id="page_146"/>requests that can cause the error. If they are function calls, then it&#8217;s what percentage of function calls can cause the error.</p>
+<p class="indenthangingB">&#8226; Calculate the effort in number of hours or amount of code to prevent it. You could also just give an easy or hard metric, or any metric that prevents you from working on the impossible when there are easier things to fix still on the list.</p>
+<p class="indenthangingB">&#8226; Rank them by effort (lowest to highest), and probability (highest to lowest). This is now your task list.</p>
+<p class="indenthangingB">&#8226; Prevent all of the errors you can in this list, aiming for removing the possibility, then reducing the probability if you can&#8217;t make it impossible.</p>
+<p class="indenthangingB">&#8226; If there are errors you can&#8217;t fix, then document them so someone else can fix them.</p>
+<p class="noindent">This little process will give you a nice list of things to do, but more importantly, keep you from working on useless things when there are other more important things to work on. You can also be more or less formal with this process. If you&#8217;re doing a full security audit, this will be better done with a whole team and a nice spreadsheet. If you&#8217;re just writing a function, then simply review the code and scratch these out into some comments. What&#8217;s important is that you stop assuming that errors don&#8217;t happen, and you work on removing them when you can without wasting effort.</p>
+<div class="heading">
+<h4 id="ch27lev2sec3">Fail Early and Openly</h4>
+<p class="noindent">If you encounter an error in C you have two choices:</p>
+</div>
+<p class="indenthangingB">&#8226; Return an error code.</p>
+<p class="indenthangingB">&#8226; Abort the process.</p>
+<p class="noindent">This is just how it is, so what you need to do is make sure the failures happen quickly, are clearly documented, give an error message, and are easy for the programmer to avoid. This is why the <code>check</code> macros I&#8217;ve given you work the way they do. For every error you find, it prints a message, the file and line number where it happened, and forces a return code. If you just use my macros, you&#8217;ll end up doing the right thing anyway.</p>
+<p class="noindent">I tend to prefer returning an error code to aborting the program. If it&#8217;s catastrophic, then I will, but very few errors are truly catastrophic. A good example of when I&#8217;ll abort a program is if I&#8217;m given an invalid pointer, as I did in <code>safercopy</code>. Instead of having the programmer experience a segmentation fault explosion somewhere, I catch it right away and abort. However, if it&#8217;s common to pass in a NULL, then I&#8217;ll probably change that to a <code>check</code> instead so that the caller can adapt and keep running.</p>
+<p class="noindent">In libraries, however, I try my hardest to <em>never</em> abort. The software using my library can decide if it should abort, and I&#8217;ll typically abort only if the library is very badly used.</p>
+<p class="noindent"><a id="page_147"/>Finally, a big part of being open about errors is not using the same message or error code for more than one possible error. You typically see this with errors in external resources. A library will receive an error on a socket, and then simply report &#8220;bad socket.&#8221; What they should do is return the error on the socket so that it can be properly debugged and fixed. When designing your error reporting, make sure you give a different error message for the different possible errors.</p>
+<div class="heading">
+<h4 id="ch27lev2sec4">Document Assumptions</h4>
+<p class="noindent">If you&#8217;re following along and using this advice, then what you&#8217;re doing is building a contract of how your functions expect the world to be. You&#8217;ve created preconditions for each argument, you&#8217;ve handled possible errors, and you&#8217;re failing elegantly. The next step is to complete the contract and add invariants and postconditions.</p>
+</div>
+<p class="noindent">An invariant is a condition that must be held true in some state while the function runs. This isn&#8217;t very common in simple functions, but when you&#8217;re dealing with complex structures, it becomes more necessary. A good example of an invariant is a condition where a structure is always initialized properly while it&#8217;s being used. Another example would be that a sorted data structure is always sorted during processing.</p>
+<p class="noindent">A postcondition is a guarantee on the exit value or result of a function running. This can blend together with invariants, but this is something as simple as &#8220;function always returns 0 or -1 on error.&#8221; Usually these are documented, but if your function returns an allocated resource, you can add a postcondition that checks to make sure it&#8217;s returning something, and not NULL. Or, you can use NULL to indicate an error, so that your postcondition checks that the resource is deallocated on any errors.</p>
+<p class="noindent">In C programming, invariants and postconditions are usually used more in documentation than actual code or assertions. The best way to handle them is to add <code>assert</code> calls for the ones you can, then document the rest. If you do that, when people hit an error they can see what assumptions you made when writing the function.</p>
+<div class="heading">
+<h4 id="ch27lev2sec5">Prevention over Documentation</h4>
+<p class="noindent">A common problem when programmers write code is that they will document a common bug rather than simply fix it. My favorite is when the Ruby on Rails system simply assumed that all months had 30 days. Calendars are hard, so rather than fix it, programmers threw a tiny little comment somewhere that said this was on purpose, and then they refused to fix it for years. Every time someone would complain, they would bluster and yell, &#8220;But it&#8217;s documented!&#8221;</p>
+</div>
+<p class="noindent">Documentation doesn&#8217;t matter if you can actually fix the problem, and if the function has a fatal flaw, then just don&#8217;t include it until you can fix it. In the case of Ruby on Rails, not having date functions would have been better than including purposefully broken ones that nobody could use.</p>
+<p class="noindent"><a id="page_148"/>As you go through your defensive programming cleanups, try to fix everything you can. If you find yourself documenting more and more problems you can&#8217;t fix, then consider redesigning the feature or simply removing it. If you <em>really</em> have to keep this horribly broken feature, then I suggest you write it, document it, and then find a new job before you are blamed for it.</p>
+<div class="heading">
+<h4 id="ch27lev2sec6">Automate Everything</h4>
+<p class="noindent">You are a programmer, and that means your job is putting other people out of jobs with automation. The pinnacle of this is putting yourself out of a job with your own automation. Obviously, you won&#8217;t completely eliminate what you do, but if you&#8217;re spending your whole day rerunning manual tests in your terminal, then your job isn&#8217;t programming. You are doing QA, and you should automate yourself out of this QA job that you probably don&#8217;t really want anyway.</p>
+</div>
+<p class="noindent">The easiest way to do this is to write automated tests, or unit tests. In this book I&#8217;m going to get into how to do this easily, but I&#8217;ll avoid most of the dogma about when you should write tests. I&#8217;ll focus on how to write them, what to test, and how to be efficient at the testing.</p>
+<p class="noindent">Here are common things programmers fail to automate when they should:</p>
+<p class="indenthangingB">&#8226; Testing and validation</p>
+<p class="indenthangingB">&#8226; Build processes</p>
+<p class="indenthangingB">&#8226; Deployment of software</p>
+<p class="indenthangingB">&#8226; System administration</p>
+<p class="indenthangingB">&#8226; Error reporting</p>
+<p class="noindent">Try to devote some of your time to automating this and you&#8217;ll have more time to work on the fun stuff. Or, if this is fun to you, then maybe you should work on software that makes automating these things easier.</p>
+<div class="heading">
+<h4 id="ch27lev2sec7">Simplify and Clarify</h4>
+<p class="noindent">The concept of simplicity is a slippery one to many people, especially smart people. They generally confuse comprehension with simplicity. If they understand it, clearly it&#8217;s simple. The actual test of simplicity is comparing something with something else that could be simpler. But you&#8217;ll see people who write code go running to the most complex, obtuse structures possible because they think the simpler version of the same thing is dirty. A love affair with complexity is a programming sickness.</p>
+</div>
+<p class="noindent">You can fight this disease by first telling yourself, &#8220;Simple and clear is not dirty, no matter what everyone else is doing.&#8221; If everyone else is writing insane visitor patterns involving 19 classes over 12 interfaces, and you can do it with two string operations, then you win. They are wrong, no matter how elegant they think their complex monstrosity is.</p>
+<p class="noindent"><a id="page_149"/>Here&#8217;s the simplest test of which function is better:</p>
+<p class="indenthangingB">&#8226; Make sure both functions have no errors. It doesn&#8217;t matter how fast or simple a function is if it has errors.</p>
+<p class="indenthangingB">&#8226; If you can&#8217;t fix one, then pick the other.</p>
+<p class="indenthangingB">&#8226; Do they produce the same result? If not, then pick the one that has the result you need.</p>
+<p class="indenthangingB">&#8226; If they produce the same result, then pick the one that either has fewer features, fewer branches, or you just think is simpler.</p>
+<p class="indenthangingB">&#8226; Make sure you&#8217;re not just picking the one that is most impressive. Simple and dirty beats complex and clean any day.</p>
+<p class="noindent">You&#8217;ll notice that I mostly give up at the end and tell you to use your judgment. Simplicity is ironically a very complex thing, so using your taste as a guide is the best way to go. Just make sure that you adjust your view of what&#8217;s &#8220;good&#8221; as you grow and gain more experience.</p>
+<div class="heading">
+<h4 id="ch27lev2sec8">Question Authority</h4>
+<p class="noindent">The final strategy is the most important because it breaks you out of the defensive programming mind-set and lets you transition into the creative mind-set. Defensive programming is authoritarian and can be cruel. The job of this mind-set is to make you follow rules, because without them you&#8217;ll miss something or get distracted.</p>
+</div>
+<p class="noindent">This authoritarian attitude has the disadvantage of disabling independent creative thought. Rules are necessary for getting things done, but being a slave to them will kill your creativity.</p>
+<p class="noindent">This final strategy means you should periodically question the rules you follow and assume that they could be wrong, just like the software you are reviewing. What I will typically do is go take a nonprogramming break and let the rules go after a session of defensive programming. Then I&#8217;ll be ready to do some creative work or more defensive coding if I need to.</p>
+<div class="heading">
+<h3 id="ch27lev1sec5">Order Is Not Important</h3>
+<p class="noindent">The final thing I&#8217;ll say on this philosophy is that I&#8217;m not telling you to do this in a strict order of &#8220;CREATE! DEFEND! CREATE! DEFEND!&#8221; At first you might want to do that, but I&#8217;d actually do either in varying amounts depending on what I wanted to do, and I might even meld them together with no defined boundary.</p>
+</div>
+<p class="noindent">I also don&#8217;t think one mind-set is better than another, or that there&#8217;s a strict separation between them. You need both creativity and strictness to do programming well, so work on both if you want to improve.</p>
+<div class="heading">
+<h3 id="ch27lev1sec6"><a id="page_150"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; The code in the book up to this point (and for the rest of it) potentially violates these rules. Go back and apply what you&#8217;ve learned to one exercise to see if you can improve it or find bugs.</p>
+</div>
+<p class="indenthangingB">&#8226; Find an open source project and give some of the files a similar code review. Submit a patch that fixes a bug.<a id="page_151"/></p>
+</body>
+</html>

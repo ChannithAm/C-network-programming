@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 8. If, Else-If, Else</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch08"><a id="page_36"/>Exercise 8. <span class="EmpStrong">If</span>, <span class="EmpStrong">Else-If</span>, <span class="EmpStrong">Else</span></h2>
+<p class="noindent">In C, there really isn&#8217;t a <em>Boolean</em> type. Instead, any integer that&#8217;s 0 is <em>false</em> or otherwise it&#8217;s <em>true</em>. In the last exercise, the expression <code>argc &gt; 1</code> actually resulted in 1 or 0, not an explicit <code>True</code> or <code>False</code> like in Python. This is another example of C being closer to how a computer works, because to a computer, truth values are just integers.</p>
+<p class="noindent">However, C does have a typical <code>if-statement</code> that uses this numeric idea of true and false to do branching. It&#8217;s fairly similar to what you would do in Python and Ruby, as you can see in this exercise:</p>
+<p class="ex-caption"><code>ex8.c</code></p>
+<hr/>
+<p class="codelink"><a id="p036pro01" href="ch08_images.html#p036pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong"><span class="pd_blue-1">0</span></span>;<br/>
+&#160;6<br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">if</span></span> <span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">==</span></span> <span class="EmpStrong"><span class="pd_blue-1">1</span>) {</span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You only have one argument. You suck.\n"</span><span class="EmpStrong">);</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else if</span></span> <span class="EmpStrong">(</span>argc <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span> <span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> argc <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> <span class="EmpStrong"><span class="pd_blue-1">4</span>) {</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Here's your arguments:\n"</span><span class="EmpStrong">);</span><br/>
+11<br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> argc<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s "</span><span class="EmpStrong">,</span> argv<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+15&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\n"</span><span class="EmpStrong">);</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span> <span class="pd_blue"><span class="EmpStrong">else</span></span> <span class="EmpStrong">{</span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"You have too many arguments. You suck.\n"</span><span class="EmpStrong">);</span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+19<br/>
+20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+21&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">The format for the <code>if-statement</code> is this:</p>
+<p class="pre">if(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+} else if(TEST) {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+} else {<br/>
+&#160;&#160;&#160;&#160;CODE;<br/>
+}</p>
+<p class="noindent"><a id="page_37"/>This is like most other languages except for some specific C differences:</p>
+<p class="indenthangingB">&#8226; As mentioned before, the <code>TEST</code> parts are false if they evaluate to 0, or otherwise true.</p>
+<p class="indenthangingB">&#8226; You have to put parentheses around the <code>TEST</code> elements, while some other languages let you skip that.</p>
+<p class="indenthangingB">&#8226; You don&#8217;t need the <code>{}</code> braces to enclose the code, but it is <em>very</em> bad form to not use them. The braces make it clear where one branch of code begins and ends. If you don&#8217;t include them then obnoxious errors come up.</p>
+<p class="noindent">Other than that, the code works the way it does in most other languages. You don&#8217;t need to have either <code>else if</code> or <code>else</code> parts.</p>
+<div class="heading">
+<h3 id="ch08lev1sec1">What You Should See</h3>
+<p class="noindent">This one is pretty simple to run and try out:</p>
+</div>
+<p class="ex-caption"><code>Exercise 8 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p037pro01" href="ch08_images.html#p037pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex8<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex8.c&#160;&#160;&#160;-o ex8</span><br/>
+<span class="pd_brown">$</span> ./ex8<br/>
+<span class="EmpItalic">You only have one argument. You suck.</span><br/>
+<span class="pd_brown">$</span> ./ex8 one<br/>
+<span class="EmpItalic">Here's your arguments:</span><br/>
+<span class="EmpItalic">./ex8 one</span><br/>
+<span class="pd_brown">$</span> ./ex8 one two<br/>
+<span class="EmpItalic">Here's your arguments:</span><br/>
+<span class="EmpItalic">./ex8 one two</span><br/>
+<span class="pd_brown">$</span> ./ex8 one two three<br/>
+<span class="EmpItalic">You have too many arguments. You suck.</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch08lev1sec2">How to Break It</h3>
+<p class="noindent">This one isn&#8217;t easy to break because it&#8217;s so simple, but try messing up the tests in the <code>if-statement</code>:</p>
+</div>
+<p class="indenthangingB">&#8226; Remove the <code>else</code> at the end, and the program won&#8217;t catch the edge case.</p>
+<p class="indenthangingB">&#8226; Change the <code>&#38;&#38;</code> to a <code>||</code> so you get an or instead of an and test and see how that works.</p>
+<div class="heading">
+<h3 id="ch08lev1sec3"><a id="page_38"/>Extra Credit</h3>
+<p class="indenthangingB">&#8226; You were briefly introduced to <code>&#38;&#38;</code>, which does an and comparison, so go research online the different <em>Boolean operators</em>.</p>
+</div>
+<p class="indenthangingB">&#8226; Write a few more test cases for this program to see what you can come up with.</p>
+<p class="indenthangingB">&#8226; Is the first test really saying the right thing? To you, the <em>first argument</em> isn&#8217;t the same first argument a user entered. Fix it.<a id="page_39"/></p>
+</body>
+</html>

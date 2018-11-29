@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 24. Input, Output, Files</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch24"><a id="page_126"/>Exercise 24. Input, Output, Files</h2>
+<p class="noindent">You&#8217;ve been using <code>printf</code> to print things, and that&#8217;s great and all, but you need more. In this exercise, you&#8217;ll be using the functions <code>fscanf</code> and <code>fgets</code> to build information about a person in a structure. After this simple introduction about reading input, you&#8217;ll get a full list of the functions that C has for I/O. Some of these you&#8217;ve already seen and used, so this will be another memorization exercise.</p>
+<p class="ex-caption"><code>ex24.c</code></p>
+<hr/>
+<p class="codelink"><a id="p126pro01" href="ch24_images.html#p126pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include "dbg.h"</span></span><br/>
+&#160;&#160;3<br/>
+&#160;&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#define MAX_DATA 100</span></span><br/>
+&#160;&#160;5<br/>
+&#160;&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef enum</span></span> EyeColor <span class="EmpStrong">{</span><br/>
+&#160;&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;BLUE_EYES<span class="EmpStrong">,</span> GREEN_EYES<span class="EmpStrong">,</span> BROWN_EYES<span class="EmpStrong">,</span><br/>
+&#160;&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;BLACK_EYES<span class="EmpStrong">,</span> OTHER_EYES<br/>
+&#160;&#160;9&#160;&#160;&#160;<span class="EmpStrong">}</span> EyeColor<span class="EmpStrong">;</span><br/>
+&#160;10<br/>
+&#160;11&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">const char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>EYE_COLOR_NAMES<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Blue"</span><span class="EmpStrong">,</span> <span class="pd_green">"Green"</span><span class="EmpStrong">,</span> <span class="pd_green">"Brown"</span><span class="EmpStrong">,</span> <span class="pd_green">"Black"</span><span class="EmpStrong">,</span> <span class="pd_green">"Other"</span><br/>
+&#160;13&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+&#160;14<br/>
+&#160;15&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">typedef struct</span></span> Person <span class="EmpStrong">{</span><br/>
+&#160;16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> age<span class="EmpStrong">;</span><br/>
+&#160;17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> first_name<span class="EmpStrong">[</span>MAX_DATA<span class="EmpStrong">];</span><br/>
+&#160;18&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> last_name<span class="EmpStrong">[</span>MAX_DATA<span class="EmpStrong">];</span><br/>
+&#160;19&#160;&#160;&#160;&#160;&#160;&#160;&#160;EyeColor eyes<span class="EmpStrong">;</span><br/>
+&#160;20&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">float</span></span> income<span class="EmpStrong">;</span><br/>
+&#160;21&#160;&#160;&#160;<span class="EmpStrong">}</span> Person<span class="EmpStrong">;</span><br/>
+&#160;22<br/>
+&#160;23&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;24&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;25&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person you <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{.</span>age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span> <span class="EmpStrong">};</span><br/>
+&#160;26&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">;</span><br/>
+&#160;28<br/>
+&#160;29&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What's your First Name? "</span><span class="EmpStrong">);</span><br/>
+&#160;30&#160;&#160;&#160;&#160;&#160;&#160;&#160;in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fgets<span class="EmpStrong">(</span>you<span class="EmpStrong">.</span>first_name<span class="EmpStrong">,</span> MAX_DATA <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> stdin<span class="EmpStrong">);</span><br/>
+&#160;31&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>in <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read first name."</span><span class="EmpStrong">);</span><br/>
+&#160;32<br/>
+&#160;33&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What's your Last Name? "</span><span class="EmpStrong">);</span><br/>
+&#160;34&#160;&#160;&#160;&#160;&#160;&#160;&#160;in <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fgets<span class="EmpStrong">(</span>you<span class="EmpStrong">.</span>last_name<span class="EmpStrong">,</span> MAX_DATA <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> stdin<span class="EmpStrong">);</span><br/>
+&#160;35&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>in <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">,</span> <span class="pd_green">"Failed to read last name."</span><span class="EmpStrong">);</span><br/>
+<a id="page_127"/>&#160;36<br/>
+&#160;37&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"How old are you? "</span><span class="EmpStrong">);</span><br/>
+&#160;38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fscanf<span class="EmpStrong">(</span>stdin<span class="EmpStrong">,</span> <span class="pd_green">"%d"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>you<span class="EmpStrong">.</span>age<span class="EmpStrong">);</span><br/>
+&#160;39&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"You have to enter a number."</span><span class="EmpStrong">);</span><br/>
+&#160;40<br/>
+&#160;41&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"What color are your eyes:\n"</span><span class="EmpStrong">);</span><br/>
+&#160;42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> OTHER_EYES<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+&#160;43&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%d) %s\n"</span><span class="EmpStrong">,</span> i <span class="pd_brown-1"><span class="EmpStrong">+</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">,</span> EYE_COLOR_NAMES<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+&#160;44&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+&#160;45&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"&gt; "</span><span class="EmpStrong">);</span><br/>
+&#160;46<br/>
+&#160;47&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> eyes <span class="pd_brown-1"><span class="EmpStrong">= -</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;48&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fscanf<span class="EmpStrong">(</span>stdin<span class="EmpStrong">,</span> <span class="pd_green">"%d"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>eyes<span class="EmpStrong">);</span><br/>
+&#160;49&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"You have to enter a number."</span><span class="EmpStrong">);</span><br/>
+&#160;50<br/>
+&#160;51&#160;&#160;&#160;&#160;&#160;&#160;&#160;you<span class="EmpStrong">.</span>eyes <span class="pd_brown-1"><span class="EmpStrong">=</span></span> eyes <span class="pd_brown-1"><span class="EmpStrong">-</span></span> <span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;52&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>you<span class="EmpStrong">.</span>eyes <span class="pd_brown-1"><span class="EmpStrong">&lt;=</span></span> OTHER_EYES<br/>
+&#160;53&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">&#38;&#38;</span></span> you<span class="EmpStrong">.</span>eyes <span class="pd_brown-1"><span class="EmpStrong">&gt;=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Do it right, that's not an option."</span><span class="EmpStrong">);</span><br/>
+&#160;54<br/>
+&#160;55&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"How much do you make an hour? "</span><span class="EmpStrong">);</span><br/>
+&#160;56&#160;&#160;&#160;&#160;&#160;&#160;&#160;rc <span class="pd_brown-1"><span class="EmpStrong">=</span></span> fscanf<span class="EmpStrong">(</span>stdin<span class="EmpStrong">,</span> <span class="pd_green">"%f"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">&#38;</span></span>you<span class="EmpStrong">.</span>income<span class="EmpStrong">);</span><br/>
+&#160;57&#160;&#160;&#160;&#160;&#160;&#160;&#160;check<span class="EmpStrong">(</span>rc <span class="pd_brown-1"><span class="EmpStrong">&gt;</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">,</span> <span class="pd_green">"Enter a floating point number."</span><span class="EmpStrong">);</span><br/>
+&#160;58<br/>
+&#160;59&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"----- RESULTS -----\n"</span><span class="EmpStrong">);</span><br/>
+&#160;60<br/>
+&#160;61&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"First Name: %s"</span><span class="EmpStrong">,</span> you<span class="EmpStrong">.</span>first_name<span class="EmpStrong">);</span><br/>
+&#160;62&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Last Name: %s"</span><span class="EmpStrong">,</span> you<span class="EmpStrong">.</span>last_name<span class="EmpStrong">);</span><br/>
+&#160;63&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Age: %d\n"</span><span class="EmpStrong">,</span> you<span class="EmpStrong">.</span>age<span class="EmpStrong">);</span><br/>
+&#160;64&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Eyes: %s\n"</span><span class="EmpStrong">,</span> EYE_COLOR_NAMES<span class="EmpStrong">[</span>you<span class="EmpStrong">.</span>eyes<span class="EmpStrong">]);</span><br/>
+&#160;65&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Income: %f\n"</span><span class="EmpStrong">,</span> you<span class="EmpStrong">.</span>income<span class="EmpStrong">);</span><br/>
+&#160;66<br/>
+&#160;67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+&#160;68&#160;&#160;&#160;<span class="pd_orange">error</span><span class="EmpStrong">:</span><br/>
+&#160;69<br/>
+&#160;70&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_brown-1"><span class="EmpStrong">-</span></span><span class="pd_blue-1"><span class="EmpStrong">1</span></span><span class="EmpStrong">;</span><br/>
+&#160;71&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">This program is deceptively simple, and introduces a function called <code>fscanf</code>, which is the file <code>scanf</code>. The <code>scanf</code> family of functions are the inverse of the <code>printf</code> versions. Where <code>printf</code> printed out data based on a format, <code>scanf</code> reads (or scans) input based on a format.</p>
+<p class="noindent">There&#8217;s nothing original in the beginning of the file, so here&#8217;s what the <code>main</code> is doing in the program:</p>
+<p class="indenthanging"><strong>ex24.c:24-28</strong> Sets up some variables we&#8217;ll need.</p>
+<p class="indenthanging"><strong>ex24.c:30-32</strong> Gets your first name using the <code>fgets</code> function, which reads a string from the input (in this case <code>stdin</code>), but makes sure it doesn&#8217;t overflow the given buffer.</p>
+<p class="indenthanging"><a id="page_128"/><strong>ex24.c:34-36</strong> Same thing for <code>you.last_name</code>, again using <code>fgets</code>.</p>
+<p class="indenthanging"><strong>ex24.c:38-39</strong> Uses <code>fscanf</code> to read an integer from <code>stdin</code> and put it into <code>you.age</code>. You can see that the same format string is used as <code>printf</code> to print an integer. You should also see that you have to give the <em>address</em> of <code>you.age</code> so that <code>fscanf</code> has a pointer to it and can modify it. This is a good example of using a pointer to a piece of data as an out parameter.</p>
+<p class="indenthanging"><strong>ex24.c:41-45</strong> Prints out all of the options available for eye color, with a matching number that works with the <code>EyeColor</code> enum above.</p>
+<p class="indenthanging"><strong>ex24.c:47-50</strong> Using <code>fscanf</code> again, gets a number for the <code>you.eyes</code>, but make sure the input is valid. This is important because someone can enter a value outside the <code>EYE_COLOR_ NAMES</code> array and cause a segmentation fault.</p>
+<p class="indenthanging"><strong>ex24.c:52-53</strong> Gets how much you make as a <code>float</code> for the <code>you.income</code>.</p>
+<p class="indenthanging"><strong>ex24.c:55-61</strong> Prints everything out so you can see if you have it right. Notice that <code>EYE_COLOR_NAMES</code> is used to print out what the <code>EyeColor</code> enum is actually called.</p>
+<div class="heading">
+<h3 id="ch24lev1sec1">What You Should See</h3>
+<p class="noindent">When you run this program, you should see your inputs being properly converted. Make sure you try to give it bogus input too, so you can see how it protects against the input.</p>
+</div>
+<p class="ex-caption"><code>Exercise 24 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p128pro01" href="ch24_images.html#p128pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex24<br/>
+<span class="EmpItalic">cc -Wall -g -DNDEBUG&#160;&#160;&#160;&#160;ex24.c&#160;&#160;&#160;&#160;-o ex24</span><br/>
+<span class="pd_brown">$</span> ./ex24<br/>
+<span class="EmpItalic">What's your First Name? Zed</span><br/>
+<span class="EmpItalic">What's your Last Name? Shaw</span><br/>
+<span class="EmpItalic">How old are you? 37</span><br/>
+<span class="EmpItalic">What color are your eyes:</span><br/>
+<span class="EmpItalic">1) Blue</span><br/>
+<span class="EmpItalic">2) Green</span><br/>
+<span class="EmpItalic">3) Brown</span><br/>
+<span class="EmpItalic">4) Black</span><br/>
+<span class="EmpItalic">5) Other</span><br/>
+<span class="pd_brown">&gt;</span> 1<br/>
+<span class="EmpItalic">How much do you make an hour? 1.2345</span><br/>
+<span class="EmpItalic">----- RESULTS -----</span><br/>
+<span class="EmpItalic">First Name: Zed</span><br/>
+<span class="EmpItalic">Last Name: Shaw</span><br/>
+<span class="EmpItalic">Age: 37</span><br/>
+<span class="EmpItalic">Eyes: Blue</span><br/>
+<span class="EmpItalic">Income: 1.234500</span></p>
+<div class="heading">
+<h3 id="ch24lev1sec2"><a id="page_129"/>How to Break It</h3>
+<p class="noindent">This is all fine and good, but the really important part of this exercise is how <code>scanf</code> actually sucks. It&#8217;s fine for a simple conversion of numbers, but fails for strings because it&#8217;s difficult to tell <code>scanf</code> how big a buffer is before you read it. There&#8217;s also a problem with the function <code>gets</code> (not <code>fgets</code>, the non-f version), which we avoided. That function has no idea how big the input buffer is at all and will just trash your program.</p>
+</div>
+<p class="noindent">To demonstrate the problems with <code>fscanf</code> and strings, change the lines that use <code>fgets</code> so they are <code>fscanf(stdin, "%50s", you.first_name)</code>, and then try to use it again. Notice it seems to read too much and then eat your enter key? This doesn&#8217;t do what you think it does, and rather than deal with weird <code>scanf</code> issues, you should just use <code>fgets</code>.</p>
+<p class="noindent">Next, change the <code>fgets</code> to use <code>gets</code>, then run your <code>debugger</code> on <code>ex24</code>. Do this inside:</p>
+<p class="pre">"run &lt;&lt; /dev/urandom"</p>
+<p class="noindent">This feeds random garbage into your program. This is called fuzzing your program, and it&#8217;s a good way to find input bugs. In this case, you&#8217;re feeding garbage from the <code>/dev/urandom</code> file (device), and then watching it crash. In some platforms, you may have to do this a few times, or even adjust the <code>MAX_DATA</code> define so it&#8217;s small enough.</p>
+<p class="noindent">The <code>gets</code> function is so bad that some platforms actually warn you when the <em>program</em> runs that you&#8217;re using <code>gets</code>. You should never use this function, ever.</p>
+<p class="noindent">Finally, take the input for <code>you.eyes</code> and remove the check that the number is within the right range. Then, feed it bad numbers like -1 or 1000. Do this under the debugger so you can see what happens there, too.</p>
+<div class="heading">
+<h3 id="ch24lev1sec3">The I/O Functions</h3>
+<p class="noindent">This is a short list of various I/O functions that you should look up. Create flash cards that have the function name and all the variants similar to it.</p>
+</div>
+<p class="indenthangingB">&#8226; <code>fscanf</code></p>
+<p class="indenthangingB">&#8226; <code>fgets</code></p>
+<p class="indenthangingB">&#8226; <code>fopen</code></p>
+<p class="indenthangingB">&#8226; <code>freopen</code></p>
+<p class="indenthangingB">&#8226; <code>fdopen</code></p>
+<p class="indenthangingB">&#8226; <code>fclose</code></p>
+<p class="indenthangingB"><a id="page_130"/>&#8226; <code>fcloseall</code></p>
+<p class="indenthangingB">&#8226; <code>fgetpos</code></p>
+<p class="indenthangingB">&#8226; <code>fseek</code></p>
+<p class="indenthangingB">&#8226; <code>ftell</code></p>
+<p class="indenthangingB">&#8226; <code>rewind</code></p>
+<p class="indenthangingB">&#8226; <code>fprintf</code></p>
+<p class="indenthangingB">&#8226; <code>fwrite</code></p>
+<p class="indenthangingB">&#8226; <code>fread</code></p>
+<p class="noindent">Go through these and memorize the different variants and what they do. For example, for the card <code>fscanf</code>, you&#8217;ll have <code>scanf</code>, <code>sscanf</code>, <code>vscanf</code>, etc., and then what each of those does on the back.</p>
+<p class="noindent">Finally, use <code>man</code> to read the help for each variant to get the information you need for the flash cards. For example, the page for <code>fscanf</code> comes from <code>man fscanf</code>.</p>
+<div class="heading">
+<h3 id="ch24lev1sec4">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Rewrite this to not use <code>fscanf</code> at all. You&#8217;ll need to use functions like <code>atoi</code> to convert the input strings to numbers.</p>
+</div>
+<p class="indenthangingB">&#8226; Change this to use plain <code>scanf</code> instead of <code>fscanf</code> to see what the difference is.</p>
+<p class="indenthangingB">&#8226; Fix it so that their input names get stripped of the trailing newline characters and any white space.</p>
+<p class="indenthangingB">&#8226; Use <code>scanf</code> to write a function that reads one character at a time and fills in the names but doesn&#8217;t go past the end. Make this function generic so it can take a size for the string, but just make sure you end the string with <code>'\0'</code> no matter what.<a id="page_131"/></p>
+</body>
+</html>

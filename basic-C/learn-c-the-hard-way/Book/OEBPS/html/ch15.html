@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 15. Pointers, Dreaded Pointers</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch15"><a id="page_62"/>Exercise 15. Pointers, Dreaded Pointers</h2>
+<p class="noindent">Pointers are famous mystical creatures in C. I&#8217;ll attempt to demystify them by teaching you the vocabulary to deal with them. They actually aren&#8217;t that complex, but they&#8217;re frequently abused in weird ways that make them hard to use. If you avoid the stupid ways to use pointers, then they&#8217;re fairly easy.</p>
+<p class="noindent">To demonstrate pointers in a way that we can talk about them, I&#8217;ve written a frivolous program that prints a group of people&#8217;s ages in three different ways.</p>
+<p class="ex-caption"><code>ex15.c</code></p>
+<hr/>
+<p class="codelink"><a id="p062pro01" href="ch15_images.html#p062pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2<br/>
+&#160;3&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+&#160;4&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+&#160;5&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// create two arrays we care about</span></span><br/>
+&#160;6&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> ages<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span> <span class="pd_blue-1"><span class="EmpStrong">23</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">43</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">12</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">89</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span> <span class="EmpStrong">};</span><br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>names<span class="EmpStrong">[]</span> <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="EmpStrong">{</span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Alan"</span><span class="EmpStrong">,</span> <span class="pd_green">"Frank"</span><span class="EmpStrong">,</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_green">"Mary"</span><span class="EmpStrong">,</span> <span class="pd_green">"John"</span><span class="EmpStrong">,</span> <span class="pd_green">"Lisa"</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+11<br/>
+12&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// safely get the size of ages</span></span><br/>
+13&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> count <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span>ages<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">/</span></span> <span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span><span class="EmpStrong">);</span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span><br/>
+15<br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// first way using indexing</span></span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+18&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s has %d years alive.\n"</span><span class="EmpStrong">,</span> names<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> ages<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+20<br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"---\n"</span><span class="EmpStrong">);</span><br/>
+22<br/>
+23&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// set up the pointers to the start of the arrays</span></span><br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>cur_age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> ages<span class="EmpStrong">;</span><br/>
+25&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">**</span></span>cur_name <span class="pd_brown-1"><span class="EmpStrong">=</span></span> names<span class="EmpStrong">;</span><br/>
+26<br/>
+27&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// second way using pointers</span></span><br/>
+28&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s is %d years old.\n"</span><span class="EmpStrong">,</span><br/>
+30&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">(</span>cur_name <span class="pd_brown-1"><span class="EmpStrong">+</span></span> i<span class="EmpStrong">),</span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span><span class="EmpStrong">(</span>cur_age <span class="pd_brown-1"><span class="EmpStrong">+</span></span> i<span class="EmpStrong">));</span><br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+32<br/>
+33&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"---\n"</span><span class="EmpStrong">);</span><br/>
+34<br/>
+35&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// third way, pointers are just arrays</span></span><br/>
+36&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>i <span class="pd_brown-1"><span class="EmpStrong">=</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span><span class="EmpStrong">;</span> i <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> i<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">) {</span><br/>
+<a id="page_63"/>37&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s is %d years old again.\n"</span><span class="EmpStrong">,</span> cur_name<span class="EmpStrong">[</span>i<span class="EmpStrong">],</span> cur_age<span class="EmpStrong">[</span>i<span class="EmpStrong">]);</span><br/>
+38&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+39<br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"---\n"</span><span class="EmpStrong">);</span><br/>
+41<br/>
+42&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// fourth way with pointers in a stupid complex way</span></span><br/>
+43&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">for</span></span> <span class="EmpStrong">(</span>cur_name <span class="pd_brown-1"><span class="EmpStrong">=</span></span> names<span class="EmpStrong">,</span> cur_age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> ages<span class="EmpStrong">;</span><br/>
+44&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">(</span>cur_age <span class="pd_brown-1"><span class="EmpStrong">-</span></span> ages<span class="EmpStrong">)</span> <span class="pd_brown-1"><span class="EmpStrong">&lt;</span></span> count<span class="EmpStrong">;</span> cur_name<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">,</span> cur_age<span class="pd_brown-1"><span class="EmpStrong">++</span></span><span class="EmpStrong">)</span> <span class="EmpStrong">{</span><br/>
+45&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"%s lived %d years so far.\n"</span><span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>cur_name<span class="EmpStrong">,</span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>cur_age<span class="EmpStrong">);</span><br/>
+46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+47<br/>
+48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span>;<br/>
+49&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">Before explaining how pointers work, let&#8217;s break this program down line by line so you get an idea of what&#8217;s going on. As you go through this detailed description, try to answer the questions for yourself on a piece of paper, then see if what you guessed matches my description of pointers later.</p>
+<p class="indenthanging"><strong>ex15.c:6-10</strong> Create two arrays: <code>ages</code> storing some <code>int</code> data, and <code>names</code> storing an array of strings.</p>
+<p class="indenthanging"><strong>ex15.c:12-13</strong> These are some variables for our <code>for-loops</code> later.</p>
+<p class="indenthanging"><strong>ex15.c:16-19</strong> This is just looping through the two arrays and printing how old each person is. This is using <code>i</code> to index into the array.</p>
+<p class="indenthanging"><strong>ex15.c:24</strong> Create a pointer that points at <code>ages</code>. Notice the use of <code>int *</code> to create a pointer to integer type of pointer. That&#8217;s similar to <code>char *</code>, which is a pointer to char, and a string is an array of chars. Seeing the similarity yet?</p>
+<p class="indenthanging"><strong>ex15.c:25</strong> Create a pointer that points at <code>names</code>. A <code>char *</code> is already a pointer to char, so that&#8217;s just a string. However, you need two levels since <code>names</code> is two-dimensional, which then means you need <code>char **</code> for a pointer to (a pointer to char) type. Study that and try to explain it to yourself, too.</p>
+<p class="indenthanging"><strong>ex15.c:28-31</strong> Loop through <code>ages</code> and <code>names</code> but use the pointers <em>plus an offset of i</em> instead. Writing <code>*(cur_name+i)</code> is the same as writing <code>name[i]</code>, and you read it as &#8220;the value of (pointer <code>cur_name</code> plus i).&#8221;</p>
+<p class="indenthanging"><strong>ex15.c:35-39</strong> This shows how the syntax to access an element of an array is the same for a pointer and an array.</p>
+<p class="indenthanging"><strong>ex15.c:44-50</strong> This is another admittedly insane loop that does the same thing as the other two, but instead it uses various pointer arithmetic methods:</p>
+<p class="indenthanging1"><strong>ex15.c:44</strong> Initialize our <code>for-loop</code> by setting <code>cur_name</code> and <code>cur_age</code> to the beginning of the <code>names</code> and <code>ages</code> arrays.</p>
+<p class="indenthanging1"><a id="page_64"/><strong>ex15.c:45</strong> The test portion of the <code>for-loop</code> then compares the <em>distance</em> of the pointer <code>cur_age</code> from the start of <code>ages</code>. Why does that work?</p>
+<p class="indenthanging1"><strong>ex15.c:46</strong> The increment part of the <code>for-loop</code> then increments both <code>cur_name</code> and <code>cur_age</code> so that they point at the <em>next</em> element of the <code>name</code> and <code>age</code> arrays.</p>
+<p class="indenthanging1"><strong>ex15.c:48-49</strong> The pointers <code>cur_name</code> and <code>cur_age</code> are now pointing at one element of the arrays that they work on, and we can print them out using just <code>*cur_name</code> and <code>*cur_age</code>, which means &#8220;the value of wherever <code>cur_name</code> is pointing.&#8221;</p>
+<p class="noindent">This seemingly simple program has a large amount of information, and my goal is to get you to attempt to figure pointers out for yourself before I explain them. <em>Don&#8217;t continue until you&#8217;ve written down what you think a pointer does.</em></p>
+<div class="heading">
+<h3 id="ch15lev1sec1">What You Should See</h3>
+<p class="noindent">After you run this program, try to trace back each line printed out to the line in the code that produced it. If you have to, alter the <code>printf</code> calls to make sure you&#8217;ve got the right line number.</p>
+</div>
+<p class="ex-caption"><code>Exercise 15 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p064pro01" href="ch15_images.html#p064pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex15<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex15.c&#160;&#160;&#160;-o ex15</span><br/>
+<span class="pd_brown">$</span> ./ex15<br/>
+<span class="EmpItalic">Alan has 23 years alive.</span><br/>
+<span class="EmpItalic">Frank has 43 years alive.</span><br/>
+<span class="EmpItalic">Mary has 12 years alive.</span><br/>
+<span class="EmpItalic">John has 89 years alive.</span><br/>
+<span class="EmpItalic">Lisa has 2 years alive.</span><br/>
+<span class="EmpItalic">---</span><br/>
+<span class="EmpItalic">Alan is 23 years old.</span><br/>
+<span class="EmpItalic">Frank is 43 years old.</span><br/>
+<span class="EmpItalic">Mary is 12 years old.</span><br/>
+<span class="EmpItalic">John is 89 years old.</span><br/>
+<span class="EmpItalic">Lisa is 2 years old.</span><br/>
+<span class="EmpItalic">---</span><br/>
+<span class="EmpItalic">Alan is 23 years old again.</span><br/>
+<span class="EmpItalic">Frank is 43 years old again.</span><br/>
+<span class="EmpItalic">Mary is 12 years old again.</span><br/>
+<span class="EmpItalic">John is 89 years old again.</span><br/>
+<span class="EmpItalic">Lisa is 2 years old again.</span><br/>
+<span class="EmpItalic">---</span><br/>
+<span class="EmpItalic">Alan lived 23 years so far.</span><br/>
+<span class="EmpItalic">Frank lived 43 years so far.</span><br/>
+<span class="EmpItalic">Mary lived 12 years so far.</span><br/>
+<span class="EmpItalic">John lived 89 years so far.</span><br/>
+<span class="EmpItalic">Lisa lived 2 years so far.</span><br/>
+<span class="pd_brown">$</span></p>
+<div class="heading">
+<h3 id="ch15lev1sec2"><a id="page_65"/>Explaining Pointers</h3>
+<p class="noindent">When you type something like <code>ages[i]</code>, you&#8217;re <em>indexing</em> into the array <code>ages</code>, and you&#8217;re using the number that&#8217;s held in <code>i</code> to do it. If <code>i</code> is set to zero then it&#8217;s the same as typing <code>ages[0]</code>. We&#8217;ve been calling this number <code>i</code> an <em>index</em> since it&#8217;s a location inside <code>ages</code> that we want. It could also be called an address, which is a way of saying &#8220;I want the integer in <code>ages</code> that&#8217;s at address <code>i</code>.&#8221;</p>
+</div>
+<p class="noindent">If <code>i</code> is an index, then what&#8217;s <code>ages</code>? To C, <code>ages</code> is a location in the computer&#8217;s memory where all of these integers start. It&#8217;s <em>also</em> an address, and the C compiler will replace <code>ages</code> anywhere you type it with the address of the very first integer in ages. Another way to think of <code>ages</code> is that it&#8217;s the &#8220;address of the first integer in ages.&#8221; But here&#8217;s the trick: <code>ages</code> is an address inside the <em>entire computer</em>. It&#8217;s not like <code>i</code> that&#8217;s just an address inside <code>ages</code>. The <code>ages</code> array name is actually an address in the computer.</p>
+<p class="noindent">That leads to a certain realization: C thinks your whole computer is one massive array of bytes. Obviously, this isn&#8217;t very useful, but then what C does is layer on top of this massive array of bytes the concept of <em>types</em> and <em>sizes</em> of those types. You already saw how this worked in previous exercises, but now you start to get an idea of how C is doing the following with your arrays:</p>
+<p class="indenthangingB">&#8226; Creating a block of memory inside your computer</p>
+<p class="indenthangingB">&#8226; <em>Pointing</em> the name <code>ages</code> at the beginning of that block</p>
+<p class="indenthangingB">&#8226; <em>Indexing</em> into the block by taking the base address of <code>ages</code> and getting the element that&#8217;s <code>i</code> away from there</p>
+<p class="indenthangingB">&#8226; Converting that address at <code>ages+i</code> into a valid <code>int</code> of the right size, such that the index works to return what you want: the int at index <code>i</code></p>
+<p class="noindent">If you can take a base address, like <code>ages</code>, and add to it with another address like <code>i</code> to produce a new address, then can you just make something that points right at this location all the time? Yes, and that thing is called a <em>pointer</em>. This is what the pointers <code>cur_age</code> and <code>cur_name</code> are doing: They are variables pointing at the location where <code>ages</code> and <code>names</code> live in your computer&#8217;s memory. The example program is then moving them around or doing math on them to get values out of the memory. In one instance, they just add <code>i</code> to <code>cur_age</code>, which is the same as what the program does with <code>array[i]</code>. In the last <code>for-loop</code>, though, these two pointers are being moved on their own, without <code>i</code> to help out. In that loop, the pointers are treated like a combination of array and integer offset rolled into one.</p>
+<p class="noindent">A pointer is simply an address pointing somewhere inside the computer&#8217;s memory with a type specifier so that you get the right size of data with it. It&#8217;s kind of like a combination of <code>ages</code> and <code>i</code> rolled into one data type. C knows where pointers are pointing, knows the data type they point at, the size of those types, and how to get the data for you. Just like with <code>i</code>, you can increment, decrement, subtract, or add to them. But, just like <code>ages</code>, you can also get values out, put new values in, and use all of the array operations.</p>
+<p class="noindent"><a id="page_66"/>The purpose of a pointer is to let you manually index data into blocks or memory when an array won&#8217;t do it right. In almost all other cases, you actually want to use an array. But, there are times when you <em>have</em> to work with a raw block of memory and that&#8217;s where a pointer comes in. A pointer gives you raw, direct access to a block of memory so you can work with it.</p>
+<p class="noindent">The final thing to grasp at this stage is that you can use either syntax for most array or pointer operations. You can take a pointer to something, but use the array syntax to access it. You can take an array and do pointer arithmetic with it.</p>
+<div class="heading">
+<h3 id="ch15lev1sec3">Practical Pointer Usage</h3>
+<p class="noindent">There are primarily four useful things you can do with pointers in C code:</p>
+</div>
+<p class="indenthangingB">&#8226; Ask the OS for a chunk of memory and use a pointer to work with it. This includes strings and something you haven&#8217;t seen yet, <code>structs</code>.</p>
+<p class="indenthangingB">&#8226; Pass large blocks of memory (like large structs) to functions with a pointer, so you don&#8217;t have to pass the whole thing to them.</p>
+<p class="indenthangingB">&#8226; Take the address of a function, so you can use it as a dynamic callback.</p>
+<p class="indenthangingB">&#8226; Scan complex chunks of memory, converting bytes off of a network socket into data structures or parsing files.</p>
+<p class="noindent">For nearly everything else, you might see people use pointers when they should be using arrays. In the early days of C programming, people used pointers to speed up their programs, because the compilers were really bad at optimizing array usage. These days, the syntax to access an array versus a pointer are translated into the same machine code and optimized in the same way, so it&#8217;s not as necessary. Instead, you should go with arrays whenever you can, and then only use pointers as a performance optimization if you absolutely have to.</p>
+<div class="heading">
+<h3 id="ch15lev1sec4">The Pointer Lexicon</h3>
+<p class="noindent">I&#8217;m now going to give you a little lexicon to use for reading and writing pointers. Whenever you run into a complex pointer statement, just refer to this and break it down bit by bit (or just don&#8217;t use it since it&#8217;s probably not good code.)</p>
+</div>
+<p class="indenthanging"><span class="EmpStrong">type *ptr</span> A pointer of type named ptr</p>
+<p class="indenthanging"><span class="EmpStrong">*ptr</span> The value of whatever ptr is pointed at</p>
+<p class="indenthanging"><span class="EmpStrong">*(ptr + i)</span> The value of (whatever ptr is pointed at plus i)</p>
+<p class="indenthanging"><span class="EmpStrong">&#38;thing</span> The address of thing</p>
+<p class="indenthanging"><span class="EmpStrong">type *ptr = &#38;thing</span> A pointer of type named ptr set to the address of thing</p>
+<p class="indenthanging"><span class="EmpStrong">ptr++</span> Increment where ptr points</p>
+<p class="noindent"><a id="page_67"/>We&#8217;ll be using this simple lexicon to break down all of the pointers we use from now on in the book.</p>
+<div class="heading">
+<h3 id="ch15lev1sec5">Pointers Aren&#8217;t Arrays</h3>
+<p class="noindent">No matter what, you should never think that pointers and arrays are the same thing. They aren&#8217;t the same thing, even though C lets you work with them in many of the same ways. For example, if you do <code>sizeof(cur_age)</code> in the code above, you would get the size of the <em>pointer</em>, not the size of what it points at. If you want the size of the full array, you have to use the array&#8217;s name, <code>age</code>, as I did on line 12.</p>
+</div>
+<p class="noindent">To do: Expand on this some more with what doesn&#8217;t work the same on pointers and arrays.</p>
+<div class="heading">
+<h3 id="ch15lev1sec6">How to Break It</h3>
+<p class="noindent">You can break this program by simply pointing the pointers at the wrong things:</p>
+</div>
+<p class="indenthangingB">&#8226; Try to make <code>cur_age</code> point at <code>names</code>. You&#8217;ll need to use a C <code>cast</code> to force it, so go look that up and try to figure it out.</p>
+<p class="indenthangingB">&#8226; In the final <code>for-loop</code>, try getting the math wrong in weird ways.</p>
+<p class="indenthangingB">&#8226; Try rewriting the loops so that they start at the end of the arrays and go to the beginning. This is harder than it looks.</p>
+<div class="heading">
+<h3 id="ch15lev1sec7">Extra Credit</h3>
+<p class="indenthangingB">&#8226; Rewrite all of the arrays in this program as pointers.</p>
+</div>
+<p class="indenthangingB">&#8226; Rewrite all of the pointers as arrays.</p>
+<p class="indenthangingB">&#8226; Go back to some of the other programs that use arrays and try to use pointers instead.</p>
+<p class="indenthangingB">&#8226; Process command line arguments using just pointers, similar to how you did <code>names</code> in this one.</p>
+<p class="indenthangingB">&#8226; Play with combinations of getting the value of and the address of things.</p>
+<p class="indenthangingB">&#8226; Add another <code>for-loop</code> at the end that prints out the addresses that these pointers are using. You&#8217;ll need the <code>%p</code> format for <code>printf</code>.</p>
+<p class="indenthangingB">&#8226; Rewrite this program to use a function for each of the ways you&#8217;re printing out things. Try to pass pointers to these functions so that they work on the data. Remember you can declare a function to accept a pointer, but just use it like an array.</p>
+<p class="indenthangingB">&#8226; Change the <code>for-loops</code> to <code>while-loops</code> and see what works better for which kind of pointer usage.</p>
+</body>
+</html>

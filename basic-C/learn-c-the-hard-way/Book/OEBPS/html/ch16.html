@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Exercise 16. Structs And Pointers to Them</title>
+<link rel="stylesheet" type="text/css" href="9780133124378.css"/>
+</head>
+<body>
+<h2 id="ch16"><a id="page_68"/>Exercise 16. Structs And Pointers to Them</h2>
+<p class="noindent">In this exercise, you&#8217;ll learn how to make a <code>struct</code>, point a pointer at it, and use it to make sense of internal memory structures. We&#8217;ll also apply the knowledge of pointers from the last exercise, and then get you constructing these structures from raw memory using <code>malloc</code>.</p>
+<p class="noindent">As usual, here&#8217;s the program we&#8217;ll talk about, so type it in and make it work.</p>
+<p class="ex-caption"><code>ex16.c</code></p>
+<hr/>
+<p class="codelink"><a id="p068pro01" href="ch16_images.html#p068pro01a">Click here to view code image</a></p>
+<p class="pre">&#160;1&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdio.h&gt;</span></span><br/>
+&#160;2&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;assert.h&gt;</span></span><br/>
+&#160;3&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;stdlib.h&gt;</span></span><br/>
+&#160;4&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">#include &lt;string.h&gt;</span></span><br/>
+&#160;5<br/>
+&#160;6&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="EmpStrong">{</span><br/>
+&#160;7&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>name<span class="EmpStrong">;</span><br/>
+&#160;8&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> age<span class="EmpStrong">;</span><br/>
+&#160;9&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> height<span class="EmpStrong">;</span><br/>
+10&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> weight<span class="EmpStrong">;</span><br/>
+11&#160;&#160;&#160;<span class="EmpStrong">};</span><br/>
+12<br/>
+13&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>Person_create<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>name<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> age<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">int</span></span> height<span class="EmpStrong">,</span><br/>
+14&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> weight<span class="EmpStrong">)</span><br/>
+15&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+16&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>who <span class="pd_brown-1"><span class="EmpStrong">=</span></span> malloc<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">sizeof</span></span><span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">struct</span></span> Person<span class="EmpStrong">));</span><br/>
+17&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>who <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+18<br/>
+19&#160;&#160;&#160;&#160;&#160;&#160;&#160;who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>name <span class="pd_brown-1"><span class="EmpStrong">=</span></span> strdup<span class="EmpStrong">(</span>name<span class="EmpStrong">);</span><br/>
+20&#160;&#160;&#160;&#160;&#160;&#160;&#160;who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>age <span class="pd_brown-1"><span class="EmpStrong">=</span></span> age<span class="EmpStrong">;</span><br/>
+21&#160;&#160;&#160;&#160;&#160;&#160;&#160;who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>height <span class="pd_brown-1"><span class="EmpStrong">=</span></span> height<span class="EmpStrong">;</span><br/>
+22&#160;&#160;&#160;&#160;&#160;&#160;&#160;who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>weight <span class="pd_brown-1"><span class="EmpStrong">=</span></span> weight<span class="EmpStrong">;</span><br/>
+23<br/>
+24&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> who<span class="EmpStrong">;</span><br/>
+25&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+26<br/>
+27&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Person_destroy<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>who<span class="EmpStrong">)</span><br/>
+28&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+29&#160;&#160;&#160;&#160;&#160;&#160;&#160;assert<span class="EmpStrong">(</span>who <span class="pd_brown-1"><span class="EmpStrong">!=</span></span> <span class="pd_blue">NULL</span><span class="EmpStrong">);</span><br/>
+30<br/>
+31&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>name<span class="EmpStrong">);</span><br/>
+32&#160;&#160;&#160;&#160;&#160;&#160;&#160;free<span class="EmpStrong">(</span>who<span class="EmpStrong">);</span><br/>
+33&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+34<br/>
+35&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">void</span></span> Person_print<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>who<span class="EmpStrong">)</span><br/>
+36&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+<a id="page_69"/>37&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Name: %s\n"</span><span class="EmpStrong">,</span> who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>name<span class="EmpStrong">);</span><br/>
+38&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\tAge: %d\n"</span><span class="EmpStrong">,</span> who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>age<span class="EmpStrong">);</span><br/>
+39&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\tHeight: %d\n"</span><span class="EmpStrong">,</span> who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>height<span class="EmpStrong">);</span><br/>
+40&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"\tWeight: %d\n"</span><span class="EmpStrong">,</span> who<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>weight<span class="EmpStrong">);</span><br/>
+41&#160;&#160;&#160;<span class="EmpStrong">}</span><br/>
+42<br/>
+43&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">int</span></span> main<span class="EmpStrong">(</span><span class="pd_blue"><span class="EmpStrong">int</span></span> argc<span class="EmpStrong">,</span> <span class="pd_blue"><span class="EmpStrong">char</span></span> <span class="pd_brown-1"><span class="EmpStrong">*</span></span>argv<span class="EmpStrong">[])</span><br/>
+44&#160;&#160;&#160;<span class="EmpStrong">{</span><br/>
+45&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// make two people structures</span></span><br/>
+46&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>joe <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Person_create<span class="EmpStrong">(</span><span class="pd_green">"Joe Alex"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">32</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">64</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">140</span></span><span class="EmpStrong">);</span><br/>
+47<br/>
+48&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">struct</span></span> Person <span class="pd_brown-1"><span class="EmpStrong">*</span></span>frank <span class="pd_brown-1"><span class="EmpStrong">=</span></span> Person_create<span class="EmpStrong">(</span><span class="pd_green">"Frank Blank"</span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">72</span></span><span class="EmpStrong">,</span> <span class="pd_blue-1"><span class="EmpStrong">180</span></span><span class="EmpStrong">);</span><br/>
+49<br/>
+50&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// print them out and where they are in memory</span></span><br/>
+51&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Joe is at memory location %p:\n"</span><span class="EmpStrong">,</span> joe<span class="EmpStrong">);</span><br/>
+52&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_print<span class="EmpStrong">(</span>joe<span class="EmpStrong">);</span><br/>
+53<br/>
+54&#160;&#160;&#160;&#160;&#160;&#160;&#160;printf<span class="EmpStrong">(</span><span class="pd_green">"Frank is at memory location %p:\n"</span><span class="EmpStrong">,</span> frank<span class="EmpStrong">);</span><br/>
+55&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_print<span class="EmpStrong">(</span>frank<span class="EmpStrong">);</span><br/>
+56<br/>
+57&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// make everyone age 20 years and print them again</span></span><br/>
+58&#160;&#160;&#160;&#160;&#160;&#160;&#160;joe<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>age <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span><span class="EmpStrong">;</span><br/>
+59&#160;&#160;&#160;&#160;&#160;&#160;&#160;joe<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>height <span class="pd_brown-1"><span class="EmpStrong">-=</span></span> <span class="pd_blue-1"><span class="EmpStrong">2</span></span><span class="EmpStrong">;</span><br/>
+60&#160;&#160;&#160;&#160;&#160;&#160;&#160;joe<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>weight <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">40</span></span><span class="EmpStrong">;</span><br/>
+61&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_print<span class="EmpStrong">(</span>joe<span class="EmpStrong">);</span><br/>
+62<br/>
+63&#160;&#160;&#160;&#160;&#160;&#160;&#160;frank<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>age <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span><span class="EmpStrong">;</span><br/>
+64&#160;&#160;&#160;&#160;&#160;&#160;&#160;frank<span class="pd_brown-1"><span class="EmpStrong">-&gt;</span></span>weight <span class="pd_brown-1"><span class="EmpStrong">+=</span></span> <span class="pd_blue-1"><span class="EmpStrong">20</span></span><span class="EmpStrong">;</span><br/>
+65&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_print<span class="EmpStrong">(</span>frank<span class="EmpStrong">);</span><br/>
+66<br/>
+67&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_brown"><span class="EmpItalic">// destroy them both so we clean up</span></span><br/>
+68&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_destroy<span class="EmpStrong">(</span>joe<span class="EmpStrong">);</span><br/>
+69&#160;&#160;&#160;&#160;&#160;&#160;&#160;Person_destroy<span class="EmpStrong">(</span>frank<span class="EmpStrong">);</span><br/>
+70<br/>
+71&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="pd_blue"><span class="EmpStrong">return</span></span> <span class="pd_blue-1"><span class="EmpStrong">0</span></span>;<br/>
+72&#160;&#160;&#160;<span class="EmpStrong">}</span></p>
+<p class="noindent">To describe this program, I&#8217;m going to use a different approach than before. I&#8217;m not going to give you a line-by-line breakdown of the program, I&#8217;m going to make <em>you</em> write it. I&#8217;m giving you a guide of the program based on the parts it contains, and your job is write out what each line does.</p>
+<p class="indenthanging"><strong>includes</strong> I include some new header files here to gain access to some new functions. What does each give you?</p>
+<p class="indenthanging"><strong>struct Person</strong> This is where I&#8217;m creating a structure that has four elements to describe a person. The final result is a new compound type that lets me reference these elements all as one or each piece by name. It&#8217;s similar to a row of a database table or a class in an object-oriented programming (OOP) language.</p>
+<p class="indenthanging"><a id="page_70"/><strong>function Person_create</strong> I need a way to create these structures, so I&#8217;ve made a function to do that. Here are the important things:</p>
+<p class="indenthangingB1">&#8226; I use <code>malloc</code> for memory allocate to ask the OS to give me a piece of raw memory.</p>
+<p class="indenthangingB1">&#8226; I pass to <code>malloc</code> the <code>sizeof(struct Person)</code>, which calculates the total size of the structure, given all of the fields inside it.</p>
+<p class="indenthangingB1">&#8226; I use <code>assert</code> to make sure that I have a valid piece of memory back from <code>malloc.</code> There&#8217;s a special constant called <code>NULL</code> that you use to mean &#8220;unset or invalid pointer.&#8221; This <code>assert</code> is basically checking that <code>malloc</code> didn&#8217;t return a NULL invalid pointer.</p>
+<p class="indenthangingB1">&#8226; I initialize each field of <code>struct Person</code> using the <code>x-&gt;y</code> syntax, to say what part of the structure I want to set.</p>
+<p class="indenthangingB1">&#8226; I use the <code>strdup</code> function to duplicate the string for the name, just to make sure that this structure actually owns it. The <code>strdup</code> actually is like <code>malloc</code>, and it also copies the original string into the memory it creates.</p>
+<p class="indenthanging"><strong>function Person_destroy</strong> If I have a <code>create</code> function, then I always need a <code>destroy</code> function, and this is what destroys <code>Person</code> structures. I again use <code>assert</code> to make sure I&#8217;m not getting bad input. Then I use the function <code>free</code> to return the memory I got with <code>malloc</code> and <code>strdup</code>. If you don&#8217;t do this, you get a <em>memory leak.</em></p>
+<p class="indenthanging"><strong>function Person_print</strong> I then need a way to print out people, which is all this function does. It uses the same <code>x-&gt;y</code> syntax to get the field from the structure to print it.</p>
+<p class="indenthanging"><strong>function main</strong> In the <code>main</code> function, I use all of the previous functions and the <code>struct Person</code> to do the following:</p>
+<p class="indenthangingB1">&#8226; Create two people, <code>joe</code> and <code>frank</code>.</p>
+<p class="indenthangingB1">&#8226; Print them out, but notice I&#8217;m using the <code>%p</code> format so you can see <em>where</em> the program has actually put your structure in memory.</p>
+<p class="indenthangingB1">&#8226; Age both of them by 20 years with changes to their bodies, too.</p>
+<p class="indenthangingB1">&#8226; Print each one after aging them.</p>
+<p class="indenthangingB1">&#8226; Finally, destroy the structures so we can clean up correctly.</p>
+<p class="noindent">Go through this description carefully, and do the following:</p>
+<p class="indenthangingB">&#8226; Look up every function and header file you don&#8217;t know. Remember that you can usually do <code>man 2 function</code> or <code>man 3 function</code>, and it&#8217;ll tell you about it. You can also search online for the information.</p>
+<p class="indenthangingB">&#8226; Write a <em>comment</em> above each and every single line that says what the line does in English.</p>
+<p class="indenthangingB">&#8226; Trace through each function call and variable so you know where it comes from in the program.</p>
+<p class="indenthangingB">&#8226; Look up any symbols you don&#8217;t understand.</p>
+<div class="heading">
+<h3 id="ch16lev1sec1"><a id="page_71"/>What You Should See</h3>
+<p class="noindent">After you augment the program with your description comments, make sure it really runs and produces this output:</p>
+</div>
+<p class="ex-caption"><code>Exercise 16 Session</code></p>
+<hr/>
+<p class="codelink"><a id="p071pro01" href="ch16_images.html#p071pro01a">Click here to view code image</a></p>
+<p class="pre"><span class="pd_brown">$</span> make ex16<br/>
+<span class="EmpItalic">cc -Wall -g&#160;&#160;&#160;&#160;ex16.c&#160;&#160;&#160;-o ex16</span><br/>
+<br/>
+<span class="pd_brown">$</span> ./ex16<br/>
+<span class="EmpItalic">Joe is at memory location 0xeba010:</span><br/>
+<span class="EmpItalic">Name: Joe Alex</span><br/>
+&#160;&#160;<span class="EmpItalic">Age: 32</span><br/>
+&#160;&#160;<span class="EmpItalic">Height: 64</span><br/>
+&#160;&#160;<span class="EmpItalic">Weight: 140</span><br/>
+<span class="EmpItalic">Frank is at memory location 0xeba050:</span><br/>
+<span class="EmpItalic">Name: Frank Blank</span><br/>
+&#160;&#160;<span class="EmpItalic">Age: 20</span><br/>
+&#160;&#160;<span class="EmpItalic">Height: 72</span><br/>
+&#160;&#160;<span class="EmpItalic">Weight: 180</span><br/>
+<span class="EmpItalic">Name: Joe Alex</span><br/>
+&#160;&#160;<span class="EmpItalic">Age: 52</span><br/>
+&#160;&#160;<span class="EmpItalic">Height: 62</span><br/>
+&#160;&#160;<span class="EmpItalic">Weight: 180</span><br/>
+<span class="EmpItalic">Name: Frank Blank</span><br/>
+&#160;&#160;<span class="EmpItalic">Age: 40</span><br/>
+&#160;&#160;<span class="EmpItalic">Height: 72</span><br/>
+&#160;&#160;<span class="EmpItalic">Weight: 200</span></p>
+<div class="heading">
+<h3 id="ch16lev1sec2">Explaining Structures</h3>
+<p class="noindent">If you&#8217;ve done the work, then structures should be making sense, but let me explain them explicitly just to make sure you&#8217;ve understood it.</p>
+</div>
+<p class="noindent">A structure in C is a collection of other data types (variables) that are stored in one block of memory where you can access each variable independently by name. They are similar to a record in a database table, or a very simplistic class in an OOP language. We can break one down this way:</p>
+<p class="indenthangingB">&#8226; In the above code, we make a <code>struct</code> that has fields for a person: name, age, weight, and height.</p>
+<p class="indenthangingB">&#8226; Each of those fields has a type, like <code>int</code>.</p>
+<p class="indenthangingB">&#8226; C then packs those together so that they can all be contained in one single <code>struct</code>.</p>
+<p class="indenthangingB">&#8226; The <code>struct Person</code> is now a <em>compound data type</em>, which means you can refer to <code>struct Person</code> using the same kinds of expressions you would for other data types.</p>
+<p class="indenthangingB">&#8226; This lets you pass the whole cohesive grouping to other functions, as you did with <code>Person_print</code>.</p>
+<p class="indenthangingB"><a id="page_72"/>&#8226; You can then access the individual parts of a <code>struct</code> by their names using <code>x-&gt;y</code> if you&#8217;re dealing with a pointer.</p>
+<p class="indenthangingB">&#8226; There&#8217;s also a way to make a struct that doesn&#8217;t need a pointer, and you use the <code>x.y</code> (period) syntax to work with it. We&#8217;ll do this in the Extra Credit section.</p>
+<p class="noindent">If you didn&#8217;t have <code>struct</code>, you&#8217;d need to figure out the size, packing, and location of pieces of memory with contents like this. In fact, in most early Assembler code (and even some now), this is what you would do. In C, you can let it handle the memory structuring of these compound data types and then focus on what you do with them.</p>
+<div class="heading">
+<h3 id="ch16lev1sec3">How to Break It</h3>
+<p class="noindent">The ways in which to break this program involve how you use the pointers and the <code>malloc</code> system:</p>
+</div>
+<p class="indenthangingB">&#8226; Try passing <code>NULL</code> to <code>Person_destroy</code> see what it does. If it doesn&#8217;t abort, then you must not have the <code>-g</code> option in your <code>Makefile'</code>s <code>CFLAGS</code>.</p>
+<p class="indenthangingB">&#8226; Forget to call <code>Person_destroy</code> at the end, and then run it under the debugger to see it report that you forgot to free the memory. Figure out the options you need to pass to the debugger to get it to print how you leaked this memory.</p>
+<p class="indenthangingB">&#8226; Forget to free <code>who-&gt;name</code> in <code>Person_destroy</code> and compare the output. Again, use the right options to see how the debugger tells you exactly where you messed up.</p>
+<p class="indenthangingB">&#8226; This time, pass <code>NULL</code> to <code>Person_print</code> and see what the debugger thinks of that. You&#8217;ll figure out that <code>NULL</code> is a quick way to crash your program.</p>
+<div class="heading">
+<h3 id="ch16lev1sec4">Extra Credit</h3>
+<p class="noindent">In this part of the exercise, I want you to attempt something difficult for the extra credit: Convert this program to <em>not</em> use pointers and <code>malloc</code>. This will be hard, so you&#8217;ll want to research the following:</p>
+</div>
+<p class="indenthangingB">&#8226; How to create a <code>struct</code> on the <em>stack</em>, just like you&#8217;re making any other variable.</p>
+<p class="indenthangingB">&#8226; How to initialize it using the <code>x.y</code> (period) character instead of the <code>x-&gt;y</code> syntax.</p>
+<p class="indenthangingB">&#8226; How to pass a structure to other functions without using a pointer.<a id="page_73"/></p>
+</body>
+</html>
