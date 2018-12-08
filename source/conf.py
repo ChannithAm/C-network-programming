@@ -14,6 +14,7 @@
 #
 import os
 import sys
+import guzzle_sphinx_theme
 sys.path.insert(0, os.path.abspath('../'))
 
 
@@ -41,13 +42,16 @@ release = '1.0.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.coverage',
+    #'sphinx.ext.mathjax'
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+#templates_path = ['_templates']
+html_theme_path = guzzle_sphinx_theme.html_theme_path()
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -79,13 +83,26 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'guzzle_sphinx_theme'
+# Register the theme as an extension to generate a sitemap.xml
+extensions.append("guzzle_sphinx_theme")
+#html_theme = 'alabaster'
+#html_theme = 'basicstrap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "project_nav_name": "រៀនភាសា C",
+    # Allow a separate homepage from the master_doc
+    "homepage": "index",
+
+    # Specify a base_url used to generate sitemap.xml links. If not
+    # specified, then no sitemap will be built.
+    "base_url": "https://rean-c.readthedocs.io",
+
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -100,7 +117,10 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# html_sidebars = {}
+# Custom sidebar templates, maps document names to template names.
+html_sidebars = {
+    '**': ['logo-text.html', 'globaltoc.html', 'searchbox.html']
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

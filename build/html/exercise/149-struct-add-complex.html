@@ -1,0 +1,232 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  
+  <!-- Licensed under the Apache 2.0 License -->
+  <link rel="stylesheet" type="text/css" href="../_static/fonts/open-sans/stylesheet.css" />
+  <!-- Licensed under the SIL Open Font License -->
+  <link rel="stylesheet" type="text/css" href="../_static/fonts/source-serif-pro/source-serif-pro.css" />
+  <link rel="stylesheet" type="text/css" href="../_static/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="../_static/css/bootstrap-theme.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <title>១៤៩. បូកចំនួនកំផ្លិច​ដោយប្រើfunction របស់struct &#8212; C programming 1.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/guzzle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="១៥០. បញ្ចូល និងបង្ហាញពត័មានបុគ្គលិក" href="150-struct-employee.html" />
+    <link rel="prev" title="១៤៨. បង្ហាញពត័មានសៀវភៅ (struct)" href="148-struct-book.html" />
+  
+   
+
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="150-struct-employee.html" title="១៥០. បញ្ចូល និងបង្ហាញពត័មានបុគ្គលិក"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="148-struct-book.html" title="១៤៨. បង្ហាញពត័មានសៀវភៅ (struct)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">C programming 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">គំរូលំហាត់</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="container-wrapper">
+
+      <div id="mobile-toggle">
+        <a href="#"><span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span></a>
+      </div>
+  <div id="left-column">
+    <div class="sphinxsidebar"><a href="
+      ../index.html" class="text-logo">រៀនភាសា C</a>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <h2>Table Of Contents</h2>
+  </div>
+  <div class="sidebar-toc">
+    
+    
+      <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../about.html">អ្នកចងក្រង</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../basic/index.html">មេរៀនកូដCមូលដ្ថាន</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">គំរូលំហាត់</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1-in-out.html">១. ប្រើប្រាស់function (printf, scanf)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2-in-out-char.html">២. ប្រើប្រាស់function (printf, scanf) ជាមួយchar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3-max-of-two-num.html">៣. រកដំលៃធំបំផុតរវាងពីរចំនួន</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4-f-equation.html">៤. រកតម្លៃនៃF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5-find-max-min-3num.html">៥. ស្វែងរកចំនួនធំបំផុត និងតូចបំផុតចំនោម៣ចំនួន</a></li>
+<li class="toctree-l2"><a class="reference internal" href="6-score-student.html">៦. បញ្ចូល និងវាយដំលៃចំនាត់ថ្នាក់សិស្ស</a></li>
+<li class="toctree-l2"><a class="reference internal" href="7-score-student.html">៧. បញ្ចូល និងបង្ហាញចំនាត់ថ្នាក់សិស្ស(switch, case)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="146-struct-distace.html">១៤៦. គណនាចម្ងាយ feet, inch (struct)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="147-struct-student-info.html">១៤៧. បញ្ចូល និងបង្ហាញពត័មានសិស្សលើscreen (struct)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="148-struct-book.html">១៤៨. បង្ហាញពត័មានសៀវភៅ (struct)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">១៤៩. បូកចំនួនកំផ្លិច​ដោយប្រើfunction របស់struct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="150-struct-employee.html">១៥០. បញ្ចូល និងបង្ហាញពត័មានបុគ្គលិក</a></li>
+<li class="toctree-l2"><a class="reference internal" href="151-struct-empolyee-high-salary.html">១៥១. រកប្រាក់ខែច្រើនបំផុតរបស់បុគ្គលិក</a></li>
+<li class="toctree-l2"><a class="reference internal" href="152-struct-arrange-student-alphabet.html">១៥២. តម្រៀបឈ្មោះសិស្សតាមលំដាប់អក្ខរក្រម</a></li>
+</ul>
+</li>
+</ul>
+
+    
+  </div>
+</div>
+<div class="sidebar-block">
+  <div class="sidebar-wrapper">
+    <div id="main-search">
+      <form class="form-inline" action="../search.html" method="GET" role="form">
+        <div class="input-group">
+          <input name="q" type="text" class="form-control" placeholder="Search...">
+        </div>
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+        <div id="right-column">
+          
+          <div role="navigation" aria-label="breadcrumbs navigation">
+            <ol class="breadcrumb">
+              <li><a href="../index.html">Docs</a></li>
+              
+                <li><a href="index.html">គំរូលំហាត់</a></li>
+              
+              <li>១៤៩. បូកចំនួនកំផ្លិច​ដោយប្រើfunction របស់struct</li>
+            </ol>
+          </div>
+          
+          <div class="document clearer body">
+            
+  <div class="section" id="function-struct">
+<h1>១៤៩. បូកចំនួនកំផ្លិច​ដោយប្រើfunction របស់struct<a class="headerlink" href="#function-struct" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#id1" id="id2">លំហាត់ទី១៤៩</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id2">លំហាត់ទី១៤៩</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>សរសេរកម្មវិធី បញ្ចូលចំនួនកុំផ្លិចពីរ រួចហើយធ្វើប្រមានវិធីបូកដោយប្រើប្រាស់functionរបស់struct។</p>
+<div class="section" id="source">
+<h3>Source<a class="headerlink" href="#source" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-C notranslate"><div class="highlight"><pre><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">Complex_num</span><span class="p">{</span>
+    <span class="kt">float</span> <span class="n">real</span><span class="p">;</span>
+    <span class="kt">float</span> <span class="n">imag</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">complex</span><span class="p">;</span>
+
+<span class="n">complex</span> <span class="nf">add</span><span class="p">(</span><span class="n">complex</span> <span class="n">n1</span><span class="p">,</span> <span class="n">complex</span> <span class="n">n2</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+    <span class="n">complex</span> <span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">temp</span><span class="p">;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;For 1st complex number</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Enter real and imaginary part respectively: </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">&quot;%f %f&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n1</span><span class="p">.</span><span class="n">real</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n1</span><span class="p">.</span><span class="n">imag</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">For 2nd complex number</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Enter real and imaginary part respectively:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+    <span class="n">scanf</span><span class="p">(</span><span class="s">&quot;%f %f&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n2</span><span class="p">.</span><span class="n">real</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">n2</span><span class="p">.</span><span class="n">imag</span><span class="p">);</span>
+
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">add</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="n">n2</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Sum = %.2f + j%.2f</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">temp</span><span class="p">.</span><span class="n">real</span><span class="p">,</span> <span class="n">temp</span><span class="p">.</span><span class="n">imag</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">complex</span> <span class="nf">add</span><span class="p">(</span><span class="n">complex</span> <span class="n">n1</span><span class="p">,</span> <span class="n">complex</span> <span class="n">n2</span><span class="p">){</span>
+    <span class="n">complex</span> <span class="n">temp</span><span class="p">;</span>
+
+    <span class="n">temp</span><span class="p">.</span><span class="n">real</span> <span class="o">=</span> <span class="n">n1</span><span class="p">.</span><span class="n">real</span> <span class="o">+</span> <span class="n">n2</span><span class="p">.</span><span class="n">real</span><span class="p">;</span>
+    <span class="n">temp</span><span class="p">.</span><span class="n">imag</span> <span class="o">=</span> <span class="n">n1</span><span class="p">.</span><span class="n">imag</span> <span class="o">+</span> <span class="n">n2</span><span class="p">.</span><span class="n">imag</span><span class="p">;</span>
+
+    <span class="k">return</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="output">
+<h3>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre>For 1st complex number
+Enter real and imaginary part respectively:
+1 1
+
+For 2nd complex number
+Enter real and imaginary part respectively:
+2 3
+Sum = 3.00 + j4.00
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+            
+  <div class="footer-relations">
+    
+      <div class="pull-left">
+        <a class="btn btn-default" href="148-struct-book.html" title="previous chapter (use the left arrow)">១៤៨. បង្ហាញពត័មានសៀវភៅ (struct)</a>
+      </div>
+    
+      <div class="pull-right">
+        <a class="btn btn-default" href="150-struct-employee.html" title="next chapter (use the right arrow)">១៥០. បញ្ចូល និងបង្ហាញពត័មានបុគ្គលិក</a>
+      </div>
+    </div>
+    <div class="clearer"></div>
+  
+        </div>
+        <div class="clearfix"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="150-struct-employee.html" title="១៥០. បញ្ចូល និងបង្ហាញពត័មានបុគ្គលិក"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="148-struct-book.html" title="១៤៨. បង្ហាញពត័មានសៀវភៅ (struct)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">C programming 1.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >គំរូលំហាត់</a> &#187;</li> 
+      </ul>
+    </div>
+<script type="text/javascript">
+  $("#mobile-toggle a").click(function () {
+    $("#left-column").toggle();
+  });
+</script>
+<script type="text/javascript" src="../_static/js/bootstrap.js"></script>
+  <div class="footer">
+    &copy; Copyright 2018, Channith Am. Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+  </div>
+  </body>
+</html>

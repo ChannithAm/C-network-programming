@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _contents:
+
 សូមស្វាគមន៍មកកាន់ប្លុកយើងខ្ញុំ តោះរៀន!!!
 =========================================
 
@@ -19,6 +21,8 @@
 
 Indices and tables
 ==================
+
+.. only:: builder_html
 
 * :ref:`genindex`
 * :ref:`modindex`

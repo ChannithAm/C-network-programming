@@ -58,9 +58,11 @@ https://www.codegrudge.com/2014/07/tcpip-multiclient-chat-server.html
 https://stackoverflow.com/questions/4200172/c-socket-programming-connecting-multiple-clients-to-server-using-select
 
 A typical concurrent server using select.
+==========================================
 http://exploreurtalents.blogspot.com/2010/03/typical-concurrent-server-using-select.html
 http://forum.codecall.net/topic/64205-concurrent-tcp-server-using-select-api-in-linux-c/
 https://therighttutorial.wordpress.com/2014/06/09/multi-client-server-chat-application-using-socket-programming-tcp/
 https://www.tenouk.com/Module41.html
 https://sites.google.com/site/sonsahn/Home/hoc-c-nha/network-programing-example/server-voi-select-trong-c-1
 http://www.linuxhowtos.org/C_C++/socket.htm
+https://www.binarytides.com/socket-programming-c-linux-tutorial/
