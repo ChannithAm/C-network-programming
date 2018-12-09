@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# File              : conf.py
+# Author            : Channith Am <amcnith@gmail.com>
+# Date              : 09.12.2018
+# Last Modified Date: 09.12.2018
+# Last Modified By  : Channith Am <amcnith@gmail.com>
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
@@ -14,13 +21,12 @@
 #
 import os
 import sys
-import guzzle_sphinx_theme
-sys.path.insert(0, os.path.abspath('../'))
-
+#sys.path.insert(0, os.path.abspath('.'))
+sys.path.append(os.path.abspath('_themes'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'C programming'
+project = 'C-Programming'
 copyright = '2018, Channith Am'
 author = 'Channith Am'
 
@@ -39,19 +45,17 @@ release = '1.0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+html_logo = "logo.png"
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.coverage',
-    #'sphinx.ext.mathjax'
-    'sphinx.ext.ifconfig',
+    'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-#templates_path = ['_templates']
-html_theme_path = guzzle_sphinx_theme.html_theme_path()
+#templates_path = ['_themes']
+html_theme_path = ['_themes']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -75,32 +79,30 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-#pygments_style = None
-pygments_style = 'sphinx'
+pygments_style = None
+
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'guzzle_sphinx_theme'
-# Register the theme as an extension to generate a sitemap.xml
-extensions.append("guzzle_sphinx_theme")
-#html_theme = 'alabaster'
-#html_theme = 'basicstrap'
+html_theme = 'bootstrap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    "project_nav_name": "រៀនភាសា C",
-    # Allow a separate homepage from the master_doc
-    "homepage": "index",
+    # Navigation bar title. (Default: ``project`` value)
+    #'navbar_title': "Demo",
+    # Fix navigation bar to top of page?
+    # Values: "true" (default) or "false"
+    'navbar_fixed_top': "true",
 
-    # Specify a base_url used to generate sitemap.xml links. If not
-    # specified, then no sitemap will be built.
-    "base_url": "https://rean-c.readthedocs.io",
+    # Choose Bootstrap version.
+    # Values: "3" (default) or "2" (in quotes)
+    'bootstrap_version': "3",
 
 }
 
@@ -117,16 +119,13 @@ html_static_path = ['_static']
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
 #
-# Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    '**': ['logo-text.html', 'globaltoc.html', 'searchbox.html']
-}
+# html_sidebars = {}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Cprogrammingdoc'
+htmlhelp_basename = 'BashShelldoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -153,7 +152,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Cprogramming.tex', 'C programming Documentation',
+    (master_doc, 'BashShell.tex', 'BashShell Documentation',
      'Channith Am', 'manual'),
 ]
 
@@ -163,7 +162,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'cprogramming', 'C programming Documentation',
+    (master_doc, 'bashshell', 'BashShell Documentation',
      [author], 1)
 ]
 
@@ -174,8 +173,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Cprogramming', 'C programming Documentation',
-     author, 'Cprogramming', 'One line description of project.',
+    (master_doc, 'BashShell', 'BashShell Documentation',
+     author, 'BashShell', 'One line description of project.',
      'Miscellaneous'),
 ]
 
