@@ -21,6 +21,7 @@
 #
 import os
 import sys
+import sphinx_bootstrap_theme
 #sys.path.insert(0, os.path.abspath('.'))
 sys.path.append(os.path.abspath('_themes'))
 
@@ -45,7 +46,8 @@ release = '1.0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-html_logo = "logo.png"
+#html_logo = "logo.png"
+html_logo = "c-programming-1.png"
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',

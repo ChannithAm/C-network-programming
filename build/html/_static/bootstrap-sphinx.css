@@ -20,7 +20,7 @@ body {
 
 @media (min-width: 980px) {
   .navbar h3 a, .navbar .brand {
-    background: transparent url("logo.png") no-repeat 22px 3px;
+    background: transparent url("c-programming-1.png") no-repeat 22px 3px;
     padding-left: 62px;
   }
 }

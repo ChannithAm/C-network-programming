@@ -1,3 +1,10 @@
+/**
+ * File              : server.c
+ * Author            : Channith Am <amcnith@gmail.com>
+ * Date              : 27.12.2018
+ * Last Modified Date: 27.12.2018
+ * Last Modified By  : Channith Am <amcnith@gmail.com>
+ */
 // socket()
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -94,6 +101,7 @@ int main(int argc, char *argv[]){
    FD_SET(serverSocket, &masterfds);
 
    int max_fd = serverSocket;
+   printf("\n\nmax_fd: %d",max_fd);
    int i;
    struct timeval timeout;
    // server se lang nghe trong 90s,
