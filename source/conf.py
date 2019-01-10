@@ -47,7 +47,7 @@ release = '1.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 #html_logo = "logo.png"
-html_logo = "c-programming-1.png"
+#html_logo = "c-programming-1.png"
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
@@ -97,7 +97,7 @@ html_theme = 'bootstrap'
 #
 html_theme_options = {
     # Navigation bar title. (Default: ``project`` value)
-    #'navbar_title': "Demo",
+    'navbar_title': "រៀនភាសា C",
     # Fix navigation bar to top of page?
     # Values: "true" (default) or "false"
     'navbar_fixed_top': "true",
