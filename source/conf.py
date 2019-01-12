@@ -3,7 +3,7 @@
 # File              : conf.py
 # Author            : Channith Am <amcnith@gmail.com>
 # Date              : 09.12.2018
-# Last Modified Date: 09.12.2018
+# Last Modified Date: 12.01.2019
 # Last Modified By  : Channith Am <amcnith@gmail.com>
 # -*- coding: utf-8 -*-
 #
@@ -21,7 +21,8 @@
 #
 import os
 import sys
-import sphinx_bootstrap_theme
+#import sphinx_bootstrap_theme
+import sphinx_rtd_theme
 #sys.path.insert(0, os.path.abspath('.'))
 sys.path.append(os.path.abspath('_themes'))
 
